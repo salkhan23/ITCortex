@@ -1,0 +1,1296 @@
+#LyX 2.1 created this file. For more info see http://www.lyx.org/
+\lyxformat 474
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_math auto
+\font_default_family rmdefault
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2.5cm
+\rightmargin 2.5cm
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset Note Comment
+status open
+
+\begin_layout Plain Layout
+Review selection of unread papers, focus more on properties of neurons in
+ IT vs constructing and object identification model
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Title
+Inferior Temporal Cortex Literature Survey
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+ 
+\backslash
+cleardoublepage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+How Does the Brain Solve Visual Object Recognition 
+\size tiny
+- 133 citations, 2012
+\end_layout
+
+\begin_layout Subparagraph
+[DiCarlo, Zoccolan & Rust; Neuron 2012]
+\end_layout
+
+\begin_layout Itemize
+Good summary paper of work being done in DiCarlo's Lab (MIT) on object recogniti
+on:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+3 Phenomena reviewed: 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Core object recognition, 
+\end_layout
+
+\begin_layout Enumerate
+IT population representations 
+\end_layout
+
+\begin_layout Enumerate
+IT single-unit responses.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Links between the three phenomena discussed and how these can occur within
+ the ventral stream given what is known about its architecture and plasticity.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+CORE OBJECT RECOGNITION is defined as the ability to rapidly and accurately
+ assign labels to objects over a range of identity preserving transformations
+ (IPT) without any pre-cuing within a short amount of time.
+ [DiCarlo & Cox, 2007]
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Labels: Precise = identification, coarse = categorization
+\end_layout
+
+\begin_layout Itemize
+Identity preserving transformations: 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Position
+\end_layout
+
+\begin_layout Enumerate
+Distance (scale)
+\end_layout
+
+\begin_layout Enumerate
+Angle relative to observer (pose)
+\end_layout
+
+\begin_layout Enumerate
+Lighting conditions (illumination)
+\end_layout
+
+\begin_layout Enumerate
+Environment (clutter)
+\end_layout
+
+\begin_layout Enumerate
+Shape (intra-category variations)
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Precuing such as object or location
+\end_layout
+
+\begin_layout Itemize
+Multiple objects can be identified within 100ms.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+INVARIANCE PROBLEM: the ability to identify objects over a wide range of
+ viewing conditions.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+each encounter (neuronal response) with an object is almost entirely unique,
+ because of IPTs.
+\end_layout
+
+\begin_layout Itemize
+Visual system is invariant to this transformations and is able to identify
+ objects rapidly.
+\end_layout
+
+\begin_layout Itemize
+For artificial systems, major problem especially as number of labels increase.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Limits on ITs object recognition abilities: [Afraz and Cavanagh, 2008: Dicarlo
+ Lab], [Bulthoff H.H,2005, How are 3D object represented in the brain], [Kravitz,
+ 2010, High-level visual object representations are constrained by position]
+\end_layout
+
+\begin_layout Itemize
+Graphical Intuition: Response of a population of neurons to a particular
+ view of an object is a response vector in space who's dimensional is defined
+ by the number of neurons in the population.
+\end_layout
+
+\begin_layout Itemize
+Neurophysiological data suggests:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+spike counts in ~50ms IT decoding windows convey information about object
+ identity.
+\end_layout
+
+\begin_layout Itemize
+information is available in IT ~100ms after image presentation
+\end_layout
+
+\begin_layout Itemize
+It neuronal representation of a given object across changes in position,
+ scale, and presence of limited clutter is untangled from the representation
+ of other objects
+\end_layout
+
+\begin_layout Itemize
+object identity can easily be decoded using simple summation codes
+\end_layout
+
+\begin_layout Itemize
+codes are readily observed in passively viewing subjects, without precuing.
+\end_layout
+
+\end_deeper
+\begin_layout Section
+Selectivity and Tolerance (Invariance) both Increase as Visual Information
+ Propagates from Cortical Area V4 to IT 
+\size tiny
+- 64 citations, 2011
+\end_layout
+
+\begin_layout Subparagraph
+[Rust & DiCarlo; J.
+ Neurophysiology, 2011]
+\end_layout
+
+\begin_layout Itemize
+Done, fill in
+\end_layout
+
+\begin_layout Section
+Fast Readout of Object Identity from Macaque Inferior Temporal Cortex 
+\size tiny
+- 389 citation, 2005
+\end_layout
+
+\begin_layout Subparagraph
+[Hung, ...
+ DiCarlo; Science 2005]
+\end_layout
+
+\begin_layout Itemize
+A 
+\noun on
+linear regularization classifier [
+\noun default
+Poggio
+\noun on
+, 2003]
+\noun default
+ was trained to learn the mapping between real IT neuronal responses to
+ object labels.
+\end_layout
+
+\begin_layout Itemize
+Best classifier: Support Vector machine(SVM) with Linear or Gaussian kernels.
+\end_layout
+
+\begin_layout Itemize
+Input consisted of neuronal response from independently recorded neurons
+ from a large number of IT cortex sites.
+ Responses types: spikes from (i) multi-unit activity (MUA) and (ii) single-unit
+ activity (SUA) and local field potentials (LFP).
+\end_layout
+
+\begin_layout Itemize
+After training the classifier tested for ability to decode responses of
+ novel stimuli.
+\end_layout
+
+\begin_layout Itemize
+
+\noun on
+Selectivity
+\noun default
+ Performance:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Categorization (1/8): 256 recording sites, 94% accuracy.
+\end_layout
+
+\begin_layout Itemize
+Identification (1/77): 256 recording sites, 72% accuracy.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Performance increased as number of recording sites increased: object representat
+ion by population encoding vs grandmother cells (complex highly object selective
+ single neurons, that responds to only one stimulus).
+\end_layout
+
+\begin_layout Itemize
+Robust to several simulated noise effects: 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Neuronal/synaptic deaths
+\end_layout
+
+\begin_layout Itemize
+Failure of spike transmission or neuro-transmitter release.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+
+\noun on
+Tolerance
+\noun default
+: Neuronal responses within a category must be similar (in some way) to
+ support generalizations.
+ Generalizations over position & scale investigated.
+\end_layout
+
+\begin_layout Itemize
+Once classifier was trained generalization transforms with a few images.
+ It could extend generalization to images it only saw only once during the
+ training at arbitrary scale and position with only 10% performance reduction.
+\end_layout
+
+\begin_layout Itemize
+
+\noun on
+Temporal resolution
+\noun default
+: Reliable (70% accuracy) object category decoding possible with spikes
+ within a single small time 12.5ms window (0 to 2 spikes per neurons) after
+ accounting for propagation latency.
+ Few spikes sufficient to encode objects in IT.
+\end_layout
+
+\begin_layout Itemize
+Generally assumed: ventral stream = 
+\emph on
+what 
+\emph default
+encoding, 
+\emph on
+where
+\emph default
+ encoding done elsewhere.
+\end_layout
+
+\begin_layout Itemize
+By training the classifier to learn mapping between neuronal responses and
+ scale and position (
+\emph on
+where
+\emph default
+ information), irrespective of object identity, possible to read out 
+\emph on
+where
+\emph default
+ information jointly with object identity.
+\end_layout
+
+\begin_layout Section
+Performance-Optimized Hierarchical Models Predict Neuronal Responses in
+ Higher Visual Cortex 
+\size tiny
+- 1 citation, 2014
+\end_layout
+
+\begin_layout Subparagraph
+[Yamis, ....
+ DiCarlo; PNAS, 2014]
+\end_layout
+
+\begin_layout Itemize
+Develop a quantitatively accurate model of the the Inferior Temporal (IT)
+ Cortex that can match human performance in a range of categorization tasks
+ on a data set with high levels of variations in object position, scale
+ and pose.
+\end_layout
+
+\begin_layout Itemize
+Discover that in biologically plausible hierarchical neural network models,
+ there is strong correlation between model's categorization performance
+ and its ability to predict individual IT neural unit responses.
+\end_layout
+
+\begin_layout Itemize
+Model parameters were optimized for performance and it was observed that
+ top layer of the network was highly predictive of IT spiking responses
+ to complex naturalistic images.
+ Moreover, intermediate layer was highly predictive of V4 cortex spiking.
+\end_layout
+
+\begin_layout Itemize
+Existing models of lower layers of the visual ventral stream can predict
+ quantitatively accurate response magnitudes to novel images [Carandini,
+ 2005].
+ 
+\end_layout
+
+\begin_layout Itemize
+Higher ventral cortical areas such as V4 and IT proven more difficult to
+ understand and existing models not as accurate as models of level level
+ ventral cortical areas.
+ Moreover, attempts to fit V4 and IT neural tuning curves on models have
+ not resulted in good categorization performance.
+\end_layout
+
+\begin_layout Itemize
+Invariant object recognition performance strongly correlates with IT neural
+ productivity:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Collected responses from real IT neurons to a set of test images.
+\end_layout
+
+\begin_layout Itemize
+Thousands of neural network models were assessed for categorization performance
+ and IT neural predictivity.
+\end_layout
+
+\begin_layout Itemize
+CATEGORIZATION PERFORMANCE: Support vector machines were attached to the
+ output layers of the models.
+ Cross validated model accuracy was calculated for each model.
+\end_layout
+
+\begin_layout Itemize
+NEURAL PREDICTIVITY: For each measured neuron, linear regression was used
+ to linearly weight outputs of candidate models (top or immediate layer
+ outputs, whichever fit best).
+ A goodness-of-fit parameter was then calculated for a novel set of images
+ between tuned model predictions and measured neural responses.
+ This was termed 
+\emph on
+explained variance
+\emph default
+.
+ Neuronal predictivity of the model was defined as the mean explained variance
+ over all sites.
+\end_layout
+
+\begin_layout Itemize
+
+\size footnotesize
+Note: goodness-of-fit (
+\begin_inset Formula $r^{2}$
+\end_inset
+
+).
+ aka coefficient of determination.
+ Indicates how well data fits a statistical model.
+ See Wikipedia for details.
+ Essentially involves squared differences to the mean, hence a function
+ of unexplained variance and from which explained variance can be derived.
+\end_layout
+
+\begin_layout Itemize
+Models were convolutional neural networks (CNNs) whose parameters were chosen
+ according to three broad categories (1) Randomly selected, (2) optimized
+ for performance, (3) optimized directly for neural predictivity.
+\end_layout
+
+\begin_layout Itemize
+Results show that in each category higher categorization lead to higher
+ neuronal predictivity.
+ Reverse not true.
+\end_layout
+
+\begin_layout Itemize
+Highest performance and IT predictivity from models directly optimized for
+ performance.
+ Furthermore, top and intermediate layers showed good predictivity for IT
+ and V4 neuronal responses even though models were not directly optimized
+ for neural responses.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+CNN models for the IT cortex:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+CNNs approximate the general retinotopic organization of the brain via locally
+ constrained spatial convolution.
+ 
+\end_layout
+
+\begin_layout Itemize
+Their basic operations of linear filtering, thresholding, pooling and normalizat
+ion are all considered neuronally plausible.
+ 
+\end_layout
+
+\begin_layout Itemize
+Their multilayer architecture is consistent with the commonly assumed Hierarchic
+al Linear-Nonlinear architecture of the Ventral Stream where higher level
+ neurons operate by linearly weighting outputs of intermediate-level neurons
+ followed by simple additional non linearities.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Hierarchical Modular Optimization (HMO) Model
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+3 layer CNNs good at recognition in low-variation object recognition.
+ 
+\end_layout
+
+\begin_layout Itemize
+[Lippmann, 1987] shows that any continuous function can be represented by
+ a 3 layer classifier (For fully connected neural networks, not sure if
+ valid for CNN).
+\end_layout
+
+\begin_layout Itemize
+[DiCarlo, 2012] shows that 3 layer CNNs may be limited in their categorization
+ performance for high performance tasks.
+\end_layout
+
+\begin_layout Itemize
+Propose a model composed of a mixture of multiple up-to-3 layer CNNs, simply
+ adding outputs of component models to get final model output.
+\end_layout
+
+\begin_layout Itemize
+Each individual CNN can have a distinct set of parameters: Filter weights,
+ Thresholds, Pooling and Normalization.
+\end_layout
+
+\begin_layout Itemize
+By allowing CNNs of different depths, overall model can include sub-components
+ of different complexity in object identity.
+ This should help with the common over-fitting problem in CNNs .
+ (Verify)
+\end_layout
+
+\begin_layout Itemize
+General trend in CNNs is to increase network depth to develop models that
+ can handle larger classification problems.
+ However such networks treat all objects as being of equal complexity.
+ Can easily over-fit relatively simple objects.
+\end_layout
+
+\begin_layout Itemize
+Biologically this architecture is pleasing because it represents cortical
+ columns specialized for specific functionality.
+ Having CNNs of different depth correspond to biological bypass connections
+ found within the ventral stream [Nakamura, 2011].
+\end_layout
+
+\begin_layout Itemize
+Develop model architecture by using Hierarchical Modular Optimization (HMO):
+ Method provides guidelines on how to discover and combine functionally
+ specialized hierarchical architectures.
+ Based on adaptive boosting procedure [Schapire, 1999] interleaved with
+ hyper-parameter optimization.
+ 
+\size footnotesize
+[Get more info.].
+\end_layout
+
+\begin_layout Itemize
+Developed a 4 layer model (HMO model) with 1250 top-level outputs.
+ Figure in supplementary text.
+\end_layout
+
+\begin_layout Itemize
+Model was able to match object recognition performance of the recorded IT
+ neurons even in tasks with high amounts of variations.
+ No current model is capable of doing that.
+\end_layout
+
+\begin_layout Itemize
+Only final linear weights of the top layer were tuned for neural data.
+ Rest of the parameters learned though training.
+ Parameters of the model were independently selected to optimize functional
+ performance at the top.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Two biological constraints together shape the Visual Cortex:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Functional constraint of object recognition performance.
+\end_layout
+
+\begin_layout Itemize
+Structural constraint of the hierarchical network architecture.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+FUTURE WORK:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+(1) See how model scale up to much larger data sets like ImageNet data set.
+\end_layout
+
+\end_deeper
+\begin_layout Section
+What Response Properties do Individual Neurons need to Underlie Position
+ and Clutter Invariant Object Recognition
+\size tiny
+ - 36 citations, 2009
+\end_layout
+
+\begin_layout Subparagraph
+[Li, ....., DiCarlo, J.
+ Neurophysiology, 2009]
+\end_layout
+
+\begin_layout Section
+Why is Real-World Visual Object Recognition Hard
+\size tiny
+ - 261 citations, 2008
+\end_layout
+
+\begin_layout Subparagraph
+[Pinto, Cox, DiCarlo; PLOS Computational Biology, 2008]
+\end_layout
+
+\begin_layout Section
+Untangling Invariant Object Recognition
+\size tiny
+ - 214 Citations, 2007
+\end_layout
+
+\begin_layout Subparagraph
+[DiCarlo & Cox; Trends in Cognitive Sciences, 2007]
+\end_layout
+
+\begin_layout Section
+Statistics of Visual Responses in Primate IT Cortex to Object Stimuli 
+\size tiny
+- 7 citations, 2011
+\end_layout
+
+\begin_layout Subparagraph
+[Lehky, Kiani, Esteky and Tanaka; J.
+ Neurophysiology, 2011] 
+\end_layout
+
+\begin_layout Itemize
+Statistics of IT cortex neurons investigated using a large 
+\begin_inset Formula $674{}_{neurons}$
+\end_inset
+
+ x 
+\begin_inset Formula $806_{images}$
+\end_inset
+
+data set.
+\end_layout
+
+\begin_layout Itemize
+Two types of selectivities, often considered inter-changeable in literature
+ (
+\noun on
+Ergodic system
+\noun default
+), investigated:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+
+\noun on
+neuronal selectivity
+\noun default
+: response of a single neuron to multiple images.
+\end_layout
+
+\begin_layout Itemize
+
+\noun on
+Population sparseness
+\noun default
+: response of a population of neurons to single image.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Paper shows that they are different and not interchangeable, in contrast
+ to earlier paper [Franco et.
+ al., 2007].
+ 
+\end_layout
+
+\begin_layout Itemize
+Shape of the response distribution curves describes both types of selectivities:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+High selectivity: Heavier tail, high peak response.
+ Higher Responses at pdf curve ends.
+\end_layout
+
+\begin_layout Itemize
+Low selectivity: Frequent small variations about the mean, fatter, lower
+ central lobe, finite tails.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Tail heaviness is an indication of how likely it would be to obtain stronger
+ neural responses if the stimulus set size could be expanded.
+ Heavy tail (low responses to many objects) 
+\begin_inset Formula $\rightarrow$
+\end_inset
+
+Fewer objects illicit stronger responses more difficult to find objects
+ that will result in large responses.
+\end_layout
+
+\begin_layout Itemize
+Use statistical technique PARETO TAIL ESTIMATION.
+\end_layout
+
+\begin_layout Itemize
+Statistical characterization of inferotemporal neurons may constrain the
+ manner in which object recognition theories are constructed.
+\end_layout
+
+\begin_layout Itemize
+Other papers that examine IT selectivity and other probabilistic aspects
+ of IT respones include:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Rolls & Tovee 1995: Sparseness of the neuronal respresentation of stimuli
+ in the primate temporal visual cortex
+\end_layout
+
+\begin_layout Itemize
+Baddeley, Abbott, 1997: responses of neurons in primary and inferior temporal
+ visual cortices to natural scenes
+\end_layout
+
+\begin_layout Itemize
+Treves, 1999: firing rate distributions and efficiency of information transmissi
+on of IT cortex neurons to natural visual stimuli
+\end_layout
+
+\begin_layout Itemize
+Kreiman, DiCarlo, 2006: Object selectivity of local field potentials and
+ spikes in the macaque IT cortex.
+\end_layout
+
+\begin_layout Itemize
+Waydo, Koch 2006: Sparse representation in the human medial temporal lobe.
+\end_layout
+
+\begin_layout Itemize
+Franco, Rolls, 2007: Neuronal selectivity, population sparseness and ergodicity
+ in the IT visual cortex.
+\end_layout
+
+\begin_layout Itemize
+Zoccolan, Dicarlo, 2007: Trade off between object selectivity and tolerance
+ in monkey IT cortex.
+\end_layout
+
+\end_deeper
+\begin_layout Paragraph*
+RESULTS
+\end_layout
+
+\begin_layout Itemize
+Selectivity and Sparseness: 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Selectivity metric = Kurtosis (Excess Kurtosis).
+ Kurtosis is a popular measure of selectivity in the theoretical literature.
+ Others measures also exist: (1) based on entropy, (2) activity fractions
+\end_layout
+
+\begin_layout Itemize
+Population Spareness > single neuron selectivity
+\end_layout
+
+\begin_layout Itemize
+Measuring single-neuron selectivity not equivalent to measuring population
+ responses.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Neural Correlation:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Noise correlation coefficients between nearby neurons is typically reported
+ in the literature as 0.15-0.20.
+\end_layout
+
+\begin_layout Itemize
+Known to drop as distance between neurons increases.
+\end_layout
+
+\begin_layout Itemize
+Known to drop as stimulus duration decreases.
+\end_layout
+
+\begin_layout Itemize
+Could not measure because of the measuring technique employed.
+\end_layout
+
+\begin_layout Itemize
+Simulation used to observe the impact of noise correlation.
+ 
+\end_layout
+
+\end_deeper
+\begin_layout Paragraph*
+NOTES
+\end_layout
+
+\begin_layout Itemize
+Kurtosis (4th central moment), which describes shape of probability distribution
+ curve measured quantity.
+\end_layout
+
+\begin_layout Itemize
+Extreme responses (upper 10%) for both types of selectivities investigated
+ separately, since tail heaviness important for determining selectivity.
+\end_layout
+
+\begin_layout Itemize
+Tails fit with Pareto Tail Distributions, particularly important was shape
+ parameter, 
+\begin_inset Formula $k$
+\end_inset
+
+, of distribution.
+\end_layout
+
+\begin_layout Paragraph
+Results & observations
+\end_layout
+
+\begin_layout Itemize
+Population spareness much greater than single neuron selectivity, therefore
+ not inter-changeable.
+\end_layout
+
+\begin_layout Itemize
+Difference attributed to the presence of neurons with a large variety of
+ dynamic range of responses (interquartile response range) and not highly
+ selective neurons.
+\end_layout
+
+\begin_layout Itemize
+Best pdf fits to empirical pdf:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Neuronal selectivity: gamma distribution.
+ Large variations in parameters for individual neurons, diversity in the
+ response statistics for different neurons.
+\end_layout
+
+\begin_layout Itemize
+Population spareness:log-normal distribution.
+ Distribution parameters remained similar for different images.
+ Population responses remained similar for different images.
+ Images are encoded primarily by changes in the pattern of activity within
+ the population.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Tail analysis: 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Single neurons responses: k<0 and finite tails, 
+\end_layout
+
+\begin_layout Itemize
+Unnormalized population sparseness: k=0 and exponentially distributed tails
+\end_layout
+
+\begin_layout Itemize
+Normalized population spareness: k>0 power law distributions.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+From tail analysis, single neuron selectivity can be analyzed with a finite
+ set of images (possible to get its preferred stimulus) while population
+ spareness requires a large stimuli set to characterize their responses.
+\end_layout
+
+\begin_layout Section
+Uncovering the Visual "Alphabet": Advances in Our Understanding of Object
+ Perception 
+\size tiny
+- 17 citations, 2011
+\end_layout
+
+\begin_layout Subparagraph
+[Ungerleider & Bell; Vision Research, 2011]
+\end_layout
+
+\begin_layout Section
+Normalization as a Canonical Neural Computation 
+\size tiny
+- 182 citations, 2011
+\end_layout
+
+\begin_layout Subparagraph
+[Carandini & Heeger; Nature Reviews Neuroscience, 2011]
+\end_layout
+
+\begin_layout Section
+Models of Object Recognition 
+\size tiny
+- 467 citations, 2000
+\end_layout
+
+\begin_layout Subparagraph
+[Riesenhuber & Poggio; Nature Neuroscience, 2000]
+\end_layout
+
+\begin_layout Section
+Hierarchical Models of Object Recognition in Cortex, 
+\size tiny
+1908 citations, 1999
+\end_layout
+
+\begin_layout Subparagraph
+[Riesenhuber, Poggio; Neuroscience Nature, 1999]
+\end_layout
+
+\begin_layout Section
+The Mathematics of Learning: Dealing with Data 
+\size tiny
+- 487 citations, 2003
+\end_layout
+
+\begin_layout Subparagraph
+[T.
+ Poggio & S.
+ Smale, 2003]
+\end_layout
+
+\begin_layout Section
+Medial Axis Shape Coding in Macaque Inferotemporal Cortex 
+\size tiny
+- 18 citations, 2012
+\end_layout
+
+\begin_layout Subparagraph
+[Hung, Carlson & Conner; Neuron 2012]
+\end_layout
+
+\begin_layout Section
+Functional Compartmentalization and Viewpoint Generalization within the
+ Macaque Face Processing System 
+\size tiny
+- 156 Citations
+\end_layout
+
+\begin_layout Subparagraph*
+[Winrich, Freiwald & Doris Y.
+ Tsao, 2010]
+\end_layout
+
+\begin_layout Itemize
+Found: 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Neurons in ML
+\backslash
+MF area are view specific
+\end_layout
+
+\begin_layout Itemize
+Neurons in AL displayed mirror symmetric preferences across head orientation.
+ Developing partial view invariance to head orientation
+\end_layout
+
+\begin_layout Itemize
+Neurons in AM (most anterior region) almost full head orientation invariant.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Face processing system: fMRI reveals six regions:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Parts:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+1 Posterior: Lateral (PL)
+\end_layout
+
+\begin_layout Itemize
+2 Middle: lateral (ML) and fundus (bottom) (MF)
+\end_layout
+
+\begin_layout Itemize
+3 Anterior: Fundus (AF), lateral (AF) and medial (AM)
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Properties:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Regions span the entire length of the IT cortex
+\end_layout
+
+\begin_layout Itemize
+Areas are interconnected.
+ AM & AL receive most of their inputs from ML
+\backslash
+MF
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Hypothesis:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+representation in diffrent brain areas are not independent but are transformatio
+ns of each other.
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Itemize
+FOB data set: faces, objects and bodies data set.
+ 128 images, 16 images in each of 8 diffrent categories: human faces(straight
+ view only), human bodies, fruits & vegetables, gadgets, human hands, scrambled
+ patterns, monkey body parts, monkey whole bodies.
+\end_layout
+
+\begin_layout Itemize
+FOB Results: 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Face selectivity: 
+\begin_inset Formula $\frac{R_{faces}-R_{nonfaces}}{R_{faces}+R_{nonfaces}}$
+\end_inset
+
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+ML
+\backslash
+MF: 97%
+\end_layout
+
+\begin_layout Itemize
+AL: 86%
+\end_layout
+
+\begin_layout Itemize
+AM: 89%
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Suppression by faces:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+ML
+\backslash
+MF : 7 %
+\end_layout
+
+\begin_layout Itemize
+AL: 24%
+\end_layout
+
+\begin_layout Itemize
+AM: 11%
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Itemize
+Face views dataset: 200 images of 25 individuals at 8 different head orientation
+s: left full profile, left half profile, straight, right half profile, right
+ full profile, up, down and back
+\end_layout
+
+\begin_layout Itemize
+In AL 2 distinct populations are evident.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+One population preferred the front, up and down views and was suppressed
+ by left and right profiles.
+\end_layout
+
+\begin_layout Itemize
+Other population responded to left and right profiles.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Suppression was also stronger in AL.
+ 20 percent of profile(left or right views) preferring neurons were suppressed
+ by front view.
+ While in ML
+\backslash
+MF 11% of profile preferring neurons were suppressed by front view.
+ This explains the lower face selectivity of AL region.
+ 
+\end_layout
+
+\begin_layout Itemize
+Mirror symmetric head orientation selectivity only observed in AL.
+ In ML
+\backslash
+MF profile selective neurons only preferred one view.
+ In this mirror symmetric neurons average response of non preferred profile
+ was 92% of response to preferred profile.
+\end_layout
+
+\begin_layout Itemize
+Tuning curves of AL neurons: 2D tuning curves for left/right angle(vertical
+ axis), up/down angle(horizontal axis) and in plane (z axis) averaged over
+ the 3rd dimension are presented for 4 typical cells, Marginal tuning curves
+ for 1 dimension tuning are also presented.
+ 75% of the tested population (total=57 cells) showed tuning curves with
+ two discrete peaks.
+\end_layout
+
+\begin_layout Itemize
+Face identity tuning.
+ 45 percent of cells were modulated by facial identity.
+ Correlation matrices of response vectors showed broken paradiagonal lines
+ of high correlation, showing partial view invariant individual selectivity.
+ These lines are not continuous and are confined to specific combinations
+ of views (left & right profiles, etc.)
+\end_layout
+
+\begin_layout Itemize
+Correlation matrices for ML
+\backslash
+MF neurons showed strong 25x25 squares along the diagonal, showing preference
+ for head orientation.
+\end_layout
+
+\begin_layout Itemize
+Cells in AM were less sharply tuned for head orientation.
+\end_layout
+
+\begin_layout Itemize
+Cells in AM were highly selective for individual identity(73 %).
+ 
+\end_layout
+
+\begin_layout Itemize
+Range of identity selectivity of neurons was high.
+ Some cells only responded to one
+\backslash
+two individual, but across all orientations excluding the back view.
+ This explains the less facial selectivity of neurons in AM compared to
+ ML
+\backslash
+MF.
+\end_layout
+
+\begin_layout Itemize
+Population similarity matrix, reviewed long continuous paradiagonal lines,
+ except for back of the head view.
+\end_layout
+
+\begin_layout Itemize
+Although feed forward transmissions between face patches are the major force
+ in face representation, processing between face patches and recurrent processin
+g between patches are likely to bring about the changes in neuron selectivities
+ in the diffrent face processing regions.
+ In the population correlation matrix, mean correlation across the off center
+ diagonal lines (view invariant face selectivity) changed substationally
+ over time.
+ View invariant face selectivity only changed for AM, and to a less extend
+ AL, but no change for ML
+\backslash
+MF over time.
+\end_layout
+
+\begin_layout Itemize
+Average latency to faces was at least 12ms shorter than to non face objects
+\end_layout
+
+\begin_layout Itemize
+Average latency for ML
+\backslash
+MF was 126ms to AL 133 ms and further to AM was 145 ms.
+ This indicates a hierarchical arrange of face patches.
+\end_layout
+
+\begin_layout Itemize
+Pooling across mirror symmetric views may constitute a crucial step in the
+ development of invariance to some transformations and shape selectivity.
+\end_layout
+
+\end_body
+\end_document

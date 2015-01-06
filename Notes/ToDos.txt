@@ -1,0 +1,9 @@
+1. Move Code into GitHub
+2. Add random seed specification to allow reporoduction of data.
+3. Complete literature matrix for positional tolerance
+4. Complete literation matrix for selectivity indices
+5. Add uniform with possion variation rotation tuning curves.
+6. Add Code implementation notes
+
+
+Neuronal Properites to add.

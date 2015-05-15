@@ -201,9 +201,9 @@ if __name__ == "__main__":
                'person sitting']
 
     # Position Tolerance Tests -----------------------------------------------------------
-    n1 = Neuron(rankedObjList=objList, 
-                selectivity=0.1)
-    
+#    n1 = Neuron(rankedObjList=objList, 
+#                selectivity=0.1)
+#    
 ##    # No Profile
 ##    print n1.position.FiringRateModifier(x=3)
 ##    print n1.position.FiringRateModifier(np.arange(10))

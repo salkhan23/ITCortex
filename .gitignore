@@ -1,0 +1,7 @@
+# Compiled python files 
+#----------------------
+*.py[cod]
+
+# Lyx Backup Files 
+#----------------------
+*.lyx~

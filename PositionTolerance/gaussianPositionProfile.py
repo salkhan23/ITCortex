@@ -103,12 +103,17 @@ class GaussianPositionProfile:
         if (gazeCenter is None):
             gazeCenter = self.params['imageSize']/2
             
-        xDeg = (x-gazeCenter[0]-self.params['rfCenterOffset'][0])/self.params['deg2Pixel']
-        yDeg = (y-gazeCenter[1]-self.params['rfCenterOffset'][1])/self.params['deg2Pixel']
+        xDeg = (x-(gazeCenter[0]-self.params['rfCenterOffset'][0]))/self.params['deg2Pixel']
+        yDeg = (y-(gazeCenter[1]-self.params['rfCenterOffset'][1]))/self.params['deg2Pixel']
         
         sigma = self.params['posTolDeg']/2
+       
+        #TODO: Add noise Spatial Sensitivity of TE Neurons - H.OP BEECK and R Vogels(2000)
+        #1.1*log(mean response)+1.5
+        meanRsp = np.exp(-(xDeg**2 + yDeg**2) / (2*(sigma)**2)) 
+        rsp = meanRsp
         
-        return ( np.exp(-(xDeg**2 + yDeg**2) / (2*(sigma)**2)) )
+        return (rsp)
         
     def PrintParameters(self):
         print("Profile: %s" %self.type)
@@ -116,17 +121,17 @@ class GaussianPositionProfile:
         for keyword in keys:
             print ("%s : %s" %(keyword, self.params[keyword]))
 
-    def PlotPositionTolerance(self, 
+    def PlotPositionTolerance(self,
                               xStart=0, xStop=None, xStep=1,
-                              yStart=0, yStop=None,  yStep=1,
-                              gazeCenter = None):
-        
+                              yStart=0, yStop=None, yStep=1,
+                              gazeCenter=None):
+
         # Necessary for 3D Plot
         from mpl_toolkits.mplot3d import Axes3D
-        
+
         if (gazeCenter is None):
             gazeCenter = self.params['imageSize']/2
-            
+
         if xStop is None:
             xStop = self.params['imageSize'][0]
         if yStop is None:
@@ -150,19 +155,64 @@ class GaussianPositionProfile:
         ax.set_ylabel('Y')
         ax.set_zlabel('Normalized Firing Rate (spikes/s)')
 
+    def PlotPositionToleranceContours(self,
+                                      xStart=0, xStop=None, xStep=0.5,
+                                      yStart=0, yStop=None, yStep=0.5,
+                                      gazeCenter=None, axis=None):
+
+        if (gazeCenter is None):
+            gazeCenter = self.params['imageSize']/2
+
+        if xStop is None:
+            xStop = self.params['imageSize'][0]
+        if yStop is None:
+            yStop = self.params['imageSize'][1]
+
+        x = np.arange(xStart, xStop, xStep)
+        y = np.arange(yStart, yStop, yStep)
+        X, Y = np.meshgrid(x, y)
+        Z = self.FiringRateModifier(X, Y, gazeCenter=gazeCenter)
+
+        if axis is None:
+            f, axis = plt.subplots()
+
+        cPlot = axis.contour(X, Y, Z, 6, colors='k')
+        axis.set_xlim([xStart, xStop])
+        axis.set_ylim([yStart, yStop])
+        plt.clabel(cPlot, inline=1)
+
+        axis.scatter(gazeCenter[0], gazeCenter[1], 1, color='red',
+                     marker='+', linewidth=4, label='Gaze Center (%i, %i)'
+                     % (gazeCenter[0], gazeCenter[1]))
+
+        rfCenterX = gazeCenter[0] - self.params['rfCenterOffset'][0]
+        rfCenterY = gazeCenter[1] - self.params['rfCenterOffset'][1]
+        axis.scatter(rfCenterX, rfCenterY, 1, color='blue',
+                     marker='o', linewidth=4,
+                     label='Rf Center (%i, %i)' % (rfCenterX, rfCenterY))
+
+        axis.set_ylabel('Y')
+        axis.set_xlabel('X')
+        axis.set_title('Positional Tolerence(Degrees) = %0.2f'
+                       % (self.params['posTolDeg']))
+
+        textstr = 'Degree to pixel conversion factor %i' % (self.params['deg2Pixel'])
+        axis.text(0.05, 0.95, textstr, transform=axis.transAxes)
+        axis.legend(loc=3, fontsize='x-small')
+
 
 if __name__ == "__main__":
     plt.ion()
     x1params = {'selectivity': 0.1,
-                'deg2Pixel'  : 10}
-                
+                'deg2Pixel': 10}
+
     n1 = GaussianPositionProfile(**x1params)
     n1.PrintParameters()
     n1.PlotPositionTolerance()
-    
+
     # Create a Neuron that processes diffrent imagesizes and rf Center
-    n2 = GaussianPositionProfile(imageSize=(800,800), rfCenterOffset=(20,20), **x1params)
+    n2 = GaussianPositionProfile(imageSize=(800, 800),
+                                 rfCenterOffset=(20, 20), **x1params)
     n2.PrintParameters()
     #Plot profile at a different center of gaze
-    n2.PlotPositionTolerance(gazeCenter = (100,100))
-    
+    n2.PlotPositionTolerance(gazeCenter=(100, 100))

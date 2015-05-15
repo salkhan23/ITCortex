@@ -9,24 +9,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 
+
 class NoProfile():
-   ''' Default Profile. Complete Tolerance, no rate modification '''
-    
-   def __init__(self):
-       self.type = 'None'
-    
-   def FiringRateModifier(self, *args, **kwargs):
-       return(1);
-   
-   def PrintParameters(self):
-       print("Profile: %s" %self.type)
-   
-         
+    ''' Default Tuning Profile. Complete Tolerance, No rate modification '''
+    def __init__(self):
+        self.type = 'None'
+
+    def FiringRateModifier(self, *args, **kwargs):
+        return(1)
+
+    def PrintParameters(self):
+        print("Profile: %s" % (self.type))
+
+
 class Neuron:
     """
-    --------------------------------------------------------------------------------------
+    ---------------------------------------------------------------------------
     Inferior Temopral Cortex Neuron
-    
+
     PARAMETERS:
     
     rankedObjList   = Ranked list of preferred Objects.
@@ -153,56 +153,57 @@ class Neuron:
         print("Object Preferences:")
         Lst = self.GetRankedObjectLists()
         for obj, rate in Lst:
-            print ("\t%s\t\t%0.4f" %(obj, rate))
-      
+            print ("\t%s\t\t%0.4f" % (obj, rate))
+
     def PrintProperties(self):
         """ Print All Parameters of Neuron """
         print ("*"*20 + " Neuron Properties " + "*"*20)
-        print("Neuron Selectivity: %0.2f" %self.s)
-        print("Selectivity Profile: %s" %self.selectivityProfile)
-        print("Max Firing Rate (spikes/s): %i" %self.maxRate)
+        print("Neuron Selectivity: %0.2f" % self.s)
+        print("Selectivity Profile: %s" % self.selectivityProfile)
+        print("Max Firing Rate (spikes/s): %i" % self.maxRate)
         self.PrintObjectList()
 
-        print("POSITION TOLERANCE: %s" %('-'*30))
+        print("POSITION TOLERANCE: %s" % ('-'*30))
         self.position.PrintParameters()
-        
-        print("ROTATIONAL TOLERANCE: %s" %('-'*30))
+
+        print("ROTATIONAL TOLERANCE: %s" % ('-'*30))
         self.yRotation.PrintParameters()
 
-    def PlotObjectPreferences(self):
+    def PlotObjectPreferences(self, axis=None):
         """ Plot Neurons Object Preferences """
         Lst = self.GetRankedObjectLists()
-        objects, rate = zip(*Lst) 
+        objects, rate = zip(*Lst)
         x = np.arange(len(rate))
-        plt.figure()
-        plt.title("Object Preferences")
-        plt.plot(x, rate)
-        plt.xticks(x, objects)
-        plt.xlabel('Objects')
-        plt.ylabel('Normalized Rate (Spikes/s)')
-        plt.grid()
-        
-           
+
+        if axis is None:
+            f, axis = plt.subplots()
+
+        axis.plot(x, rate, 'x-')
+
+        axis.set_title("Object Preferences Selectivity Index %0.2f" % (self.s))
+        axis.set_xticklabels(objects, size='small')
+        axis.set_xlabel('Objects')
+        axis.set_ylabel('Normalized Rate (Spikes/s)')
+        axis.grid()
+        axis.set_ylim([0, 1])
+
 
 if __name__ == "__main__":
-    # if you call this script from the command line (the shell) it will
-    # run the 'main' function
-    import random 
     plt.ion()
-    
-    objList = ['car', 
-               'van', 
-               'Truck', 
-               'bus', 
-               'pedestrian', 
-               'cyclist', 
-               'tram', 
+
+    objList = ['car',
+               'van',
+               'Truck',
+               'bus',
+               'pedestrian',
+               'cyclist',
+               'tram',
                'person sitting']
 
     # Position Tolerance Tests -----------------------------------------------------------
-#    n1 = Neuron(rankedObjList=objList, 
-#                selectivity=0.1)
-#    
+    n1 = Neuron(rankedObjList=objList, 
+                selectivity=0.1)
+    
 ##    # No Profile
 ##    print n1.position.FiringRateModifier(x=3)
 ##    print n1.position.FiringRateModifier(np.arange(10))
@@ -214,30 +215,30 @@ if __name__ == "__main__":
 #                positionProfile=positionProfile)
 #     
 #    n1.position.PlotPositionTolerance()
-#    print n1.FiringRate('car',x=1382/2,y=512/2, yRotation = 0) 
-#    print n1.FiringRate('car', 
-#                        x = np.arange(-10,10)+ 1382/2,
-#                        y = np.arange(-10,10)+ 512/2,
-#                        yRotation =0)  
-#    print n1.FiringRate('car', 
-#                        x = np.arange(-10,10)+ 1382/2,
-#                        y = np.arange(-10,10)+ 512/2,
-#                        yRotation = np.arange(-10,10))
-#    print n1.FiringRate('car', 
-#                        x = np.arange(-10,10)+ 1382/2,
-#                        y = np.arange(-10,10)+ 512/2,
-#                        yRotation = np.arange(-10,10),
-#                        gazeCenter = (200,300)) 
+##    print n1.FiringRate('car',x=1382/2,y=512/2, yRotation = 0) 
+##    print n1.FiringRate('car', 
+##                        x = np.arange(-10,10)+ 1382/2,
+##                        y = np.arange(-10,10)+ 512/2,
+##                        yRotation =0)  
+##    print n1.FiringRate('car', 
+##                        x = np.arange(-10,10)+ 1382/2,
+##                        y = np.arange(-10,10)+ 512/2,
+##                        yRotation = np.arange(-10,10))
+##    print n1.FiringRate('car', 
+##                        x = np.arange(-10,10)+ 1382/2,
+##                        y = np.arange(-10,10)+ 512/2,
+##                        yRotation = np.arange(-10,10),
+##                        gazeCenter = (200,300)) 
 #                
 #    n1.position.PlotPositionTolerance()
     
      # Rotation Tolerance Tests ----------------------------------------------------------    
-    rotationProfile = 'multiGaussianSum'
-    rotationParams = { 'nGaussian' : 2, 
-                       'muArray'   : [  -10,  159.00], 
-                       'sigmaArray': [15.73,  136.74], 
-                       'ampArray'  : [  0.8,    0.16]  }
-                       
+#    rotationProfile = 'multiGaussianSum'
+#    rotationParams = { 'nGaussian' : 2, 
+#                       'muArray'   : [  -10,  159.00], 
+#                       'sigmaArray': [15.73,  136.74], 
+#                       'ampArray'  : [  0.8,    0.16]  }
+#                       
 #    # Check parameter Validation
 #    n1 = Neuron(rankedObjList=objList, 
 #                selectivity=0.1,
@@ -259,56 +260,60 @@ if __name__ == "__main__":
 #    plt.figure()     
 #    plt.plot(anglesAll, n1.FiringRate('van', x =1, y=1, yRotation = anglesAll)) 
 #    plt.title("Rotation Tuning")
-        
-    # Rotation & Tolerance Tolerance Tests ----------------------------------------------
-#    positionProfile = 'Gaussian'
-#    positionParams =  {'rfCenterOffset': (-15,-15)}
-#    rotationProfile = 'multiGaussianSum'
-#    rotationParams = { 'nGaussian' : 2, 
-#                       'muArray'   : [  -10,  159.00], 
-#                       'sigmaArray': [15.73,  136.74], 
-#                       'ampArray'  : [  0.8,    0.16]  }
-#                       
-#    n1 = Neuron(rankedObjList=objList, 
-#                selectivity=0.1,
-#                positionProfile = positionProfile, 
-#                positionParams = positionParams,
-#                yRotationProfile= rotationProfile,
-#                yRotationParams = rotationParams )
-#
-#    n1.PrintProperties()
-#
-#    print n1.FiringRate('car',x=1382/2, y=512/2, yRotation = 0) 
-#    print n1.FiringRate('car', 
-#                         x = np.arange(-10,10)+ 1382/2,
-#                         y = np.arange(-10,10)+ 512/2,
-#                         yRotation = 0) 
-#    print n1.FiringRate('truck', 
-#                        x = np.arange(-10,10)+ 1382/2,
-#                        y = np.arange(-10,10)+ 512/2,
-#                        yRotation = np.arange(-10,10))
-#    print n1.FiringRate('car', 
-#                        x = np.arange(-10,10)+ 1382/2,
-#                        y = np.arange(-10,10)+ 512/2,
-#                        yRotation = np.arange(-10,10),
-#                        gazeCenter = (200,300)) 
 
-           
-#   # Multiple Objects Tests -------------------------------------------------------------
-    random.shuffle(objList)
-    n2 = Neuron(objList, selectivity=0.9)
-    
-    random.shuffle(objList)
-    n3 = Neuron(objList, selectivity=0.5)
-    
-    print n2.__doc__        
-    n2.PrintProperties()
-    n3.PrintProperties()
-    
-    """ Plot Object Preferences """
-    n2.PlotObjectPreferences()
-    n3.PlotObjectPreferences()
-   
+    # Rotation & Tolerance Tolerance Tests --------------------------------------------------------
+    title = 'Single IT Neuron: Low Object selectivity, Rotation & Position Tuning'
+    print(title)
+    positionProfile = 'Gaussian'
+    positionParams = {'rfCenterOffset': (-15, -15)}
+    rotationProfile = 'multiGaussianSum'
+    rotationParams = {'nGaussian' : 2, 
+                      'muArray'   : [-10.00,  30.00], 
+                      'sigmaArray': [ 15.73,  50.74], 
+                      'ampArray'  : [  0.60,   0.40]}
 
+    n1 = Neuron(rankedObjList=objList,
+                selectivity=0.1,
+                positionProfile=positionProfile,
+                positionParams=positionParams,
+                yRotationProfile=rotationProfile,
+                yRotationParams=rotationParams)
 
+    n1.PrintProperties()
 
+    f, axArr = plt.subplots(2, 2)
+    f.subplots_adjust(hspace=0.2, wspace=0.05)
+
+    n1.PlotObjectPreferences(axArr[0][0])
+    n1.position.PlotPositionToleranceContours(axis=axArr[0][1], gazeCenter=(800, 200))
+    n1.yRotation.PlotProfile(axis=axArr[1][0])
+    plt.suptitle(title, size=16)
+
+    # Example 2
+    title = 'Single IT Neuron: High Object selectivity, Rotation & Position Tuning'
+    print(title)
+
+    positionProfile = 'Gaussian'
+    positionParams = {'rfCenterOffset': (30, 15)}
+    rotationProfile = 'multiGaussianSum'
+    rotationParams = {'nGaussian' : 3,
+                      'muArray'   : [-100.00,  80.00, 105.00 ], 
+                      'sigmaArray': [  15.73,  15.74,  30.04 ], 
+                      'ampArray'  : [   0.45,   0.45,   0.10 ]  }
+
+    n2 = Neuron(rankedObjList=objList,
+                selectivity=0.85,
+                positionProfile=positionProfile,
+                positionParams=positionParams,
+                yRotationProfile=rotationProfile,
+                yRotationParams=rotationParams)
+
+    n1.PrintProperties()
+
+    f, axArr = plt.subplots(2, 2)
+    f.subplots_adjust(hspace=0.2, wspace=0.05)
+
+    n2.PlotObjectPreferences(axArr[0][0])
+    n2.position.PlotPositionToleranceContours(axis=axArr[0][1])
+    n2.yRotation.PlotProfile(axis=axArr[1][0])
+    plt.suptitle(title, size=16)

@@ -89,13 +89,27 @@ class multiGaussianSumProfile():
         for keyword in keys:
             print ("%s : %s" %(keyword, self.params[keyword]))
         
-    def PlotProfile(self, angles=np.arange(-180, 180, step = 1)):
-        plt.title('Tolerance Profile')
-        plt.scatter(angles, self.FiringRateModifier(angles))
-        plt.xlabel('angle')
-        plt.ylabel('Normalized Spike Rate')
-        
-       
+    def PlotProfile(self, angles=np.arange(-180, 180, step = 1), axis = None):
+        if axis is None:
+            f, axis = plt.subplots()
+
+        txtStr = ''
+        for idx in np.arange(self.params['nGaussian']):
+            txtStr += r'$\ \mu%i=%0.2f\ \sigma%i=%0.2f\ Amp%i=%0.2f,$' \
+            % (idx, self.params['muArray'][idx], 
+               idx, self.params['sigmaArray'][idx],
+               idx, self.params['ampArray'][idx])
+        axis.plot(angles, self.FiringRateModifier(angles), label=txtStr)
+
+        axis.set_title('Rotational Tolerance Profile')
+        axis.set_xlabel('angle')
+        axis.set_ylabel('Normalized Spike Rate (Spikes/s)')
+        axis.grid()
+        axis.set_ylim([0, 1])
+        axis.set_xlim([-180,180])
+        axis.legend(loc=1, fontsize='small')
+
+
 def main():
     import gaussianFit as gF
     import pickle

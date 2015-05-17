@@ -39,7 +39,7 @@ def GenerateRfCenters(n, deg2pixel=1, gazeCenter=np.array([0, 0])):
 
     z = np.vstack((xGen, yGen))
 
-    return(z)
+    return(z.T)
 
 
 def Main():
@@ -134,7 +134,7 @@ def Main():
 
     plt.figure("RF Centers Distribution")
     plt.scatter(0, 0, color='red', marker='+', linewidth=10, label='Gaze Center')
-    plt.scatter(rfCenters[0, :], rfCenters[1, :], color='green', marker='o', s=50,
+    plt.scatter(rfCenters[:, 0], rfCenters[:, 1], color='green', marker='o', s=50,
                 label='Generated Data')
     plt.xlabel('Horizontal position (deg)', fontsize=30)
     plt.ylabel('Vertical position (deg)',  fontsize=30)

@@ -28,23 +28,23 @@ class Neuron:
     Inferior Temopral Cortex Neuron
 
     PARAMETERS:
-    
+
     rankedObjList   = Ranked list of preferred Objects.
-    Selectivity     = Activity fraction of objects neuron responds to over total number of 
+    Selectivity     = Activity fraction of objects neuron responds to over total number of
                       objects. As defined in [Zoccolan et. al. 2007]
                       S = {1 - [sum(Ri/n)^2 / sum(Ri^2/n)] } / (1-1/n).
     maxFireRate     = maximum firing Rate (Spikes/second). (default = 100)
-                      
+
     POSITION TOLERENCE -------------------------------------------------------------------
       positionProfile = [Gaussian, None(Default)]. (string)
       positionParams  = Dictionary of all parameters of the selected profile.
-    
+
       A. GAUSSIAN PARAMETERS:
       -----------------------
         Required:
           None.
         Optional Parameters:
-          (1) rfCenterOffset = List [x, y] in pixel co-ordinates of center of receptive 
+          (1) rfCenterOffset = List [x, y] in pixel co-ordinates of center of receptive
                    field relative to center of gaze. Default = (0, 0)
           (2) imageSize = Tuple (x,y) of input image dimensions.
                    Determines the default center of gaze = center of image, (x/2, y/2).
@@ -54,100 +54,99 @@ class Neuron:
     Y-ROTATIONAL TOLERENCE ---------------------------------------------------------------
       yRotationProfile = [MultiGaussianSum, Uniform(TODO), None(Default)]
       yRotationParams  = Dictionary of all parameters of the selected profile.
-     
-      MULTIGAUSSIANSUM PARAMETERS:
+
+      MULTIGAUSSIAN SUM PARAMETERS:
       ----------------------------
         Required:
           (1) nGaussian = Number of gaussian random variables(rv) in tuning profile.
           (2) muArray = Array of means of all gaussian rvs.
           (3) sigmaArray = Array of standard deviations of all gaussian rvs.
-          (4) ampArray = Normalized relative amplitudes of gaussian peaks. 
+          (4) ampArray = Normalized relative amplitudes of gaussian peaks.
         Optional:
           None.
-          
+
     -----------------------------------------------------------------------------------"""
     def __init__(self,
                  rankedObjList,
                  selectivity,
-                 maxRate = 100,
-                 positionProfile = 'Default',
-                 positionParams = {},
-                 yRotationProfile = 'Default',
-                 yRotationParams = {}):
-        
-       # Get Rate modification factors for objects                   
-       rankedObjList = [item.lower() for item in rankedObjList]
-       self.objects = self._PowerLawSelectivity(rankedObjList, selectivity)
-       self.s = selectivity
-       self.selectivityProfile = 'Power Law' 
-       
-       # Maximum firing rate
-       self.maxRate = maxRate
-       
-       # POSITION TOLERANCE
-       if (positionProfile.lower() == 'gaussian'):
-           from PositionTolerance import gaussianPositionProfile as GPP
-           self.position = GPP.GaussianPositionProfile(selectivity=self.s, 
-                                                       **positionParams )
-       else:
-           self.position = NoProfile()
-       
-       # ROTATION TOLERANCE
-       if (yRotationProfile.lower() == 'multigaussiansum'):
-          from RotationalTolerance import multiGaussianSumProfile as MGS 
-          self.yRotation = MGS.multiGaussianSumProfile(rMax=self.maxRate, **yRotationParams)
-       else:
-           self.yRotation = NoProfile()
+                 maxRate=100,
+                 positionProfile='Default',
+                 positionParams={},
+                 yRotationProfile='Default',
+                 yRotationParams={}):
 
+        # Get Rate modification factors for objects
+        rankedObjList = [item.lower() for item in rankedObjList]
+        self.objects = self._PowerLawSelectivity(rankedObjList, selectivity)
+        self.s = selectivity
+        self.selectivityProfile = 'Power Law'
+
+        # Maximum firing rate
+        self.maxRate = maxRate
+
+        # POSITION TOLERANCE
+        if (positionProfile.lower() == 'gaussian'):
+            from PositionTolerance import gaussianPositionProfile as GPP
+            self.position = GPP.GaussianPositionProfile(selectivity=self.s,
+                                                        **positionParams)
+        else:
+            self.position = NoProfile()
+
+        # ROTATION TOLERANCE
+        if (yRotationProfile.lower() == 'multigaussiansum'):
+            from RotationalTolerance import multiGaussianSumProfile as MGS
+            self.yRotation = MGS.multiGaussianSumProfile(rMax=self.maxRate, **yRotationParams)
+        else:
+            self.yRotation = NoProfile()
 
     def _PowerLawSelectivity(self, rankedObjList, selectivity):
-        ''' 
-        Object preference rate modification modeled as power law distribution. 
+        '''
+        Object preference rate modification modeled as power law distribution.
         Rate Modifier = objectIdx^(-selectivity)
-            
+
         PARAMETERS:
             rankedObjList = ranked list of neurons preferred objects
-            selectivity = Function of fraction of objects neuron responds to divided by 
+            selectivity = Function of fraction of objects neuron responds to divided by
                           total number of objects. As Defined in [Zoccolan et. al. 2007]
                           = {1 - [sum(Ri/n)^2 / sum(Ri^2/n)] } / (1-1/n).
-            
+
         RETURN:
             Dictionary of {object: rate modifification factor}
-        
+
         REF: Zoccolan et.al. 2007 - Fig2
         TODO: Add rest of Power Law parameters
         '''
         if not (0 < selectivity <= 1):
-            raise Exception("Selectivity %0.2f not within [0, 1]" %selectivity)
-            
-        return( {item : np.power(idx,-selectivity) 
-                 for idx, item in enumerate(rankedObjList, start=1)} )
-                     
+            raise Exception("Selectivity %0.2f not within [0, 1]" % selectivity)
+
+        return({item: np.power(idx, -selectivity)
+               for idx, item in enumerate(rankedObjList, start=1)})
+
     def GetRankedObjectLists(self):
         """ Return neurons rank list of objects and rate modification factors """
-        return(sorted(self.objects.items(), key=lambda item:item[1], reverse=True))
-        
-    def FiringRate( self,
-                    obj,
-                    x,
-                    y,
-                    yRotation,
-                    gazeCenter = None):
-        ''' Given pixel corodinates (x,y), gazeCenter (tuple), y rotation angles, return
-            firing rate of neuron 
-            TODO: Add Noise & possion variations 
+        return(sorted(self.objects.items(), key=lambda item: item[1], reverse=True))
+
+    def FiringRate(self,
+                   obj,
+                   x,
+                   y,
+                   yRotation,
+                   gazeCenter=None):
+        ''' Given pixel coordinates (x, y), gazeCenter (tuple), y rotation angles, return
+            firing rate of neuron.
+            TODO: Add Noise & Poisson Spiking
         '''
         objPreference = self.objects.get(obj.lower(), 0)
-        
+
         if objPreference == 0.0:
-            warnings.warn("Neuron does not respond to obj %s" %obj)
-            
+            warnings.warn("Neuron does not respond to obj %s" % obj)
+
         rate = self.maxRate * objPreference * \
-               self.position.FiringRateModifier(x, y, gazeCenter) *\
-               self.yRotation.FiringRateModifier(yRotation)
-               
+            self.position.FiringRateModifier(x, y, gazeCenter) *\
+            self.yRotation.FiringRateModifier(yRotation)
+
         return(rate)
-                                 
+
     def PrintObjectList(self):
         """ Print a ranked list of neurons object preferences """
         print("Object Preferences:")
@@ -201,64 +200,68 @@ if __name__ == "__main__":
                'person sitting']
 
     # Position Tolerance Tests -----------------------------------------------------------
-#    n1 = Neuron(rankedObjList=objList, 
-#                selectivity=0.1)
-#    
-##    # No Profile
-##    print n1.position.FiringRateModifier(x=3)
-##    print n1.position.FiringRateModifier(np.arange(10))
-#    
+    title = 'Single IT Neuron: Minimum Parameters'
+    print(title)
+    n1 = Neuron(rankedObjList=objList,
+                selectivity=0.1)
+
+    n1.PrintProperties()
+
+#    # No Profile
+#    print n1.position.FiringRateModifier(x=3)
+#    print n1.position.FiringRateModifier(np.arange(10))
+#
 #    # Gaussian Profile no Parmeters
 #    positionProfile = 'Gaussian'
-#    n1 = Neuron(rankedObjList=objList, 
+#    n1 = Neuron(rankedObjList=objList,
 #                selectivity=0.1,
 #                positionProfile=positionProfile)
-#     
+#
 #    n1.position.PlotPositionTolerance()
-##    print n1.FiringRate('car',x=1382/2,y=512/2, yRotation = 0) 
-##    print n1.FiringRate('car', 
-##                        x = np.arange(-10,10)+ 1382/2,
-##                        y = np.arange(-10,10)+ 512/2,
-##                        yRotation =0)  
-##    print n1.FiringRate('car', 
+##    print n1.FiringRate('car',x=1382/2,y=512/2, yRotation = 0)
+##    print n1.FiringRate('car',
+##                        x=np.arange(-10,10)+ 1382/2,
+##                        y=np.arange(-10,10)+ 512/2,
+##                        yRotation=0)
+##    print n1.FiringRate('car',
 ##                        x = np.arange(-10,10)+ 1382/2,
 ##                        y = np.arange(-10,10)+ 512/2,
 ##                        yRotation = np.arange(-10,10))
-##    print n1.FiringRate('car', 
-##                        x = np.arange(-10,10)+ 1382/2,
-##                        y = np.arange(-10,10)+ 512/2,
-##                        yRotation = np.arange(-10,10),
-##                        gazeCenter = (200,300)) 
-#                
+##    print n1.FiringRate('car',
+##                        x=np.arange(-10,10)+ 1382/2,
+##                        y=np.arange(-10,10)+ 512/2,
+##                        yRotation=np.arange(-10,10),
+##                        gazeCenter=(200,300))
+#
 #    n1.position.PlotPositionTolerance()
-    
-     # Rotation Tolerance Tests ----------------------------------------------------------    
+
+     # Rotation Tolerance Tests ----------------------------------------------------------
 #    rotationProfile = 'multiGaussianSum'
-#    rotationParams = { 'nGaussian' : 2, 
-#                       'muArray'   : [  -10,  159.00], 
-#                       'sigmaArray': [15.73,  136.74], 
-#                       'ampArray'  : [  0.8,    0.16]  }
-#                       
+#    rotationParams = {'nGaussian' : 2,
+#                      'muArray'   : [  -10,  159.00],
+#                      'sigmaArray': [15.73,  136.74],
+#                      'ampArray'  : [  0.8,    0.16] }
+#
 #    # Check parameter Validation
-#    n1 = Neuron(rankedObjList=objList, 
+#    n1 = Neuron(rankedObjList=objList,
 #                selectivity=0.1,
-#                positionProfile ='Gaussian',
+#                positionProfile='Gaussian',
 #                yRotationProfile=rotationProfile)
-#                       
-#    n1 = Neuron(rankedObjList=objList, 
+#
+#    n1 = Neuron(rankedObjList=objList,
 #                selectivity=0.1,
-#                yRotationProfile= rotationProfile,
-#                yRotationParams = rotationParams )
-#                
+#                yRotationProfile=rotationProfile,
+#                yRotationParams =rotationParams )
+#
 #    n1.PrintProperties()
 #
 #    anglesAll = np.arange(-180, 180, step =1)
 #    plt.figure()
 #    plt.scatter(anglesAll,n1.yRotation.FiringRateModifier(anglesAll))
 #    plt.title("Normalized y-Rotation Tuning")
-#    
-#    plt.figure()     
-#    plt.plot(anglesAll, n1.FiringRate('van', x =1, y=1, yRotation = anglesAll)) 
+#
+#    plt.figure()
+#    plt.plot(anglesAll, n1.FiringRate('van', x =1, y=1, yRotation=anglesAll))
 #    plt.title("Rotation Tuning")
 
     # Rotation & Tolerance Tolerance Tests --------------------------------------------------------
@@ -299,7 +302,7 @@ if __name__ == "__main__":
     rotationParams = {'nGaussian' : 3,
                       'muArray'   : [-100.00,  80.00, 105.00 ], 
                       'sigmaArray': [  15.73,  15.74,  30.04 ], 
-                      'ampArray'  : [   0.45,   0.45,   0.10 ]  }
+                      'ampArray'  : [   0.45,   0.45,   0.10 ]}
 
     n2 = Neuron(rankedObjList=objList,
                 selectivity=0.85,

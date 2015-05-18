@@ -38,7 +38,7 @@ class GaussianPositionProfile:
              kwargs['rfCenterOffset'] = np.array([0, 0])
          
          if 'imageSize' not in kwargs.keys():
-             kwargs['imageSize'] = np.array([1382, 512])
+             kwargs['imageSize'] = np.array([1382, 512]) #Kitti Data image size
              
          if 'deg2Pixel' not in kwargs.keys():
              kwargs['deg2Pixel'] = 10
@@ -114,12 +114,19 @@ class GaussianPositionProfile:
         rsp = meanRsp
         
         return (rsp)
-        
+
     def PrintParameters(self):
-        print("Profile: %s" %self.type)
-        keys = sorted(self.params.keys())
-        for keyword in keys:
-            print ("%s : %s" %(keyword, self.params[keyword]))
+        print("Profile: %s" % (self.type))
+        print ("Degrees to Pixel Conversion factor: %d" % (self.params['deg2Pixel']))
+        print ("Image Size: %s" % (self.params['imageSize']))
+        print ("Position Tolerance: %f(degrees), %f(pixels)"
+               % (self.params['posTolDeg'], self.params['posTolDeg'] * self.params['deg2Pixel']))
+        print ("RF Center Offset (from Gaze Center): %s(degrees), %s(pixels)"
+               % (self.params['rfCenterOffset'],
+                  self.params['rfCenterOffset'] * self.params['deg2Pixel']))
+#        keys = sorted(self.params.keys())
+#        for keyword in keys:
+#            print ("%s : %s" %(keyword, self.params[keyword]))
 
     def PlotPositionTolerance(self,
                               xStart=0, xStop=None, xStep=1,
@@ -158,7 +165,7 @@ class GaussianPositionProfile:
     def PlotPositionToleranceContours(self,
                                       xStart=0, xStop=None, xStep=0.5,
                                       yStart=0, yStop=None, yStep=0.5,
-                                      gazeCenter=None, axis=None):
+                                      gazeCenter=None, axis=None, nContours=6):
 
         if (gazeCenter is None):
             gazeCenter = self.params['imageSize']/2
@@ -176,10 +183,10 @@ class GaussianPositionProfile:
         if axis is None:
             f, axis = plt.subplots()
 
-        cPlot = axis.contour(X, Y, Z, 6, colors='k')
+        cPlot = axis.contour(X, Y, Z, nContours, colors='k')
         axis.set_xlim([xStart, xStop])
         axis.set_ylim([yStart, yStop])
-        plt.clabel(cPlot, inline=1)
+#        plt.clabel(cPlot, inline=1)
 
         axis.scatter(gazeCenter[0], gazeCenter[1], 1, color='red',
                      marker='+', linewidth=4, label='Gaze Center (%i, %i)'
@@ -196,9 +203,9 @@ class GaussianPositionProfile:
         axis.set_title('Positional Tolerence(Degrees) = %0.2f'
                        % (self.params['posTolDeg']))
 
-        textstr = 'Degree to pixel conversion factor %i' % (self.params['deg2Pixel'])
-        axis.text(0.05, 0.95, textstr, transform=axis.transAxes)
-        axis.legend(loc=3, fontsize='x-small')
+#        textstr = 'Degree to pixel conversion factor %i' % (self.params['deg2Pixel'])
+#        axis.text(0.05, 0.95, textstr, transform=axis.transAxes)
+#        axis.legend(loc=3, fontsize='x-small')
 
 
 if __name__ == "__main__":

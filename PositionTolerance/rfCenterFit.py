@@ -14,12 +14,12 @@ import matplotlib.pyplot as plt
 import scipy.stats as ss
 
 
-def GenerateRfCenters(n, deg2pixel=1, gazeCenter=np.array([0, 0])):
+def GenerateRfCenters(n, deg2Pixel=1, gazeCenter=np.array([0, 0])):
     ''' Generate Rf centers distribution based on data from Op de Beeck & Vogels - 2000 -
         Spatial Sensitivities of Macaque Inferior Temporal Neurons - Fig 6.
 
         @param n            = number of RF centers to generate
-        @param deg2pixel    = conversion factor from degree to pixels
+        @param deg2Pixel    = conversion factor from degree to pixels
         @param gazeCenter   = Center of gaze in pixels
 
         @return Receptive Field Centers in pixels.
@@ -34,8 +34,8 @@ def GenerateRfCenters(n, deg2pixel=1, gazeCenter=np.array([0, 0])):
     sigmaY = 2.12
     muY = 0.61
 
-    xGen = gazeCenter[0] + ss.norm.rvs(size=n, loc=muX, scale=sigmaX)
-    yGen = gazeCenter[0] + ss.norm.rvs(size=n, loc=muY, scale=sigmaY)
+    xGen = (gazeCenter[0] + ss.norm.rvs(size=n, loc=muX, scale=sigmaX)) * deg2Pixel
+    yGen = (gazeCenter[0] + ss.norm.rvs(size=n, loc=muY, scale=sigmaY)) * deg2Pixel
 
     z = np.vstack((xGen, yGen))
 

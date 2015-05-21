@@ -5,3 +5,11 @@
 # Lyx Backup Files 
 #----------------------
 *.lyx~
+
+# Eclipse MetaData
+#---------------------
+.project
+.pydevproject
+.settings
+
+

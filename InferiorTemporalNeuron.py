@@ -25,7 +25,7 @@ class NoProfile():
 class Neuron:
     """
     ---------------------------------------------------------------------------
-    Inferior Temopral Cortex Neuron
+    Inferior Temporal Cortex Neuron
 
     PARAMETERS:
 
@@ -58,10 +58,10 @@ class Neuron:
       MULTIGAUSSIAN SUM PARAMETERS:
       ----------------------------
         Required:
-          (1) nGaussian = Number of gaussian random variables(rv) in tuning profile.
-          (2) muArray = Array of means of all gaussian rvs.
-          (3) sigmaArray = Array of standard deviations of all gaussian rvs.
-          (4) ampArray = Normalized relative amplitudes of gaussian peaks.
+          (1) nGaussian = Number of Gaussian random variables(RVs) in tuning profile.
+          (2) muArray = Array of means of all Gaussian RVs.
+          (3) sigmaArray = Array of standard deviations of all Gaussian RVs.
+          (4) ampArray = Normalized relative amplitudes of Gaussian peaks.
         Optional:
           None.
 
@@ -111,7 +111,7 @@ class Neuron:
                           = {1 - [sum(Ri/n)^2 / sum(Ri^2/n)] } / (1-1/n).
 
         RETURN:
-            Dictionary of {object: rate modifification factor}
+            Dictionary of {object: rate modification factor}
 
         REF: Zoccolan et.al. 2007 - Fig2
         TODO: Add rest of Power Law parameters
@@ -139,7 +139,7 @@ class Neuron:
         objPreference = self.objects.get(obj.lower(), 0)
 
         if objPreference == 0.0:
-            warnings.warn("Neuron does not respond to obj %s" % obj)
+            warnings.warn("Neuron does not respond to object %s" % obj)
 
         rate = self.maxRate * objPreference * \
             self.position.FiringRateModifier(x, y, gazeCenter) *\
@@ -211,7 +211,7 @@ if __name__ == "__main__":
 #    print n1.position.FiringRateModifier(x=3)
 #    print n1.position.FiringRateModifier(np.arange(10))
 #
-#    # Gaussian Profile no Parmeters
+#    # Gaussian Profile no Parameters
 #    positionProfile = 'Gaussian'
 #    n1 = Neuron(rankedObjList=objList,
 #                selectivity=0.1,
@@ -270,9 +270,9 @@ if __name__ == "__main__":
     positionProfile = 'Gaussian'
     positionParams = {'rfCenterOffset': (-15, -15)}
     rotationProfile = 'multiGaussianSum'
-    rotationParams = {'nGaussian' : 2, 
-                      'muArray'   : [-10.00,  30.00], 
-                      'sigmaArray': [ 15.73,  50.74], 
+    rotationParams = {'nGaussian' : 2,
+                      'muArray'   : [-10.00,  30.00],
+                      'sigmaArray': [ 15.73,  50.74],
                       'ampArray'  : [  0.60,   0.40]}
 
     n1 = Neuron(rankedObjList=objList,
@@ -300,8 +300,8 @@ if __name__ == "__main__":
     positionParams = {'rfCenterOffset': (30, 15)}
     rotationProfile = 'multiGaussianSum'
     rotationParams = {'nGaussian' : 3,
-                      'muArray'   : [-100.00,  80.00, 105.00 ], 
-                      'sigmaArray': [  15.73,  15.74,  30.04 ], 
+                      'muArray'   : [-100.00,  80.00, 105.00 ],
+                      'sigmaArray': [  15.73,  15.74,  30.04 ],
                       'ampArray'  : [   0.45,   0.45,   0.10 ]}
 
     n2 = Neuron(rankedObjList=objList,
@@ -320,3 +320,23 @@ if __name__ == "__main__":
     n2.position.PlotPositionToleranceContours(axis=axArr[0][1])
     n2.yRotation.PlotProfile(axis=axArr[1][0])
     plt.suptitle(title, size=16)
+
+    # Firing Rate Tests ------------------ --------------------------------------------------------
+    title = 'Firing rate Tests '
+
+    positionProfile = 'Gaussian'
+    positionParams = {'rfCenterOffset': (-15, -15)}
+    rotationProfile = 'multiGaussianSum'
+    rotationParams = {'nGaussian' : 2,
+                      'muArray'   : [-10.00,  30.00],
+                      'sigmaArray': [ 15.73,  50.74],
+                      'ampArray'  : [  0.60,   0.40]}
+
+    n1 = Neuron(rankedObjList=objList,
+                selectivity=0.1,
+                positionProfile=positionProfile,
+                positionParams=positionParams,
+                yRotationProfile=rotationProfile,
+                yRotationParams=rotationParams)
+                
+    

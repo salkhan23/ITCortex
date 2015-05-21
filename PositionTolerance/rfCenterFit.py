@@ -2,9 +2,9 @@
 """
 Created on Sun Dec 28 18:50:17 2014
 
-Receptive Field Centers distribution modelled from :
+Receptive Field Centers distribution modeled from :
 Op de Beeck & Vogels - 2000 - Spatial Sensitivities of Macaque Inferior Temporal Neurons - Fig 6.
-Use maximum likiehood to fit the data.
+Use maximum likelihood to fit the data.
 @author: s362khan
 """
 
@@ -15,7 +15,7 @@ import scipy.stats as ss
 
 
 def GenerateRfCenters(n, deg2Pixel=1, gazeCenter=np.array([0, 0])):
-    ''' Generate Rf centers distribution based on data from Op de Beeck & Vogels - 2000 -
+    ''' Generate RF centers distribution based on data from Op de Beeck & Vogels - 2000 -
         Spatial Sensitivities of Macaque Inferior Temporal Neurons - Fig 6.
 
         @param n            = number of RF centers to generate
@@ -26,7 +26,7 @@ def GenerateRfCenters(n, deg2Pixel=1, gazeCenter=np.array([0, 0])):
 
         Use a random variable with parameters extracted from the curve fitting of recorded
         data in the main function.  Even though the gamma provides a slightly better fit,
-        the log likelihood probabilties are similar and the Gaussian RV uses less parameters.
+        the log likelihood probabilities are similar and the Gaussian RV uses less parameters.
     '''
     sigmaX = 2.02
     muX = 1.82
@@ -43,7 +43,7 @@ def GenerateRfCenters(n, deg2Pixel=1, gazeCenter=np.array([0, 0])):
 
 
 def Main():
-    # Load rf centers data
+    # Load RF centers data
     with open('rfCenters.pkl', 'rb') as fId:
         data = pickle.load(fId)
 

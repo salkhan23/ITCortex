@@ -20,7 +20,7 @@ def PlotPositionTolerances(itPopulation, axis=None, gazeCenter=np.array([0, 0]),
     if axis is None:
         f, axis = plt.subplots()
 
-    [n.position.PlotPositionToleranceContours(gazeCenter=gazeCenter, nContours=1, axis=axis)
+    [n.position.PlotPositionToleranceContours(gazeCenter=gazeCenter, nContours=nContours, axis=axis)
      for n in itPopulation]
 
 
@@ -52,10 +52,11 @@ def Main():
                'tram',
                'person sitting']
 
-    ''' Population Distributions '''
+    #----------------------------------------------------------------------------------------------
+    # Population Distributions
+    # ---------------------------------------------------------------------------------------------
     # Selectivity
     selectivityDist = SF.GenerateSelectivityDistribution(populationSize)
-
     title = 'Population Selectivity Distribution'
     plt.figure(title)
     plt.title(title)
@@ -67,8 +68,13 @@ def Main():
     imageSize = (1382, 512)
     deg2Pixel = 10
     rfCenters = RFCenter.GenerateRfCenters(n=populationSize, deg2Pixel=deg2Pixel)
+    
+    # Rotation Population data - distribution of Parameters 
+    # TODO: Currently not enough information 
 
-    ''' Generate Population '''
+    #----------------------------------------------------------------------------------------------
+    # Generate Population
+    # ---------------------------------------------------------------------------------------------
     population = np.array([])
     gazeCenter = np.array([1382/2, 512/2])
 
@@ -88,16 +94,21 @@ def Main():
                                          positionProfile=positionProfile,
                                          positionParams=positionParams))
 
+    #----------------------------------------------------------------------------------------------
+    # Population Plots and Prints
+    # ---------------------------------------------------------------------------------------------
     # Sample Neuron Properties
 #    n = 0
 #    print ("Properties of neuron %i" % n)
 #    population[n].PrintProperties()
 
-    # PLot Object Selectivites of population
+    # PLot Object Selectivities of population
     PlotObjectPreferences(population)
 
     # Plot Spatial Receptive Fields of Population
     PlotPositionTolerances(population, gazeCenter=gazeCenter, nContours=1)
+    
+    
 
 if __name__ == "__main__":
     plt.ion()

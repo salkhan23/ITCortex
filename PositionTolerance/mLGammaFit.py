@@ -79,7 +79,7 @@ plt.plot(alphaArray, logLikelihood, label = 'mode based on best fit line,  scale
 plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood), 'r+', linewidth=3)
 plt.legend(loc='lower right')
 plt.xlabel('alpha')
-plt.ylabel('Loglikliehood')
+plt.ylabel('Loglikelihood')
 
 ''' -----------------------------------------------------------------------------------'''
 ''' Raw Gamma Fit '''
@@ -98,7 +98,7 @@ alpha=4.04
 [plt.plot(xArray, ss.gamma.pdf(xArray, a=alpha, scale=yLineFit[0]*x+yLineFit[1]/(alpha))) \
  for x in xScatterRaw]
 plt.xlabel('Position Tolerance')
-plt.ylabel('Probability of Occurence')
+plt.ylabel('Probability of Occurrence')
 plt.text(15, 0.6, "<--- Selectivity Increases")
 
 

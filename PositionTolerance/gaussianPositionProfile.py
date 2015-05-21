@@ -11,14 +11,14 @@ import matplotlib.pyplot as plt
 
 class GaussianPositionProfile:
     """
-    Models neurons position tolerance receptive field using a gaussian function.
+    Models neurons position tolerance receptive field using a Gaussian function.
     Reference [Zoccolan et. al, 2007].
 
     REQUIRED PARAMETERS:
         selectivity = Neurons selectivity Index
 
      OPTIONAL PARAMTERS:
-       rfCenterOffset = List [x, y] in pixel co-ordinates of center of receptive field
+       rfCenterOffset = List [x, y] in pixel coordinates of center of receptive field
                   relative to center of gaze. Default = (0, 0)
        imageSize = Tuple (x,y) of input image dimensions.
                    Determines the default center of gaze = center of image, (x/2, y/2).
@@ -39,7 +39,7 @@ class GaussianPositionProfile:
             kwargs['rfCenterOffset'] = np.array([0, 0])
 
         if 'imageSize' not in kwargs.keys():
-            kwargs['imageSize'] = np.array([1382, 512])  # Kitti Data image size
+            kwargs['imageSize'] = np.array([1382, 512])  # KITTI Data image size
 
         if 'deg2Pixel' not in kwargs.keys():
             kwargs['deg2Pixel'] = 10
@@ -58,23 +58,23 @@ class GaussianPositionProfile:
     def __GetPositionTolerance(self, selectivity):
         """
         Method determines the position tolerance of the Neuron.Position Tolerance is
-        defined as 2*standard deviation of the gaussian function
+        defined as 2*standard deviation of the Gaussian function
 
         Two properties of position tolerance are modeled: (1) Position tolerance decreases
         as selectivity/spareness of neuron increases, (2) Position tolerance variations
-        (spread) decrease as selectivity/sparsness decreases.
+        (spread) decrease as selectivity/sparseness decreases.
 
         A set of gamma random variables with constant shape (alpha) and variable spread
         (scale) that decreases with neuron selectivity are used to fit scatter points in
         Figure 4.A of of Zoccolan et. al, 2007. A best fit linear regression line to all
-        scatter points is used to model decreaseing mean (scale = Mean\alpha) of the
+        scatter points is used to model decreasing mean (scale = Mean\alpha) of the
         gamma random variables.
 
         Maximum likelihood fitting (alpha value that best fits the data) is used to
         determine alpha. See mLGammmaFit.py for ML fitting.
 
-        Gamma RV Mean(spareness) = -9.820*sparsness + 13.9730
-        Gamma RV Scale(sparness) = mean(spareness)\ alpha
+        Gamma RV Mean(sparseness) = -9.820*sparseness + 13.9730
+        Gamma RV Scale(sparseness) = mean(spareness)\ alpha
 
         PARAMETERS:
             selectivity: neuron selectivity
@@ -89,15 +89,15 @@ class GaussianPositionProfile:
 
     def FiringRateModifier(self, x, y, gazeCenter=None):
         '''
-        Given (x,y) pixel position corordinates return how much firing rate of neuron is
+        Given (x,y) pixel position coordinates return how much firing rate of neuron is
         impacted by distance from neuron's receptive field center. Receptive field center
         is a function of gaze center and the receptive filed center offset from the gaze
         center.
 
         PARAMETERS:
-        x = x pixel co-ordinate of position
-        y = y pixel co-ordinate of position
-        gazeCenter = Tuple of (x,y) co-ordinates of center of gaze.
+        x = x pixel coordinate of position
+        y = y pixel coordinate of position
+        gazeCenter = Tuple of (x,y) coordinates of center of gaze.
                      Default = Image Center, Determined from image size specified during
                                initialization
         '''
@@ -152,7 +152,7 @@ class GaussianPositionProfile:
         Z = self.FiringRateModifier(X, Y, gazeCenter=gazeCenter)
         f1 = plt.figure()
         ax = f1.gca(projection='3d')
-        ax.set_title("Position Tolerance Profile Gaze Center=(%i,%i), Rf Center Offset=(%i, %i)"
+        ax.set_title("Position Tolerance Profile Gaze Center=(%i,%i), RF Center Offset=(%i, %i)"
                      % (gazeCenter[0], gazeCenter[1],
                         self.params['rfCenterOffset'][0],
                         self.params['rfCenterOffset'][1]))
@@ -201,7 +201,7 @@ class GaussianPositionProfile:
 
         axis.set_ylabel('Y')
         axis.set_xlabel('X')
-        axis.set_title('Positional Tolerence(Degrees) = %0.2f'
+        axis.set_title('Positional Tolerance(Degrees) = %0.2f'
                        % (self.params['posTolDeg']))
 
 #        textstr = 'Degree to pixel conversion factor %i' % (self.params['deg2Pixel'])
@@ -218,9 +218,9 @@ if __name__ == "__main__":
     n1.PrintParameters()
     n1.PlotPositionTolerance()
 
-    # Create a Neuron that processes different imagesizes and rf Center
+    # Create a Neuron that processes different image sizes and RF Centers
     n2 = GaussianPositionProfile(imageSize=(800, 800),
                                  rfCenterOffset=(20, 20), **x1params)
     n2.PrintParameters()
-    #Plot profile at a different center of gaze
+    # Plot profile at a different center of gaze
     n2.PlotPositionTolerance(gazeCenter=(100, 100))

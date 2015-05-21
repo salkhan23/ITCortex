@@ -4,8 +4,8 @@ Created on Wed Dec 17 12:08:04 2014
 
 Multiple Gaussian Fitting for Rotation Tuning Curves of Inferior Temporal Cortex Neurons
 Using scipy.optimize.curve_fit, to find best fits for single, multiple, triple, quadruple
-gaussian functions, provided initial estimates of the gussian paramters are provided. 
-curve fit function for gussian needs initial estimates to fit best fits.
+Gaussian functions, provided initial estimates of the Gaussian parameters are provided. 
+curve fit function for Gaussian needs initial estimates to fit best fits.
 
 @author: s362khan
 """

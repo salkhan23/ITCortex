@@ -15,16 +15,20 @@ from ObjectSelectivity import selectivityFit as SF
 from PositionTolerance import rfCenterFit as RFCenter
 
 
-def PlotPositionTolerances(itPopulation, axis=None, gazeCenter=np.array([0, 0]), nContours=1):
+def PlotPopulationRf(itPopulation, axis=None, gazeCenter=np.array([0, 0]), nContours=1):
     ''' Plot Receptive Fields of entire Population '''
     if axis is None:
         f, axis = plt.subplots()
 
-    [n.position.PlotPositionToleranceContours(gazeCenter=gazeCenter, nContours=nContours, axis=axis)
+    [n.position.PlotPositionToleranceContours(gazeCenter=gazeCenter,
+                                              nContours=nContours, axis=axis)
      for n in itPopulation]
 
+    axis.set_title('Population Receptive Field Sizes N=%i, gazeCenter=(%i,%i)' 
+                   % (len(itPopulation), gazeCenter[0], gazeCenter[1]))
 
-def PlotObjectPreferences(itPopulation, axis=None):
+
+def PlotPopulationObjPreferences(itPopulation, axis=None):
     ''' PLot Selectivity Profiles of entire Population '''
     if axis is None:
         f, axis = plt.subplots()
@@ -103,10 +107,10 @@ def Main():
 #    population[n].PrintProperties()
 
     # PLot Object Selectivities of population
-    PlotObjectPreferences(population)
+    PlotPopulationObjPreferences(population)
 
     # Plot Spatial Receptive Fields of Population
-    PlotPositionTolerances(population, gazeCenter=gazeCenter, nContours=1)
+    PlotPopulationRf(population, gazeCenter=gazeCenter, nContours=1)
     
     
 

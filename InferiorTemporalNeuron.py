@@ -201,7 +201,7 @@ if __name__ == "__main__":
 
     # Base ----------------------------------------------------------------------------------------
     title = 'Single IT Neuron: Minimum Parameters'
-    print( '-'*100 + '\n' + title + '\n' + '-'*100)
+    print('-'*100 + '\n' + title + '\n' + '-'*100)
     n1 = Neuron(rankedObjList=objList,
                 selectivity=0.1)
 
@@ -217,8 +217,8 @@ if __name__ == "__main__":
     # Position Tolerance Tests --------------------------------------------------------------------
     # Gaussian Profile no Parameters
     title = 'Single IT Neuron: Gaussian Position Profile only'
-    print( '-'*100 + '\n' + title + '\n' + '-'*100)
-    
+    print('-'*100 + '\n' + title + '\n' + '-'*100)
+
     positionProfile = 'Gaussian'
     n2 = Neuron(rankedObjList=objList,
                 selectivity=0.1,
@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     n2.PrintProperties()
     n2.position.PlotPositionToleranceContours()
-    
+
     grndTruth = ['car', 1382/2, 512/2, 0]
     print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
           % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.FiringRate(*grndTruth)))
@@ -235,9 +235,9 @@ if __name__ == "__main__":
     print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
           % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.FiringRate(*grndTruth)))
 
-    # Rotation Tolerance Tests ---------------------------------------------------------------------
+    # Rotation Tolerance Tests --------------------------------------------------------------------
     title = 'Single IT Neuron: MultiGaussian Sum Rotation Profile'
-    print( '-'*100 + '\n' + title + '\n' + '-'*100)
+    print('-'*100 + '\n' + title + '\n' + '-'*100)
 
     rotationProfile = 'multiGaussianSum'
     rotationParams = {'nGaussian' : 2,
@@ -249,20 +249,20 @@ if __name__ == "__main__":
                 selectivity=0.1,
                 positionProfile='Gaussian',
                 yRotationProfile=rotationProfile,
-                yRotationParams =rotationParams)
+                yRotationParams=rotationParams)
 
     n3.PrintProperties()
 
-    anglesAll = np.arange(-180, 180, step =1)
+    anglesAll = np.arange(-180, 180, step=1)
     plt.figure("Rotation Tuning Profile")
     plt.scatter(anglesAll, n3.yRotation.FiringRateModifier(anglesAll))
     plt.title("Normalized y-Rotation Tuning")
     plt.xlabel('Angle (Degrees)')
     plt.ylabel('Normalized Firing Rate')
-    
+
     # Rotation & Tolerance Tolerance Tests --------------------------------------------------------
     title = 'Single IT Neuron: Low Object selectivity, Rotation & Position Tuning'
-    print( '-'*100 + '\n' + title + '\n' + '-'*100)
+    print('-'*100 + '\n' + title + '\n' + '-'*100)
 
     positionProfile = 'Gaussian'
     positionParams = {'rfCenterOffset': (-15, -15)}
@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
     # Example 2
     title = 'Single IT Neuron: High Object selectivity, Rotation & Position Tuning'
-    print( '-'*100 + '\n' + title + '\n' + '-'*100)
+    print('-'*100 + '\n' + title + '\n' + '-'*100)
 
     positionProfile = 'Gaussian'
     positionParams = {'rfCenterOffset': (30, 15)}

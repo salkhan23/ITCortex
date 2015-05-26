@@ -16,6 +16,7 @@ class NoProfile():
         self.type = 'None'
 
     def FiringRateModifier(self, *args, **kwargs):
+        'Return 1 no matter what inputs are provided'
         return(1)
 
     def PrintParameters(self):

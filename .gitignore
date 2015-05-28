@@ -12,4 +12,7 @@
 .pydevproject
 .settings
 
+PyCharm MetaData
+#---------------------
+.idea
 

@@ -10,17 +10,17 @@ import matplotlib.pyplot as plt
 import warnings
 
 
-class NoProfile():
-    ''' Default Tuning Profile. Complete Tolerance, No rate modification '''
+class NoProfile:
+    """ Default Tuning Profile. Complete Tolerance, No rate modification """
     def __init__(self):
         self.type = 'None'
 
     def FiringRateModifier(self, *args, **kwargs):
-        'Return 1 no matter what inputs are provided'
-        return(1)
+        """Return 1 no matter what inputs are provided"""
+        return 1
 
     def PrintParameters(self):
-        print("Profile: %s" % (self.type))
+        print("Profile: %s" % self.type)
 
 
 class Neuron:
@@ -36,7 +36,7 @@ class Neuron:
                       S = {1 - [sum(Ri/n)^2 / sum(Ri^2/n)] } / (1-1/n).
     maxFireRate     = maximum firing Rate (Spikes/second). (default = 100)
 
-    POSITION TOLERENCE -------------------------------------------------------------------
+    POSITION TOLERANCE -------------------------------------------------------------------
       positionProfile = [Gaussian, None(Default)]. (string)
       positionParams  = Dictionary of all parameters of the selected profile.
 
@@ -52,7 +52,7 @@ class Neuron:
                    Default = (1382, 512). [KITTI Data Set]
           (3) deg2Pixel = pixel span of a degree of eccentricity
 
-    Y-ROTATIONAL TOLERENCE ---------------------------------------------------------------
+    Y-ROTATIONAL TOLERANCE ---------------------------------------------------------------
       yRotationProfile = [MultiGaussianSum, Uniform(TODO), None(Default)]
       yRotationParams  = Dictionary of all parameters of the selected profile.
 

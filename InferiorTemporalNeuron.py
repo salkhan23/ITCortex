@@ -128,23 +128,23 @@ class Neuron:
         return(sorted(self.objects.items(), key=lambda item: item[1], reverse=True))
 
     def FiringRate(self,
-                   obj,
+                   obj_list,
                    x,
                    y,
-                   yRotation,
-                   gazeCenter=None):
-        ''' Given pixel coordinates (x, y), gazeCenter (tuple), y rotation angles, return
-            firing rate of neuron.
-            TODO: Add Noise & Poisson Spiking
-        '''
-        objPreference = self.objects.get(obj.lower(), 0)
+                   y_rotation,
+                   gaze_center=None):
+        """ Given pixel coordinates (x, y), gazeCenter (tuple), y rotation angles, return
+            firing rate(s) of neuron. Input lengths of obj_list, x, y, y_rotation, gaze_center
+            should match or be equal to one.
+        """
+        if not isinstance(obj_list, list):
+            obj_list = [obj_list]
 
-        if objPreference == 0.0:
-            warnings.warn("Neuron does not respond to object %s" % obj)
+        obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in obj_list])
 
-        rate = self.maxRate * objPreference * \
-            self.position.FiringRateModifier(x, y, gazeCenter) *\
-            self.yRotation.FiringRateModifier(yRotation)
+        rate = self.maxRate * obj_pref_list * \
+            self.position.FiringRateModifier(x, y, gaze_center) *\
+            self.yRotation.FiringRateModifier(y_rotation)
 
         return(rate)
 
@@ -229,12 +229,46 @@ if __name__ == "__main__":
     n2.position.PlotPositionToleranceContours()
 
     grndTruth = ['car', 1382/2, 512/2, 0]
-    print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
+    print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
           % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.FiringRate(*grndTruth)))
 
     grndTruth = ['tram', 0, 0, 135]
-    print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
+    print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
           % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.FiringRate(*grndTruth)))
+
+    #Test multiple inputs -------------------------------------------------------------------------
+    # All inputs the same dimensions
+    objects = ['car', 'bus', 'tram']
+    x_arr = [250, 500, 750]
+    y_arr = [256, 256, 256]
+    y_rotation = [0, 10, 20]
+    gaze_center = (1382/2, 512/2)
+
+    print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
+           % (objects, x_arr, y_arr, y_rotation,
+              n2.FiringRate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+
+    # mixed input dimensions - must be either of length 1 or if larger
+    # must match all >1 lenth inputs
+    objects = ['car']
+    x_arr = [250, 500, 750]
+    y_arr = [256, 256, 256]
+    y_rotation = [0, 10, 20]
+    gaze_center = (1382/2, 512/2)
+
+    print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
+           % (objects, x_arr, y_arr, y_rotation,
+              n2.FiringRate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+
+    objects = ['car']
+    x_arr = [250, 500, 750]
+    y_arr = [256]
+    y_rotation = [0, 10, 20]
+    gaze_center = (1382/2, 512/2)
+
+    print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
+           % (objects, x_arr, y_arr, y_rotation,
+              n2.FiringRate(objects, x_arr, y_arr, y_rotation, gaze_center)))
 
     # Rotation Tolerance Tests --------------------------------------------------------------------
     title = 'Single IT Neuron: MultiGaussian Sum Rotation Profile'
@@ -280,7 +314,7 @@ if __name__ == "__main__":
                 yRotationProfile=rotationProfile,
                 yRotationParams=rotationParams)
 
-    n1.PrintProperties()
+    n4.PrintProperties()
 
     f, axArr = plt.subplots(2, 2)
     f.subplots_adjust(hspace=0.2, wspace=0.05)

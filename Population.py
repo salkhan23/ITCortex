@@ -122,6 +122,7 @@ if __name__ == "__main__":
     # Population Firing Rates
     # ---------------------------------------------------------------------------------------------
 
+    # Single Object in a frame
     # Create a list of Ground Truth
     #                  object      x      y        yRotation
     groundTruthLst = [['bus',      0,     512/2,   0],
@@ -143,7 +144,7 @@ if __name__ == "__main__":
 
     for idx, groundTruth in enumerate(groundTruthLst):
         rateTimeMatrix[idx, :] = \
-            [neuron.FiringRate(*groundTruth, gazeCenter=(1382/2, 512/2)) for neuron in population]
+            [neuron.firing_rate(*groundTruth, gaze_center=(1382/2, 512/2)) for neuron in population]
 
     #Plot firing rates of population for all Ground truth entries
     f, axArr = plt.subplots(len(groundTruthLst), sharex=True)

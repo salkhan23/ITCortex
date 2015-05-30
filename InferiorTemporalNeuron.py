@@ -127,7 +127,7 @@ class Neuron:
         """ Return neurons rank list of objects and rate modification factors """
         return(sorted(self.objects.items(), key=lambda item: item[1], reverse=True))
 
-    def FiringRate(self,
+    def firing_rate(self,
                    obj_list,
                    x,
                    y,
@@ -142,11 +142,21 @@ class Neuron:
 
         obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in obj_list])
 
-        rate = self.maxRate * obj_pref_list * \
-            self.position.FiringRateModifier(x, y, gaze_center) *\
+        position_weights = self.position.FiringRateModifier(x, y, gaze_center)
+
+        rate = self.maxRate * obj_pref_list * position_weights *\
             self.yRotation.FiringRateModifier(y_rotation)
 
-        return(rate)
+        # Calculate a single clutter response
+        # Each object in the input frame is weighted by its position modifier, and the net
+        # response is the weighted sum of the isolated responses
+        #
+        # Modified from Zoccolan-2005 Multiple object response normalization in Monkey
+        # Inferotemporal cortex. In the paper they discuss a single average, we extend that model
+        # by using a weighted sum based on the spatial receptive field of the neurons
+        rate = rate * position_weights / np.sum(position_weights, axis=0)
+
+        return np.sum(rate, axis=0)
 
     def PrintObjectList(self):
         """ Print a ranked list of neurons object preferences """
@@ -209,11 +219,11 @@ if __name__ == "__main__":
     n1.PrintProperties()
     grndTruth = ['car', 1382/2, 512/2, 0]
     print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n1.FiringRate(*grndTruth)))
+          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n1.firing_rate(*grndTruth)))
 
     grndTruth = ['tram', 0, 0, 100]
     print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n1.FiringRate(*grndTruth)))
+          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n1.firing_rate(*grndTruth)))
 
     # Position Tolerance Tests --------------------------------------------------------------------
     # Gaussian Profile no Parameters
@@ -230,13 +240,16 @@ if __name__ == "__main__":
 
     grndTruth = ['car', 1382/2, 512/2, 0]
     print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.FiringRate(*grndTruth)))
+          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.firing_rate(*grndTruth)))
 
     grndTruth = ['tram', 0, 0, 135]
     print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.FiringRate(*grndTruth)))
+          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.firing_rate(*grndTruth)))
 
     #Test multiple inputs -------------------------------------------------------------------------
+    title = 'Multiple input tests'
+    print('-'*100 + '\n' + title + '\n' + '-'*100)
+
     # All inputs the same dimensions
     objects = ['car', 'bus', 'tram']
     x_arr = [250, 500, 750]
@@ -246,7 +259,7 @@ if __name__ == "__main__":
 
     print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
            % (objects, x_arr, y_arr, y_rotation,
-              n2.FiringRate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+              n2.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center)))
 
     # mixed input dimensions - must be either of length 1 or if larger
     # must match all >1 lenth inputs
@@ -258,7 +271,7 @@ if __name__ == "__main__":
 
     print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
            % (objects, x_arr, y_arr, y_rotation,
-              n2.FiringRate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+              n2.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center)))
 
     objects = ['car']
     x_arr = [250, 500, 750]
@@ -268,7 +281,33 @@ if __name__ == "__main__":
 
     print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
            % (objects, x_arr, y_arr, y_rotation,
-              n2.FiringRate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+              n2.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+
+
+    #Check the clutter response makes sense
+    objects = 'car'
+    x_arr = 1382/2
+    y_arr = 512/2
+    y_rotation = 0
+
+    print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
+          % (objects, x_arr, y_arr,y_rotation, n2.firing_rate(objects, x_arr, y_arr,y_rotation)))
+
+    objects = ['car', 'apple']
+    x_arr = [1382/2, 1382/2]
+    y_arr = 512/2
+    y_rotation = 0
+
+    print("Neuron Firing Rate to %s at position(%s, %s), with rotation %s: %0.2f"
+          % (objects, x_arr, y_arr,y_rotation, n2.firing_rate(objects, x_arr, y_arr,y_rotation)))
+
+    objects = ['car', 'apple']
+    x_arr = [1382/2, 0]
+    y_arr = [512/2, 0]
+    y_rotation = 0
+
+    print("Neuron Firing Rate to %s at position(%s, %s), with rotation %s: %0.2f"
+          % (objects, x_arr, y_arr,y_rotation, n2.firing_rate(objects, x_arr, y_arr,y_rotation)))
 
     # Rotation Tolerance Tests --------------------------------------------------------------------
     title = 'Single IT Neuron: MultiGaussian Sum Rotation Profile'

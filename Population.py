@@ -10,6 +10,7 @@ import numpy as np
 import InferiorTemporalNeuron as IT
 import matplotlib.pyplot as plt
 import random
+import os
 
 from ObjectSelectivity import selectivityFit as SF
 from PositionTolerance import rfCenterFit as RFCenter
@@ -42,6 +43,28 @@ def PlotPopulationObjPreferences(itPopulation, axis=None):
     axis.set_ylabel('Normalized Firing Rate')
     axis.set_xlabel('Ranked Object Preferences')
     axis.set_title('Population Object Preferences')
+
+
+def get_ground_truth_from_file(input_frame):
+    """
+    Return ground truth for each frame.
+    :param input_frame: Complete or relative path to file from working directory that list
+                        all objects and their attributes.
+    :return: lists of objects, x-coordinates, y_coordinates and y_rotation in each file
+    """
+    objs = []
+    x_array = []
+    y_array = []
+    y_rotation_array = []
+    with open(input_frame, 'rb') as fid:
+        for line in fid:
+            temp = line.split(',')
+            objs.append(temp[0])
+            x_array.append(float(temp[1]))
+            y_array.append(float(temp[2]))
+            y_rotation_array.append(float(temp[3]))
+
+    return objs, x_array, y_array, y_rotation_array
 
 
 def Main():
@@ -103,7 +126,7 @@ if __name__ == "__main__":
     plt.ion()
     population = Main()
 
-    #----------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------
     # Population Plots and Prints
     # ---------------------------------------------------------------------------------------------
 #    # Sample Neuron Properties
@@ -118,7 +141,7 @@ if __name__ == "__main__":
     gazeCenter = np.array([1382/2, 512/2])
     PlotPopulationRf(population, gazeCenter=gazeCenter, nContours=1)
 
-    #----------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------
     # Population Firing Rates
     # ---------------------------------------------------------------------------------------------
 
@@ -140,17 +163,17 @@ if __name__ == "__main__":
                       ['bus',   1200,     512/2,   0],
                       ['bus',   1300,     512/2,   0]]
 
-    rateTimeMatrix = np.zeros(shape=(len(groundTruthLst), len(population)))
+    rate_time_matrix = np.zeros(shape=(len(groundTruthLst), len(population)))
 
     for idx, groundTruth in enumerate(groundTruthLst):
-        rateTimeMatrix[idx, :] = \
-            [neuron.firing_rate(*groundTruth, gaze_center=(1382/2, 512/2)) for neuron in population]
+        rate_time_matrix[idx, :] = [neuron.firing_rate(*groundTruth, gaze_center=(1382/2, 512/2))
+                                    for neuron in population]
 
-    #Plot firing rates of population for all Ground truth entries
+    # Plot firing rates of population for all Ground truth entries
     f, axArr = plt.subplots(len(groundTruthLst), sharex=True)
     f.subplots_adjust(hspace=0.0)
 
-    for idx, rates in enumerate(rateTimeMatrix):
+    for idx, rates in enumerate(rate_time_matrix):
         axArr[idx].plot(rates)
         axArr[idx].set_ylim(0, 100)
         axArr[idx].set_yticks([])
@@ -158,5 +181,36 @@ if __name__ == "__main__":
 
     axArr[-1].set_yticks(np.arange(0, 101, step=20))
     axArr[-1].set_xlabel('Neuron')
-    f.suptitle('Firing Rates of all neurons in Population to list of ground truth.' + 
+    f.suptitle('Population Firing Rates to list of ground truth.' +
                'Y axis changes in x coordinate of object', fontsize=16)
+
+    # Multiple Objects in a frame -----------------------------------------------------------------
+    # Read Ground Truth for each frame from a file
+    video_dir = './SampleVideoGroundTruth'
+
+    video = [os.path.join(video_dir, frame_data) for frame_data in os.listdir(video_dir)
+             if 'frame' in frame_data.lower()]
+
+    video.sort()
+
+    rate_time_matrix = np.zeros(shape=(len(video), len(population)))
+
+    for idx, frame in enumerate(video):
+        objects, x_arr, y_arr, y_rotation = get_ground_truth_from_file(frame)
+        rate_time_matrix[idx, :] = \
+            [neuron.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center=(1382/2, 512/2))
+             for neuron in population]
+
+    # Plot firing rates of population for all frames
+    f, axArr = plt.subplots(len(video), sharex=True)
+    f.subplots_adjust(hspace=0.0)
+
+    for idx, rates in enumerate(rate_time_matrix):
+        axArr[idx].plot(rates)
+        axArr[idx].set_ylim(0, 100)
+        axArr[idx].set_yticks([])
+        axArr[idx].set_ylabel("F %i" % idx)
+
+    axArr[-1].set_yticks(np.arange(0, 101, step=20))
+    axArr[-1].set_xlabel('Neuron')
+    f.suptitle('Population Firing Rates to Video Sequence.', fontsize=16)

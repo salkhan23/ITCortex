@@ -7,36 +7,38 @@ Simulates a population of IT Neurons
 @author: s362khan
 """
 import numpy as np
-import InferiorTemporalNeuron as IT
+import InferiorTemporalNeuron as It
 import matplotlib.pyplot as plt
 import random
 import os
 
-from ObjectSelectivity import selectivityFit as SF
+from ObjectSelectivity import selectivityFit as SelFit
 from PositionTolerance import rfCenterFit as RFCenter
 
 
-def PlotPopulationRf(itPopulation, axis=None, gazeCenter=np.array([0, 0]), nContours=1):
-    ''' Plot Receptive Fields of entire Population '''
+def plot_population_rf(it_population, axis=None, gaze_center=np.array([0, 0]), num_contours=1):
+    """ Plot Receptive Fields of entire Population
+    :param.
+    """
     if axis is None:
         f, axis = plt.subplots()
 
-    [n.position.PlotPositionToleranceContours(gazeCenter=gazeCenter,
-                                              nContours=nContours, axis=axis)
-     for n in itPopulation]
+    [n.position.PlotPositionToleranceContours(gazeCenter=gaze_center,
+                                              nContours=num_contours, axis=axis)
+     for n in it_population]
 
     axis.set_title('Population Receptive Field Sizes N=%i, gazeCenter=(%i, %i)'
-                   % (len(itPopulation), gazeCenter[0], gazeCenter[1]))
+                   % (len(it_population), gaze_center[0], gaze_center[1]))
 
 
-def PlotPopulationObjPreferences(itPopulation, axis=None):
-    ''' Plot Selectivity Profiles of entire Population '''
+def plot_population_obj_preferences(it_population, axis=None):
+    """ Plot Selectivity Profiles of entire Population """
     if axis is None:
         f, axis = plt.subplots()
 
-    for neuron in itPopulation:
+    for neuron in it_population:
         Lst = neuron.GetRankedObjectLists()
-        objects, rate = zip(*Lst)
+        objs, rate = zip(*Lst)
         x = np.arange(len(rate))
         axis.plot(x, rate)
 
@@ -50,7 +52,7 @@ def get_ground_truth_from_file(input_frame):
     Return ground truth for each frame.
     :param input_frame: Complete or relative path to file from working directory that list
                         all objects and their attributes.
-    :return: lists of objects, x-coordinates, y_coordinates and y_rotation in each file
+    :return: lists of objects, x-coordinates, y_coordinates and y_rotation in each file.
     """
     objs = []
     x_array = []
@@ -67,64 +69,64 @@ def get_ground_truth_from_file(input_frame):
     return objs, x_array, y_array, y_rotation_array
 
 
-def Main():
-    populationSize = 100
+def main():
+    population_size = 100
 
-    objList = ['car',
-               'van',
-               'Truck',
-               'bus',
-               'pedestrian',
-               'cyclist',
-               'tram',
-               'person sitting']
+    obj_list = ['car',
+                'van',
+                'Truck',
+                'bus',
+                'pedestrian',
+                'cyclist',
+                'tram',
+                'person sitting']
 
-    #----------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------
     # Population Distributions
     # ---------------------------------------------------------------------------------------------
     # Selectivity
-    selectivityDist = SF.GenerateSelectivityDistribution(populationSize)
+    selectivity_dist = SelFit.GenerateSelectivityDistribution(population_size)
 #     title = 'Population Selectivity Distribution'
 #     plt.figure(title)
 #     plt.title(title)
-#     plt.hist(selectivityDist, bins=np.linspace(start=0, stop=1, num=10))
+#     plt.hist(selectivity_dist, bins=np.linspace(start=0, stop=1, num=10))
 #     plt.xlabel('Selectivity')
 #     plt.ylabel('Frequency')
 
     # Position Population Data
-    imageSize = (1382, 512)
-    deg2Pixel = 10
-    rfCenters = RFCenter.GenerateRfCenters(n=populationSize, deg2Pixel=deg2Pixel)
+    image_size = (1382, 512)
+    deg_2_pixel = 10
+    rf_centers = RFCenter.GenerateRfCenters(n=population_size, deg2Pixel=deg_2_pixel)
 
     # Rotation Population data - distribution of Parameters
     # TODO: Currently not enough information
 
-    #----------------------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------------
     # Generate Population
     # ---------------------------------------------------------------------------------------------
-    population = np.array([])
+    generated_population = np.array([])
 
-    for idx, s in enumerate(selectivityDist):
+    for idx, s in enumerate(selectivity_dist):
         # Randomize Objects List
-        random.shuffle(objList)
-        positionProfile = 'Gaussian'
+        random.shuffle(obj_list)
+        position_profile = 'Gaussian'
 
         # Position Distribution - RF size determined from selectivity
-        positionParams = {'rfCenterOffset': rfCenters[idx],
-                          'imageSize': imageSize,
-                          'deg2Pixel': deg2Pixel}
+        position_params = {'rfCenterOffset': rf_centers[idx],
+                           'imageSize': image_size,
+                           'deg2Pixel': deg_2_pixel}
 
-        population = np.append(population,
-                               IT.Neuron(rankedObjList=objList,
-                                         selectivity=s,
-                                         positionProfile=positionProfile,
-                                         positionParams=positionParams))
+        generated_population = np.append(generated_population,
+                                         It.Neuron(rankedObjList=obj_list,
+                                                   selectivity=s,
+                                                   positionProfile=position_profile,
+                                                   positionParams=position_params))
 
-    return (population)
+    return generated_population
 
 if __name__ == "__main__":
     plt.ion()
-    population = Main()
+    population = main()
 
     # ---------------------------------------------------------------------------------------------
     # Population Plots and Prints
@@ -135,11 +137,11 @@ if __name__ == "__main__":
 #    population[n].PrintProperties()
 
     # PLot object selectivities of population
-    PlotPopulationObjPreferences(population)
+    plot_population_obj_preferences(population)
 
     # Plot spatial receptive fields of population
     gazeCenter = np.array([1382/2, 512/2])
-    PlotPopulationRf(population, gazeCenter=gazeCenter, nContours=1)
+    plot_population_rf(population, gaze_center=gazeCenter, num_contours=1)
 
     # ---------------------------------------------------------------------------------------------
     # Population Firing Rates

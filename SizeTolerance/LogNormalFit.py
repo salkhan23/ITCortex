@@ -144,10 +144,10 @@ ax_arr[1].legend(loc='best', fontsize='small')
 size_bw_dist = data["sizeDist"]
 size_bw_rf_size = data["sizeDistRfSize"]
 
-# For bandwidths > 4 octaves the upper cutoff was not determined and it is likely that the results
-# of all larger bandwidths are grouped into the 4 bw bin. We ignore the rules in the > 4 bandwidth
-# bin and assume it follows the same trend as for low bandwidths continue until the the end of the
-#  receptive field.
+# For bandwidths > 4 octaves the upper cutoff was not determined and it is likely that
+# the results of all larger bandwidths are grouped into the 4 bw bin. We ignore the data
+# in the > 4 bandwidth bin and assume it follows the same trend as in the lower bandwidths
+# continues.
 cutoff = 4
 valid_idx = np.where(size_bw_dist < 4)[0]  # Returns a tuple, take first element
 size_bw_dist = size_bw_dist[valid_idx]
@@ -226,17 +226,25 @@ ax_arr[1].plot(np.log2(n1_stim_size), n1_firing_rate, marker='o', markersize=10,
 ax_arr[1].set_title('Log Scale')
 
 # Generate data from tuning profile
+# Method 1
 x_arr = np.arange(0, np.log2(max_stim_size), step=0.01)
 norm_pdf = ss.norm.pdf(x_arr, loc=np.log2(pref_size), scale=(size_bw / 2) / np.sqrt(2 * np.log(2)))
 ax_arr[1].plot(x_arr, norm_pdf / norm_pdf.max(), label='generated')
 ax_arr[1].legend()
 ax_arr[1].set_xlabel(r'$log_2(Stimulus\ Size)\ [Degrees]$')
 
-ax_arr[0].plot(2. ** x_arr, 2. ** (norm_pdf / norm_pdf.max()) - 1, label='Generated')
+ax_arr[0].plot(2. ** x_arr, norm_pdf / norm_pdf.max(), label='Generated-1')
 ax_arr[0].legend()
 ax_arr[0].set_xlabel('Stimulus Size [Degrees]')
 fig_n1.suptitle("Neuron 1 - Figure 3")
 
+# Method 2
+x_arr_lin = np.arange(0, max_stim_size, step=0.01)
+sigma = (size_bw / 2) / np.sqrt(2 * np.log(2))
+log_domain_tuning_curve = np.exp(-(np.log2(x_arr_lin) - np.log2(pref_size))**2 / (2 * sigma**2))
+
+ax_arr[0].plot(x_arr_lin, log_domain_tuning_curve, label='Generated-2')
+ax_arr[0].legend()
 
 # Neuron 2 - prefSize=26.1, sizeBw>5octaves ------------------------------------------------------
 pref_size = 13.1
@@ -265,7 +273,7 @@ ax_arr[1].plot(x_arr, norm_pdf / norm_pdf.max(), label='generated')
 ax_arr[1].legend()
 ax_arr[1].set_xlabel(r'$log_2(Stimulus\ Size)\ [Degrees]$')
 
-ax_arr[0].plot(2. ** x_arr, 2. ** (norm_pdf / norm_pdf.max()) - 1, label='Generated')
+ax_arr[0].plot(2. ** x_arr, norm_pdf / norm_pdf.max(), label='Generated')
 ax_arr[0].legend()
 ax_arr[0].set_xlabel('Stimulus Size [Degrees]')
 fig_n2.suptitle("Neuron 2 - Figure 4 - Large Bandwidth")

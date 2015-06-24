@@ -17,7 +17,7 @@ class GaussianPositionProfile:
     REQUIRED PARAMETERS:
         selectivity = Neurons selectivity Index
 
-     OPTIONAL PARAMTERS:
+     OPTIONAL PARAMETERS:
        rfCenterOffset = List [x, y] in pixel coordinates of center of receptive field
                   relative to center of gaze. Default = (0, 0)
        imageSize = Tuple (x,y) of input image dimensions.
@@ -29,10 +29,10 @@ class GaussianPositionProfile:
         self.type = 'Gaussian'
 
         # Check required parameters
-        requiredParams = ['selectivity']
-        for param in requiredParams:
+        required_params = ['selectivity']
+        for param in required_params:
             if param not in kwargs.keys():
-                raise Exception("Required Parameter '%s' not provided" % (param))
+                raise Exception("Required Parameter '%s' not provided" % param)
 
         # Check & Set optional parameters
         if 'rfCenterOffset' not in kwargs.keys():
@@ -45,7 +45,7 @@ class GaussianPositionProfile:
             kwargs['deg2Pixel'] = 10
 
         # Get position tolerance
-        kwargs['posTolDeg'] = self.__GetPositionTolerance(kwargs['selectivity'])
+        kwargs['posTolDeg'] = self.__get_position_tolerance(kwargs['selectivity'])
         del kwargs['selectivity']
 
         if not isinstance(kwargs['rfCenterOffset'], np.ndarray):
@@ -55,9 +55,9 @@ class GaussianPositionProfile:
 
         self.params = kwargs
 
-    def __GetPositionTolerance(self, selectivity):
+    def __get_position_tolerance(self, selectivity):
         """
-        Method determines the position tolerance of the Neuron.Position Tolerance is
+        Method determines the position tolerance of the Neuron. Position Tolerance is
         defined as 2*standard deviation of the Gaussian function
 
         Two properties of position tolerance are modeled: (1) Position tolerance decreases
@@ -83,9 +83,9 @@ class GaussianPositionProfile:
             Position tolerance of the neuron in degree of eccentricity
         """
         alpha = 4.04
-        meanPosTol = -9.820*selectivity + 13.9730
+        mean_position_tolerance = -9.820*selectivity + 13.9730
 
-        return(ss.gamma.rvs(a=alpha, scale=meanPosTol/alpha))
+        return ss.gamma.rvs(a=alpha, scale=mean_position_tolerance/alpha)
 
     def FiringRateModifier(self, x, y, gazeCenter=None):
         '''

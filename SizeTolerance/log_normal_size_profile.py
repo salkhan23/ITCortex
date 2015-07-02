@@ -6,15 +6,15 @@ import scipy.stats as ss
 class LogNormalSizeProfile:
     def __init__(self, pos_tol_deg):
         """
-        Generate a log normal size tuning profile for a neuron. Reference Ito-95.
+        Generate a lognormal size tuning profile for a neuron. Reference Ito-95.
 
         REQUIRED PARAMETERS:
-        :param pos_tol_deg: 2x the standard deviation of the RF spatial extent of the neuron.
-                            It comes from the position profile. Specifically from
+        :param pos_tol_deg: 2x the standard deviation of the RF spatial extent of the neuron
+                            in degrees. It comes from the position profile. Specifically from
                             gaussianPositionProfile.
         """
         self.params = {}
-        self.type = 'Lognormal'
+        self.type = 'lognormal'
 
         # TODO: Check required parameters
         # pos_tol_deg is defined as 2x the standard deviation of the RF spatial extent of the
@@ -121,7 +121,7 @@ class LogNormalSizeProfile:
 
 if __name__ == "__main__":
     plt.ion()
-    n1 = LogNormalSizeProfile(pos_tol_deg=15)
+    n1 = LogNormalSizeProfile(pos_tol_deg=5)
     n1.print_parameters()
 
     size_arr = np.arange(20, step=0.1)
@@ -129,4 +129,4 @@ if __name__ == "__main__":
 
     print n1.firing_rate_modifier(3)
 
-    #TODO: Generate a population of neurons and display their size tolerence
+    # TODO: Generate a population of neurons and display their size tolerance

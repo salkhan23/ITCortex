@@ -72,9 +72,9 @@ class multiGaussianSumProfile():
 
         return(s)
         
-    def FiringRateModifier(self, x):
+    def firing_rate_modifier(self, x):
         '''Return average firing rate as determined by the multi-gaussian sum and
-            poission variation around the average.
+            poisson variation around the average.
         '''
         if not isinstance(x, np.ndarray):
             x = np.array([x])
@@ -82,7 +82,7 @@ class multiGaussianSumProfile():
         return(np.random.poisson(self.__GetAvgFiringRate(x)*self.params['rMax']) / 
                self.params['rMax'])
 
-    def PrintParameters(self):
+    def print_parameters(self):
         print("Profile: %s" %self.type)
         keys = sorted(self.params.keys())
         for keyword in keys:
@@ -98,7 +98,7 @@ class multiGaussianSumProfile():
             % (idx, self.params['muArray'][idx], 
                idx, self.params['sigmaArray'][idx],
                idx, self.params['ampArray'][idx])
-        axis.plot(angles, self.FiringRateModifier(angles), label=txtStr)
+        axis.plot(angles, self.firing_rate_modifier(angles), label=txtStr)
 
         axis.set_title('Rotational Tolerance Profile')
         axis.set_xlabel('angle')
@@ -239,7 +239,7 @@ def main():
     for idx, neuron in enumerate(neurons):
         plt.subplot(nSubplots, 1, idx+1)
         plt.scatter(angles, original, label = 'Original Data', color ='red')
-        plt.scatter(angles, neuron.FiringRateModifier(angles),
+        plt.scatter(angles, neuron.firing_rate_modifier(angles),
                     label = r'$Simulated\ %i\ Gaussian\ Data\ $' %(idx+1) )
        
         #Plot Multi-Gaussian sum fit

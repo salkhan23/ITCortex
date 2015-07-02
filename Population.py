@@ -23,8 +23,8 @@ def plot_population_rf(it_population, axis=None, gaze_center=np.array([0, 0]), n
     if axis is None:
         f, axis = plt.subplots()
 
-    [n.position.PlotPositionToleranceContours(gazeCenter=gaze_center,
-                                              nContours=num_contours, axis=axis)
+    [n.position.plot_position_tolerance_contours(gazeCenter=gaze_center,
+                                              n_contours=num_contours, axis=axis)
      for n in it_population]
 
     axis.set_title('Population Receptive Field Sizes N=%i, gazeCenter=(%i, %i)'
@@ -37,7 +37,7 @@ def plot_population_obj_preferences(it_population, axis=None):
         f, axis = plt.subplots()
 
     for neuron in it_population:
-        Lst = neuron.GetRankedObjectLists()
+        Lst = neuron.get_ranked_object_list()
         objs, rate = zip(*Lst)
         x = np.arange(len(rate))
         axis.plot(x, rate)
@@ -117,7 +117,7 @@ def main():
                            'deg2Pixel': deg_2_pixel}
 
         generated_population = np.append(generated_population,
-                                         It.Neuron(rankedObjList=obj_list,
+                                         It.Neuron(ranked_obj_list=obj_list,
                                                    selectivity=s,
                                                    positionProfile=position_profile,
                                                    positionParams=position_params))

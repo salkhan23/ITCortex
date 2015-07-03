@@ -80,15 +80,18 @@ class Neuron:
                  ranked_obj_list,
                  selectivity,
                  max_rate=100,
-                 positionProfile='Default',
-                 positionParams={},
-                 yRotationProfile='Default',
-                 yRotationParams={},
+                 position_profile='Default',
+                 position_params={},
+                 y_rotation_profile='Default',
+                 y_rotation_params={},
                  size_profile='Default',
-                 size_params = {},
                  deg2pixel=10):
 
         # Get Rate modification factors for objects
+        """
+
+        :rtype : Return Single Neuron Instance
+        """
         ranked_obj_list = [item.lower() for item in ranked_obj_list]
 
         # Get object selectivity metric for each object
@@ -100,29 +103,31 @@ class Neuron:
         self.deg2pixel = deg2pixel
 
         # POSITION TOLERANCE
-        if positionProfile.lower() == 'gaussian':
-            from PositionTolerance import gaussianPositionProfile as pt
-            self.position = pt.GaussianPositionProfile(selectivity=self.s,
+        if position_profile.lower() == 'gaussian':
+            from PositionTolerance import gaussianPositionProfile as pT
+            self.position = pT.GaussianPositionProfile(selectivity=self.s,
                                                        deg2pixel=self.deg2pixel,
-                                                       **positionParams)
+                                                       **position_params)
         else:
             self.position = NoProfile()
 
         # ROTATION TOLERANCE
-        if yRotationProfile.lower() == 'multigaussiansum':
-            from RotationalTolerance import multiGaussianSumProfile as rt
-            self.yRotation = rt.multiGaussianSumProfile(rMax=self.maxRate, **yRotationParams)
+        if y_rotation_profile.lower() == 'multigaussiansum':
+            from RotationalTolerance import multiGaussianSumProfile as rT
+            self.yRotation = rT.multiGaussianSumProfile(rMax=self.maxRate, **y_rotation_params)
         else:
             self.yRotation = NoProfile()
 
         # SIZE TOLERANCE
         if 'lognormal' == size_profile.lower():
             # first check that gaussian position profile is defined
-            if self.position.type == 'gaussian':
+            if 'gaussian' == self.position.type:
                 import SizeTolerance.log_normal_size_profile as st
                 self.size = st.LogNormalSizeProfile(self.position.params['posTolDeg'])
             else:
                 raise Exception('Lognormal Size Profile requires Gaussian Position profile!')
+        else:
+            self.size = NoProfile()
 
     def __power_law_selectivity(self, ranked_obj_list):
         """
@@ -156,44 +161,48 @@ class Neuron:
                     x,
                     y,
                     y_rotation,
+                    stimulus_size,
                     gaze_center=None):
         """
-        Given pixel coordinates (x, y), gazeCenter (tuple), y rotation angles, return
-        normalized firing rate(s) of neuron. Input lengths of obj_list, x, y, y_rotation,
-        gaze_center.
+        Return the normalized firing rate of the neuron.
 
-        If vector inputs (list of inputs) it will assume multiple object present in the visual
-        scene and with return aa single multiple object response.
+        If any input is a vector, function will assume multiple object present in the visual
+        scene and with return a single multiple-object response.
 
         Each object in the input frame is weighted by its position modifier, and the net
         response is the weighted sum of the isolated responses. Modified from Zoccolan-2005
         Multiple object response normalization in Monkey Inferotemporal cortex. In the paper
-        they discuss a single average, we extend that model by using a weighted sum based on
-        the spatial receptive field of the neurons
+        they discuss a single average, we extend that model by using a weighted sum, where each
+        object is weighted by its position modifier.
 
         :rtype : Normalized firing rate of neuron
 
         :param obj_list:
-        :param x: pixel x coordinate
-        :param y: pixel y coordinate
-        :param y_rotation: rotation around the vertical axis.
-        :param gaze_center: center of gaze (x, y)
+        :param x:               pixel X coordinate
+        :param y:               pixel Y coordinate
+        :param y_rotation:      Rotation around the vertical axis (degrees)
+        :param stimulus_size:   The distance in pixels between the outer edges along the longest
+                                axis of the stimulus
+        :param gaze_center:     Center of gaze (x, y)
         """
         if not isinstance(obj_list, list):
             obj_list = [obj_list]
 
+        # Get normalized object preference for each object.
         obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in obj_list])
 
-        # Separate out the position modifiers
+        # Separate out the position modifiers, these will be reused when calculating
+        # the multi-object responses
         position_weights = self.position.firing_rate_modifier(x, y,
                                                               deg2pixel=self.deg2pixel,
                                                               gaze_center=gaze_center)
 
         rate = self.maxRate * obj_pref_list * position_weights *\
-            self.yRotation.firing_rate_modifier(y_rotation)
-            # self.size.firing_rate_modifier()
+            self.yRotation.firing_rate_modifier(y_rotation) *\
+            self.size.firing_rate_modifier(stimulus_size, deg2pixel=self.deg2pixel)
 
         # Get multi-object response
+        # TODO: Add noise to the averaged response based on Zoccolan-2005
         rate = rate * position_weights / np.sum(position_weights, axis=0)
 
         return np.sum(rate, axis=0)
@@ -201,32 +210,37 @@ class Neuron:
     def print_object_list(self):
         """ Print a ranked list of neurons object preferences """
         print("Object Preferences:")
-        Lst = self.get_ranked_object_list()
-        for obj, rate in Lst:
+        lst = self.get_ranked_object_list()
+        for obj, rate in lst:
             print ("\t%s\t\t%0.4f" % (obj, rate))
 
     def print_properties(self):
-        """ Print All Parameters of Neuron """
+        """ Print all parameters of Neuron """
         print ("*"*20 + " Neuron Properties " + "*"*20)
         print("Neuron Selectivity: %0.2f" % self.s)
         print("Selectivity Profile: %s" % self.selectivityProfile)
         print("Max Firing Rate (spikes/s): %i" % self.maxRate)
         self.print_object_list()
 
-        print("POSITION TOLERANCE: %s" % ('-'*30))
+        print("POSITION TOLERANCE %s" % ('-'*30))
         self.position.print_parameters()
 
-        print("ROTATIONAL TOLERANCE: %s" % ('-'*30))
+        print("ROTATIONAL TOLERANCE %s" % ('-'*28))
         self.yRotation.print_parameters()
 
-    def PlotObjectPreferences(self, axis=None):
+        print("SIZE TOLERANCE: %s" % ('-'*33))
+        self.size.print_parameters()
+
+        print ('*'*60)
+
+    def plot_object_preferences(self, axis=None):
         """ Plot Neurons Object Preferences """
-        Lst = self.get_ranked_object_list()
-        objects, rate = zip(*Lst)
+        lst = self.get_ranked_object_list()
+        objects, rate = zip(*lst)
         x = np.arange(len(rate))
 
         if axis is None:
-            f, axis = plt.subplots()
+            fig_obj_pref, axis = plt.subplots()
 
         axis.plot(x, rate, 'x-')
 
@@ -250,105 +264,110 @@ if __name__ == "__main__":
                'tram',
                'person sitting']
     # Base ----------------------------------------------------------------------------------------
-    title = 'Single IT Neuron: Minimum Parameters'
+    title = "Single IT Neuron: Minimum Parameters, no sensitivity to position, rotation or size"
     print('-'*100 + '\n' + title + '\n' + '-'*100)
     n1 = Neuron(ranked_obj_list=objList,
                 selectivity=0.1)
 
     n1.print_properties()
-    grndTruth = ['car', 1382/2, 512/2, 0]
-    print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n1.firing_rate(*grndTruth)))
+    groundTruthArray = [[       'car', 1382/2, 512/2,   0,  50],
+                        [      'tram',      0,     0, 100,  50],
+                        ['pedestrian',      0,     0, 100, 300]]
 
-    grndTruth = ['tram', 0, 0, 100]
-    print("Neuron Firing Rate to object %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n1.firing_rate(*grndTruth)))
+    for groundTruth in groundTruthArray:
+        print("N1 firing rate to %s at (%i, %i), rotation %i and size %0.2f = %0.4f"
+              % (groundTruth[0], groundTruth[1], groundTruth[2], groundTruth[3], groundTruth[4],
+                 n1.firing_rate(*groundTruth)))
 
-    # Position Tolerance Tests --------------------------------------------------------------------
-    # Gaussian Profile no Parameters
-    title = 'Single IT Neuron: Gaussian Position Profile only'
+    # Position Tolerance Tests ------------------------------------------------------------------
+    # Gaussian Profile no parameters
+    title = "Single IT Neuron: Gaussian position profile only"
     print('-'*100 + '\n' + title + '\n' + '-'*100)
 
     positionProfile = 'Gaussian'
     n2 = Neuron(ranked_obj_list=objList,
-                selectivity=0.1,
-                positionProfile=positionProfile)
+                selectivity=0.3,
+                position_profile=positionProfile)
 
     n2.print_properties()
     n2.position.plot_position_tolerance_contours(deg2pixel=n2.deg2pixel)
 
-    grndTruth = ['car', 1382/2, 512/2, 0]
-    print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.firing_rate(*grndTruth)))
+    groundTruthArray = [[       'car', 1382/2, 512/2,   0,  50],
+                        [      'tram', 1382/4, 512/2, 100,  50],
+                        ['pedestrian',      0,     0, 100, 300]]
 
-    grndTruth = ['tram', 0, 0, 135]
-    print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
-          % (grndTruth[0], grndTruth[1], grndTruth[2], grndTruth[3], n2.firing_rate(*grndTruth)))
+    for groundTruth in groundTruthArray:
+        print("N2 firing rate to %s at (%i, %i), rotation %i and size %0.2f = %0.4f"
+              % (groundTruth[0], groundTruth[1], groundTruth[2], groundTruth[3], groundTruth[4],
+                 n2.firing_rate(*groundTruth)))
 
-    #Test multiple inputs -------------------------------------------------------------------------
+    # Test multiple inputs -----------------------------------------------------------------------
     title = 'Multiple input tests'
     print('-'*100 + '\n' + title + '\n' + '-'*100)
 
     # Example 1: All inputs the same dimensions
-    objects = ['car', 'bus', 'tram']
-    x_arr = [250, 500, 750]
-    y_arr = [256, 256, 256]
-    y_rotation = [0, 10, 20]
-    gaze_center = (1382/2, 512/2)
+    objArr = ['car', 'bus', 'tram']
+    xArr = [250, 500, 750]
+    yArr = [256, 256, 256]
+    rotationArr = [0, 10, 20]
+    sizeArr = [50, 20, 30]
+    gazeCenter = (1382/2, 512/2)
 
-    print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
-           % (objects, x_arr, y_arr, y_rotation,
-              n2.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+    print('Inputs: objs=%s, x=%s, y=%s, rotation=%s size=%s\nfiring rate=%s'
+          % (objArr, xArr, yArr, rotationArr, sizeArr,
+             n2.firing_rate(objArr, xArr, yArr, rotationArr, sizeArr, gazeCenter)))
 
-    # mixed input dimensions - must be either of length 1 or if larger
-    # must match all >1 length inputs
-    objects = ['car']
-    x_arr = [250, 500, 750]
-    y_arr = [256, 256, 256]
-    y_rotation = [0, 10, 20]
-    gaze_center = (1382/2, 512/2)
+    # Example 2: mixed input dimensions -
+    # must be either of length 1 or if larger must match all >1 length inputs
+    objArr = ['car']
+    xArr = [250, 500, 750]
+    yArr = [256, 256, 256]
+    rotationArr = [0, 10, 20]
+    sizeArr = [50]
+    gazeCenter = (1382/2, 512/2)
 
-    print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
-           % (objects, x_arr, y_arr, y_rotation,
-              n2.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+    print('Inputs: objs=%s, x=%s, y=%s, rotation=%s size=%s\nfiring rate=%s'
+          % (objArr, xArr, yArr, rotationArr, sizeArr,
+             n2.firing_rate(objArr, xArr, yArr, rotationArr, sizeArr, gazeCenter)))
 
-    objects = ['car']
-    x_arr = [250, 500, 750]
-    y_arr = [256]
-    y_rotation = [0, 10, 20]
-    gaze_center = (1382/2, 512/2)
+    # Example 2B
+    objArr = ['car']
+    xArr = [250, 500, 750]
+    yArr = [256]
+    rotationArr = [0, 10, 20]
+    sizeArr = [50]
+    gazeCenter = (1382/2, 512/2)
 
-    print ('Multi Obj Firing Rates: objs:%s, x=%s, y=%s, rotation=%s, firing Rates %s'
-           % (objects, x_arr, y_arr, y_rotation,
-              n2.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center)))
+    print('Inputs: objs=%s, x=%s, y=%s, rotation=%s size=%s\nfiring rate=%s'
+          % (objArr, xArr, yArr, rotationArr, sizeArr,
+             n2.firing_rate(objArr, xArr, yArr, rotationArr, sizeArr, gazeCenter)))
 
-    #Check the clutter response makes sense
-    objects = 'car'
-    x_arr = 1382/2
-    y_arr = 512/2
-    y_rotation = 0
+    # Check the clutter response makes sense
+    # Example 3 Compare single and multi-object responses
+    objArr = 'car'
+    xArr = 1382/2
+    yArr = 512/2
+    rotationArr = 0
+    sizeArr = 50
+    print("Single object. Inputs: obj=%s at (%i, %i), rotation %i, size=%0.2f: %0.4s"
+          % (objArr, xArr, yArr, rotationArr, sizeArr,
+             n2.firing_rate(objArr, xArr, yArr, rotationArr, sizeArr)))
 
-    print("Neuron Firing Rate to %s at position(%i, %i), with rotation %i: %0.2f"
-          % (objects, x_arr, y_arr,y_rotation, n2.firing_rate(objects, x_arr, y_arr,y_rotation)))
+    objArr = ['car', 'apple']
+    xArr = [1382/2, 1382/4]
+    print("Multiple objects. Inputs: obj=%s at (%s, %i), rotation %i, size=%0.2f: %0.4f"
+          % (objArr, xArr, yArr, rotationArr, sizeArr,
+             n2.firing_rate(objArr, xArr, yArr, rotationArr, sizeArr)))
 
-    objects = ['car', 'apple']
-    x_arr = [1382/2, 1382/2]
-    y_arr = 512/2
-    y_rotation = 0
+    objArr = ['car', 'apple']
+    xArr = [1382/2, 0]
+    yArr = [512/2, 0]
+    print("Multiple objects. Inputs: obj=%s at (%s, %s), rotation %i, size=%0.2f: %0.4f"
+          % (objArr, xArr, yArr, rotationArr, sizeArr,
+             n2.firing_rate(objArr, xArr, yArr, rotationArr, sizeArr)))
 
-    print("Neuron Firing Rate to %s at position(%s, %s), with rotation %s: %0.2f"
-          % (objects, x_arr, y_arr,y_rotation, n2.firing_rate(objects, x_arr, y_arr,y_rotation)))
-
-    objects = ['car', 'apple']
-    x_arr = [1382/2, 0]
-    y_arr = [512/2, 0]
-    y_rotation = 0
-
-    print("Neuron Firing Rate to %s at position(%s, %s), with rotation %s: %0.2f"
-          % (objects, x_arr, y_arr, y_rotation, n2.firing_rate(objects, x_arr, y_arr,y_rotation)))
-
-    # Rotation Tolerance Tests --------------------------------------------------------------------
-    title = 'Single IT Neuron: MultiGaussian Sum Rotation Profile'
+    # Rotation Tolerance Tests -----------------------------------------------------------------
+    title = 'Single IT Neuron: Multi Gaussian Sum Rotation Profile'
     print('-'*100 + '\n' + title + '\n' + '-'*100)
 
     rotationProfile = 'multiGaussianSum'
@@ -359,9 +378,9 @@ if __name__ == "__main__":
 
     n3 = Neuron(ranked_obj_list=objList,
                 selectivity=0.1,
-                positionProfile='Gaussian',
-                yRotationProfile=rotationProfile,
-                yRotationParams=rotationParams)
+                position_profile='Gaussian',
+                y_rotation_profile=rotationProfile,
+                y_rotation_params=rotationParams)
 
     n3.print_properties()
 
@@ -372,7 +391,7 @@ if __name__ == "__main__":
     plt.xlabel('Angle (Degrees)')
     plt.ylabel('Normalized Firing Rate')
 
-    # Position, Rotation & Size Tolerance Tests ---------------------------------------------------
+    # Position, Rotation & Size Tolerance Tests ------------------------------------------------
     title = 'Single IT Neuron: Low Object selectivity, Rotation & Position Tuning'
     print('-'*100 + '\n' + title + '\n' + '-'*100)
 
@@ -383,20 +402,22 @@ if __name__ == "__main__":
                       'muArray'   : [-10.00,  30.00],
                       'sigmaArray': [ 15.73,  50.74],
                       'ampArray'  : [  0.60,   0.40]}
+    sizeProfile = 'lognormal'
 
     n4 = Neuron(ranked_obj_list=objList,
                 selectivity=0.1,
-                positionProfile=positionProfile,
-                positionParams=positionParams,
-                yRotationProfile=rotationProfile,
-                yRotationParams=rotationParams)
+                position_profile=positionProfile,
+                position_params=positionParams,
+                y_rotation_profile=rotationProfile,
+                y_rotation_params=rotationParams,
+                size_profile=sizeProfile)
 
     n4.print_properties()
 
     f, axArr = plt.subplots(2, 2)
     f.subplots_adjust(hspace=0.2, wspace=0.05)
 
-    n4.PlotObjectPreferences(axArr[0][0])
+    n4.plot_object_preferences(axArr[0][0])
     n4.position.plot_position_tolerance_contours(axis=axArr[0][1],
                                                  deg2pixel=n4.deg2pixel,
                                                  gaze_center=(800, 200))
@@ -417,22 +438,22 @@ if __name__ == "__main__":
 
     n5 = Neuron(ranked_obj_list=objList,
                 selectivity=0.85,
-                positionProfile=positionProfile,
-                positionParams=positionParams,
-                yRotationProfile=rotationProfile,
-                yRotationParams=rotationParams)
+                position_profile=positionProfile,
+                position_params=positionParams,
+                y_rotation_profile=rotationProfile,
+                y_rotation_params=rotationParams)
 
     n5.print_properties()
 
     f, axArr = plt.subplots(2, 2)
     f.subplots_adjust(hspace=0.2, wspace=0.05)
 
-    n5.PlotObjectPreferences(axArr[0][0])
+    n5.plot_object_preferences(axArr[0][0])
     n5.position.plot_position_tolerance_contours(axis=axArr[0][1], deg2pixel=n5.deg2pixel)
     n5.yRotation.PlotProfile(axis=axArr[1][0])
     plt.suptitle(title, size=16)
 
-    # # --------------------------------------------------------------------------------------------
+    # # ----------------------------------------------------------------------------------------
     # title = 'Size Tolerance'
     # print('-'*100 + '\n' + title + '\n' + '-'*100)
     # n1 = Neuron(ranked_obj_list=objList,

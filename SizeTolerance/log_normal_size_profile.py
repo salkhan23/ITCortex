@@ -94,8 +94,8 @@ class LogNormalSizeProfile:
         :param deg2pixel    : Degree to pixel value conversion factor
         :return             : Normalized firing rate
         """
-        log_mu = np.log2(self.params['pref_size'])
-        log_sigma = (self.params['size_bw'] / 2) / np.sqrt(2 * np.log(2))
+        log_mu = np.log2(self.params["pref_size"])
+        log_sigma = (self.params["size_bw"] / 2) / np.sqrt(2 * np.log(2))
 
         # Convert to stimulus size to degrees from pixels
         stimulus_size_deg = stimulus_size / float(deg2pixel)

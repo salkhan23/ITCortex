@@ -119,8 +119,8 @@ def main():
         generated_population = np.append(generated_population,
                                          It.Neuron(ranked_obj_list=obj_list,
                                                    selectivity=s,
-                                                   positionProfile=position_profile,
-                                                   positionParams=position_params))
+                                                   position_profile=position_profile,
+                                                   position_params=position_params))
 
     return generated_population
 

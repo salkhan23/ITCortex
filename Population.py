@@ -23,8 +23,9 @@ def plot_population_rf(it_population, axis=None, gaze_center=np.array([0, 0]), n
     if axis is None:
         f, axis = plt.subplots()
 
-    [n.position.plot_position_tolerance_contours(gazeCenter=gaze_center,
-                                              n_contours=num_contours, axis=axis)
+    [n.position.plot_position_tolerance_contours(deg2pixel=n.deg2pixel,
+                                                 gaze_center=gaze_center,
+                                                 n_contours=num_contours, axis=axis)
      for n in it_population]
 
     axis.set_title('Population Receptive Field Sizes N=%i, gazeCenter=(%i, %i)'
@@ -36,9 +37,9 @@ def plot_population_obj_preferences(it_population, axis=None):
     if axis is None:
         f, axis = plt.subplots()
 
-    for neuron in it_population:
-        Lst = neuron.get_ranked_object_list()
-        objs, rate = zip(*Lst)
+    for n in it_population:
+        lst = n.get_ranked_object_list()
+        objs, rate = zip(*lst)
         x = np.arange(len(rate))
         axis.plot(x, rate)
 
@@ -58,15 +59,21 @@ def get_ground_truth_from_file(input_frame):
     x_array = []
     y_array = []
     y_rotation_array = []
+    size_array = []
     with open(input_frame, 'rb') as fid:
         for line in fid:
-            temp = line.split(',')
-            objs.append(temp[0])
-            x_array.append(float(temp[1]))
-            y_array.append(float(temp[2]))
-            y_rotation_array.append(float(temp[3]))
+            try:
+                temp = line.split(',')
+                objs.append(temp[0])
+                x_array.append(float(temp[1]))
+                y_array.append(float(temp[2]))
+                y_rotation_array.append(float(temp[3]))
+                size_array.append(float(temp[4]))
 
-    return objs, x_array, y_array, y_rotation_array
+            except:
+                print("Error in reading ground truth file: %s\nLine: %s" % (input_frame, line))
+
+    return objs, x_array, y_array, y_rotation_array, size_array
 
 
 def main():
@@ -106,13 +113,13 @@ def main():
     # ---------------------------------------------------------------------------------------------
     generated_population = np.array([])
 
-    for idx, s in enumerate(selectivity_dist):
+    for index, s in enumerate(selectivity_dist):
         # Randomize Objects List
         random.shuffle(obj_list)
         position_profile = 'Gaussian'
 
         # Position Distribution - RF size determined from selectivity
-        position_params = {'rfCenterOffset': rf_centers[idx],
+        position_params = {'rfCenterOffset': rf_centers[index],
                            'imageSize': image_size,
                            'deg2Pixel': deg_2_pixel}
 
@@ -149,21 +156,21 @@ if __name__ == "__main__":
 
     # Single Object in a frame
     # Create a list of Ground Truth
-    #                  object      x      y        yRotation
-    groundTruthLst = [['bus',      0,     512/2,   0],
-                      ['bus',    100,     512/2,   0],
-                      ['bus',    200,     512/2,   0],
-                      ['bus',    300,     512/2,   0],
-                      ['bus',    400,     512/2,   0],
-                      ['bus',    500,     512/2,   0],
-                      ['bus',    600,     512/2,   0],
-                      ['bus',    700,     512/2,   0],
-                      ['bus',    800,     512/2,   0],
-                      ['bus',    900,     512/2,   0],
-                      ['bus',   1000,     512/2,   0],
-                      ['bus',   1100,     512/2,   0],
-                      ['bus',   1200,     512/2,   0],
-                      ['bus',   1300,     512/2,   0]]
+    #                  object      x      y        yRotation    Size
+    groundTruthLst = [['bus',      0,     512/2,   0,           50],
+                      ['bus',    100,     512/2,   0,           50],
+                      ['bus',    200,     512/2,   0,           50],
+                      ['bus',    300,     512/2,   0,           50],
+                      ['bus',    400,     512/2,   0,           50],
+                      ['bus',    500,     512/2,   0,           50],
+                      ['bus',    600,     512/2,   0,           50],
+                      ['bus',    700,     512/2,   0,           50],
+                      ['bus',    800,     512/2,   0,           50],
+                      ['bus',    900,     512/2,   0,           50],
+                      ['bus',   1000,     512/2,   0,           50],
+                      ['bus',   1100,     512/2,   0,           50],
+                      ['bus',   1200,     512/2,   0,           50],
+                      ['bus',   1300,     512/2,   0,           50]]
 
     rate_time_matrix = np.zeros(shape=(len(groundTruthLst), len(population)))
 
@@ -172,8 +179,8 @@ if __name__ == "__main__":
                                     for neuron in population]
 
     # Plot firing rates of population for all Ground truth entries
-    f, axArr = plt.subplots(len(groundTruthLst), sharex=True)
-    f.subplots_adjust(hspace=0.0)
+    fig, axArr = plt.subplots(len(groundTruthLst), sharex=True)
+    fig.subplots_adjust(hspace=0.0)
 
     for idx, rates in enumerate(rate_time_matrix):
         axArr[idx].plot(rates)
@@ -183,8 +190,8 @@ if __name__ == "__main__":
 
     axArr[-1].set_yticks(np.arange(0, 101, step=20))
     axArr[-1].set_xlabel('Neuron')
-    f.suptitle('Population Firing Rates to list of ground truth.' +
-               'Y axis changes in x coordinate of object', fontsize=16)
+    fig.suptitle('Population Firing Rates to list of ground truth.' +
+                 'Y axis changes in x coordinate of object', fontsize=16)
 
     # Multiple Objects in a frame -----------------------------------------------------------------
     # Read Ground Truth for each frame from a file
@@ -198,14 +205,15 @@ if __name__ == "__main__":
     rate_time_matrix = np.zeros(shape=(len(video), len(population)))
 
     for idx, frame in enumerate(video):
-        objects, x_arr, y_arr, y_rotation = get_ground_truth_from_file(frame)
+        objects, x_arr, y_arr, y_rotation, stim_size = get_ground_truth_from_file(frame)
         rate_time_matrix[idx, :] = \
-            [neuron.firing_rate(objects, x_arr, y_arr, y_rotation, gaze_center=(1382/2, 512/2))
+            [neuron.firing_rate(objects, x_arr, y_arr, y_rotation, stim_size,
+                                gaze_center=(1382/2, 512/2))
              for neuron in population]
 
     # Plot firing rates of population for all frames
-    f, axArr = plt.subplots(len(video), sharex=True)
-    f.subplots_adjust(hspace=0.0)
+    fig2, axArr = plt.subplots(len(video), sharex=True)
+    fig2.subplots_adjust(hspace=0.0)
 
     for idx, rates in enumerate(rate_time_matrix):
         axArr[idx].plot(rates)
@@ -215,4 +223,4 @@ if __name__ == "__main__":
 
     axArr[-1].set_yticks(np.arange(0, 101, step=20))
     axArr[-1].set_xlabel('Neuron')
-    f.suptitle('Population Firing Rates to Video Sequence.', fontsize=16)
+    fig2.suptitle('Population Firing Rates to Video Sequence.', fontsize=16)

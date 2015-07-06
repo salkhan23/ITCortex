@@ -197,6 +197,7 @@ class GaussianPositionProfile:
         axis.set_xlabel('X')
         axis.set_title('Positional Tolerance(Degrees) = %0.2f'
                        % (self.params['posTolDeg']))
+        axis.grid()
 
 
 if __name__ == "__main__":

@@ -391,8 +391,10 @@ if __name__ == "__main__":
     plt.xlabel('Angle (Degrees)')
     plt.ylabel('Normalized Firing Rate')
 
+    # TODO: Size Tolerance Tests ---------------------------------------------------------------
+
     # Position, Rotation & Size Tolerance Tests ------------------------------------------------
-    title = 'Single IT Neuron: Low Object selectivity, Rotation & Position Tuning'
+    title = 'Single IT Neuron: Low Object selectivity, Rotation, Position & Size Tuning'
     print('-'*100 + '\n' + title + '\n' + '-'*100)
 
     positionProfile = 'Gaussian'
@@ -422,6 +424,8 @@ if __name__ == "__main__":
                                                  deg2pixel=n4.deg2pixel,
                                                  gaze_center=(800, 200))
     n4.yRotation.PlotProfile(axis=axArr[1][0])
+
+    n4.size.plot_size_tolerance(axis=axArr[1][1])
     plt.suptitle(title, size=16)
 
     # Example 2
@@ -435,13 +439,15 @@ if __name__ == "__main__":
                       'muArray'   : [-100.00,  80.00, 105.00 ],
                       'sigmaArray': [  15.73,  15.74,  30.04 ],
                       'ampArray'  : [   0.45,   0.45,   0.10 ]}
+    sizeProfile = 'lognormal'
 
     n5 = Neuron(ranked_obj_list=objList,
                 selectivity=0.85,
                 position_profile=positionProfile,
                 position_params=positionParams,
                 y_rotation_profile=rotationProfile,
-                y_rotation_params=rotationParams)
+                y_rotation_params=rotationParams,
+                size_profile=sizeProfile)
 
     n5.print_properties()
 
@@ -451,13 +457,6 @@ if __name__ == "__main__":
     n5.plot_object_preferences(axArr[0][0])
     n5.position.plot_position_tolerance_contours(axis=axArr[0][1], deg2pixel=n5.deg2pixel)
     n5.yRotation.PlotProfile(axis=axArr[1][0])
-    plt.suptitle(title, size=16)
+    n5.size.plot_size_tolerance(axis=axArr[1][1])
 
-    # # ----------------------------------------------------------------------------------------
-    # title = 'Size Tolerance'
-    # print('-'*100 + '\n' + title + '\n' + '-'*100)
-    # n1 = Neuron(ranked_obj_list=objList,
-    #             selectivity=0.1,
-    #             positionProfile = 'Gaussian',
-    #             size_profile='lognormal',
-    #             size_params = {})
+    plt.suptitle(title, size=16)

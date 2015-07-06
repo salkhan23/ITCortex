@@ -118,15 +118,28 @@ class LogNormalSizeProfile:
         print("Size bandwidth: %0.2f octaves" % self.params['size_bw'])
         print ("RF Size (area extent of receptive field): %0.2f" % self.params['rf_size'])
 
+    def plot_size_tolerance(self, axis=None):
+        x = np.linspace(0, self.params['max_stim_size']*1.2, num=100)
+
+        if axis is None:
+            f, axis = plt.subplots()
+
+        axis.plot(x, self.firing_rate_modifier(x))
+        axis.set_xlabel('Stimulus Size (Degrees)')
+        axis.set_ylabel('Normalized Firing Rate')
+        axis.set_title("Size Tolerance (Degrees): bandwidth %0.2f, preferred size %0.2f"
+                       % (self.params['size_bw'], self.params['pref_size']))
+        axis.grid()
 
 if __name__ == "__main__":
     plt.ion()
-    n1 = LogNormalSizeProfile(pos_tol_deg=5)
+    n1 = LogNormalSizeProfile(pos_tol_deg=15)
     n1.print_parameters()
 
-    size_arr = np.arange(20, step=0.1)
-    plt.plot(size_arr, n1.firing_rate_modifier(size_arr))
+    n1.plot_size_tolerance()
 
-    print n1.firing_rate_modifier(3)
+    stimSize = 3
+    print ("N1 Firing Rate to stimulus of size %0.2f=%0.2f"
+           % (stimSize, n1.firing_rate_modifier(3)))
 
     # TODO: Generate a population of neurons and display their size tolerance

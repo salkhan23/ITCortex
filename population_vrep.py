@@ -12,8 +12,38 @@ Created on Mon Aug  3 10:15:01 2015
 ----------------------------------------------------------------------------------------------"""
 import sys
 import time
+import numpy as np
 import matplotlib.pyplot as plt
 from vrep.src import vrep
+
+
+# VREP CONSTANTS ----------------------------------------------------------------------------------
+
+# VISION SENSOR PARAMETERS
+# FLOAT
+VS_NEAR_CLIPPING_PLANE = 1000
+VS_FAR_CLIPPING_PLANE = 1001
+VS_PERSPECTIVE_PROJECTION_ANGLE = 1004
+# INT PARAMETERS:
+VS_RESOLUTION_X = 1002
+VS_RESOLUTION_Y = 1003
+
+# All OBJECT PARAMETERS:
+# FLOAT
+OBJ_BOUND_BOX_MIN_X = 15  # These are relative to object reference frame
+OBJ_BOUND_BOX_MIN_Y = 16
+OBJ_BOUND_BOX_MIN_Z = 17
+OBJ_BOUND_BOX_MAX_X = 18  # These are relative to object reference frame
+OBJ_BOUND_BOX_MAX_Y = 19
+OBJ_BOUND_BOX_MAX_Z = 20
+# -------------------------------------------------------------------------------------------------
+
+
+class VrepObject:
+    def __init__(self, name, handle, max_dimension):
+        self.name = name
+        self.handle = handle
+        self.size = max_dimension
 
 
 def connect_vrep(sim_stop_time_s):
@@ -39,20 +69,112 @@ def connect_vrep(sim_stop_time_s):
     return c_id
 
 
+def get_object_dimensions(c_id, object_handle):
+    """ Return x, y, z dimensions of an object """
+    max_x = 0
+    max_y = 0
+    max_z = 0
+
+    min_y = 0
+    min_z = 0
+
+    res, min_x = vrep.simxGetObjectFloatParameter(
+        c_id,
+        object_handle,
+        OBJ_BOUND_BOX_MIN_X,
+        vrep.simx_opmode_oneshot_wait)
+
+    if res == vrep.simx_return_ok:
+        res, max_x = vrep.simxGetObjectFloatParameter(
+            c_id,
+            object_handle,
+            OBJ_BOUND_BOX_MAX_X,
+            vrep.simx_opmode_oneshot_wait)
+
+    if res == vrep.simx_return_ok:
+        res, min_y = vrep.simxGetObjectFloatParameter(
+            c_id,
+            object_handle,
+            OBJ_BOUND_BOX_MIN_Y,
+            vrep.simx_opmode_oneshot_wait)
+
+    if res == vrep.simx_return_ok:
+        res, max_y = vrep.simxGetObjectFloatParameter(
+            c_id,
+            object_handle,
+            OBJ_BOUND_BOX_MAX_Y,
+            vrep.simx_opmode_oneshot_wait)
+
+    if res == vrep.simx_return_ok:
+        res, min_z = vrep.simxGetObjectFloatParameter(
+            c_id,
+            object_handle,
+            OBJ_BOUND_BOX_MIN_Z,
+            vrep.simx_opmode_oneshot_wait)
+
+    if res == vrep.simx_return_ok:
+        res, max_z = vrep.simxGetObjectFloatParameter(
+            c_id,
+            object_handle,
+            OBJ_BOUND_BOX_MAX_Z,
+            vrep.simx_opmode_oneshot_wait)
+
+    if res != vrep.simx_return_ok:
+        print ('Retrieving object dimensions failed with error code %d', res)
+
+    return (max_x - min_x,
+            max_y - min_y,
+            max_z - min_z)
+
+
+def get_scene_objects(c_id, objects):
+    """ Get all objects in the VREP scene, find their names, handles and maximum real work size """
+
+    # Ignore all object with default, pioneer (vision sensor robot) and floor in name
+    objects_to_ignore = ['default', 'pioneer', 'floor', 'it_cortex', 'proxy']
+
+    res, handles, i_data, f_data, s_data = vrep.simxGetObjectGroupData(
+        c_id,
+        vrep.sim_appobj_object_type,
+        0,  # Retrieves the object names in s_data
+        vrep.simx_opmode_oneshot_wait)
+
+    if res != vrep.simx_return_ok:
+        print ('get_scene_objects: Remote API function call returned with error code: %i' % res)
+    else:
+        for count in np.arange(len(handles)):
+
+            if not any([word in s_data[count].lower() for word in objects_to_ignore]):
+                size = get_object_dimensions(c_id, handles[count])
+                obj = VrepObject(s_data[count], handles[count], max(size))
+                objects.append(obj)
+
+
+def print_objects(objects):
+    """ Print all objects stored in objects """
+    print("Number of Objects in List %d" % len(objects))
+    for obj in objects:
+        print("\t%s: handle=%d, max_dimension=%0.1f" % (obj.name, obj.handle, obj.size))
+
+
 def main():
     t_stop = 5  # Simulation stop time in seconds
     client_id = connect_vrep(t_stop)
 
+    # Create objects list ----------------------------------------------------------------------
+    objects_array = []
+    get_scene_objects(client_id, objects_array)
+    print_objects(objects_array)
+
+    # ------------------------------------------------------------------------------------------
 
     time.sleep(10)
 
-
-
     # Stop Simulation
-    res = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
+    result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
     vrep.simxFinish(-1)
 
 
 if __name__ == "__main__":
     plt.ion()
-    population = main()
+    main()

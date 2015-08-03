@@ -28,17 +28,26 @@
 
 import platform
 import struct
+import os
 from ctypes import *
 from vrepConst import *
 
-#load library
-libsimx = None
+# Load library
 if platform.system() =='Windows':
-    libsimx = CDLL("./remoteApi.dll") 
-elif platform.system() == 'Darwin':
-    libsimx = CDLL("./remoteApi.dylib")
+    dll_file = 'remoteApi.dll'
+elif  platform.system() == 'Darwin':
+    dll_file = 'remoteApi.dylib'
 else:
-    libsimx = CDLL("./remoteApi.so")
+    dll_file = 'remoteApi.so'
+
+cur_dir = os.path.split(os.path.abspath(__file__))[0]
+# Check if exists:
+dll_file = os.path.join(cur_dir, dll_file)
+
+if not os.path.exists(dll_file):
+    raise Exception("Cannot find VREP remote Api file: %s" %dll_file)
+
+libsimx = CDLL(dll_file)
 
 #ctypes wrapper prototypes 
 c_GetJointPosition          = CFUNCTYPE(c_int32,c_int32, c_int32, POINTER(c_float), c_int32)(("simxGetJointPosition", libsimx))

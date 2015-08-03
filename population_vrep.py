@@ -47,8 +47,9 @@ class VrepObject:
 
 
 def connect_vrep(sim_stop_time_s):
-    """ Establish connection to VREP simulation
-        Add the following command to a child script in the simulation: simExtRemoteApiStart(19999)
+    """
+    Establish connection to VREP simulation
+    Add the following command to a child script in the simulation: simExtRemoteApiStart(19999)
     """
     vrep.simxFinish(-1)  # Close any open connections.
 
@@ -157,8 +158,49 @@ def print_objects(objects):
         print("\t%s: handle=%d, max_dimension=%0.1f" % (obj.name, obj.handle, obj.size))
 
 
+def set_robot_velocity(c_id, target_velocity):
+    """
+    The model expects to find the IT Cortex Robot. Essentially this is the Pioneer 3dx Robot
+    with an extra vision sensor it_cortex_vision_sensor, whose reference frame is used to
+    generate the ground truth.
+
+    TODO: See how to make this robot into a single object or use a simpler robot
+    TODO: Add more checks to see if the robot has its vision senor
+    """
+    res, left_motor_handle = vrep.simxGetObjectHandle(
+        c_id,
+        "it_cortex_robot_left_motor",
+        vrep.simx_opmode_oneshot_wait)
+
+    if res == vrep.simx_return_ok:
+        res, right_motor_handle = vrep.simxGetObjectHandle(
+            c_id,
+            "it_cortex_robot_right_motor",
+            vrep.simx_opmode_oneshot_wait)
+
+    if res != vrep.simx_return_ok:
+        print ('Failed to retrieve handles to IT cortex robot motors, error code %d' % res)
+
+    if res == vrep.simx_return_ok:
+        res = vrep.simxSetJointTargetVelocity(
+            c_id,
+            left_motor_handle,
+            target_velocity,
+            vrep.simx_opmode_oneshot)
+
+        res = vrep.simxSetJointTargetVelocity(
+            c_id,
+            right_motor_handle,
+            target_velocity,
+            vrep.simx_opmode_oneshot)
+
+        if res != vrep.simx_return_ok and \
+           res != vrep.simx_return_novalue_flag:
+            print("Failed to set velocity of IT cortex robot motors, error code %d" % res)
+
+
 def main():
-    t_stop = 5  # Simulation stop time in seconds
+    t_stop = 20  # Simulation stop time in seconds
     client_id = connect_vrep(t_stop)
 
     # Create objects list ----------------------------------------------------------------------
@@ -166,11 +208,15 @@ def main():
     get_scene_objects(client_id, objects_array)
     print_objects(objects_array)
 
-    # ------------------------------------------------------------------------------------------
+    # Generate a Population of IT Neurons that react to the list of objects in the scene
 
-    time.sleep(10)
+    # Start IT Cortex Robot --------------------------------------------------------------------
+    set_robot_velocity(client_id, 0.2)
+    time.sleep(15)
 
     # Stop Simulation
+    set_robot_velocity(client_id, 0)
+    time.sleep(1)
     result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
     vrep.simxFinish(-1)
 

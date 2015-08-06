@@ -153,9 +153,13 @@ def get_scene_objects(c_id, objects):
 
 def print_objects(objects):
     """ Print all objects stored in objects """
-    print("Number of Objects in List %d" % len(objects))
+    print("Objects in scene %d" % len(objects))
+
+    longest_name = max([len(obj.name) for obj in objects])
+
     for obj in objects:
-        print("\t%s: handle=%d, max_dimension=%0.1f" % (obj.name, obj.handle, obj.size))
+        print("\t%s: handle=%d, max_dimension=%0.1f"
+              % (obj.name.ljust(longest_name), obj.handle, obj.size))
 
 
 def set_robot_velocity(c_id, target_velocity):

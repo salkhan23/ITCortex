@@ -169,43 +169,37 @@ def set_robot_velocity(c_id, target_velocity):
     generate the ground truth.
 
     TODO: See how to make this robot into a single object or use a simpler robot
-    TODO: Add more checks to see if the robot has its vision senor
     """
-    res, left_motor_handle = vrep.simxGetObjectHandle(
-        c_id,
-        "it_cortex_robot_left_motor",
-        vrep.simx_opmode_oneshot_wait)
+    motors_list = ["it_cortex_robot_left_motor", "it_cortex_robot_right_motor"]
+    motors_handle_list = []
 
-    if res == vrep.simx_return_ok:
-        res, right_motor_handle = vrep.simxGetObjectHandle(
+    for motor in motors_list:
+        res, handle = vrep.simxGetObjectHandle(
             c_id,
-            "it_cortex_robot_right_motor",
+            motor,
             vrep.simx_opmode_oneshot_wait)
 
-    if res != vrep.simx_return_ok:
-        print ('Failed to retrieve handles to IT cortex robot motors, error code %d' % res)
+        if res != vrep.simx_return_ok:
+            raise Exception("Failed to get %s handle. Error Code %d" % (motor, res))
+        else:
+            motors_handle_list.append(handle)
 
-    if res == vrep.simx_return_ok:
+    for ii, handle in enumerate(motors_handle_list):
         res = vrep.simxSetJointTargetVelocity(
             c_id,
-            left_motor_handle,
-            target_velocity,
-            vrep.simx_opmode_oneshot)
-
-        res = vrep.simxSetJointTargetVelocity(
-            c_id,
-            right_motor_handle,
+            handle,
             target_velocity,
             vrep.simx_opmode_oneshot)
 
         if res != vrep.simx_return_ok and \
            res != vrep.simx_return_novalue_flag:
-            print("Failed to set velocity of IT cortex robot motors, error code %d" % res)
+            raise Exception("Failed to set velocity of %s motor. Error code %d"
+                            % (motors_list[ii], res))
 
 
 def get_vision_sensor_parameters(c_id):
-    '''
-    Retrieve parameters of the vision sensor
+    """
+    Retrieve parameters of the vision sensor.
     :param c_id     : connected scene id
 
     :return: (alpha_rad, aspect_ratio, near_z, far_z)
@@ -213,11 +207,11 @@ def get_vision_sensor_parameters(c_id):
         ar          : Aspect Ratio. Screen width/height = x_resolution/y_resolution
         n_z      : Near clipping plane of vision sensor
         f_z       : Far clipping plane of vision sensor
-    '''
+    """
     res, vs_handle = vrep.simxGetObjectHandle(
         c_id,
         'it_cortex_robot_vision_sensor',
-        vrep.simx_opmode_oneshot_wait )
+        vrep.simx_opmode_oneshot_wait)
 
     if res != vrep.simx_return_ok:
         raise Exception("Failed to get it_cortex_robot_vision_sensor handle. Error Code %d" % res)
@@ -236,7 +230,7 @@ def get_vision_sensor_parameters(c_id):
         VS_RESOLUTION_X,
         vrep.simx_opmode_oneshot_wait)
     if res != vrep.simx_return_ok:
-        raise Exception("Failed to get VS_RESOLUTION_X. Error code %d" %res)
+        raise Exception("Failed to get VS_RESOLUTION_X. Error code %d" % res)
 
     res, resolution_y = vrep.simxGetObjectIntParameter(
         c_id,
@@ -244,7 +238,7 @@ def get_vision_sensor_parameters(c_id):
         VS_RESOLUTION_Y,
         vrep.simx_opmode_oneshot_wait)
     if res != vrep.simx_return_ok:
-        raise Exception("Failed to get VS_RESOLUTION_Y. Error code %d" %res)
+        raise Exception("Failed to get VS_RESOLUTION_Y. Error code %d" % res)
 
     ar = resolution_x / resolution_y
 
@@ -266,37 +260,40 @@ def get_vision_sensor_parameters(c_id):
 
     return angle, ar, z_n, z_f
 
+
 def main():
+
     t_stop = 20  # Simulation stop time in seconds
     client_id = connect_vrep(t_stop)
 
-    # Setup ------------------------------------------------------------------------------------
-    #Get list of objects in scene
-    objects_array = []
-    get_scene_objects(client_id, objects_array)
-    print_objects(objects_array)
+    try:
 
-    # Get IT Cortex Robot Vision sensor parameters
-    alpha_rad, aspect_ratio, z_near, z_far, result = get_vision_sensor_parameters(client_id)
+        # SETUP VREP  ---------------------------------------------------------------------------
+        # Get list of objects in scene
+        objects_array = []
+        get_scene_objects(client_id, objects_array)
+        print_objects(objects_array)
 
-    # Construct vision sensor projection matrix
+        # Get IT Cortex Robot Vision sensor parameters
+        alpha_rad, aspect_ratio, z_near, z_far = get_vision_sensor_parameters(client_id)
 
+        # Construct vision sensor projection matrix
+        # Generate IT Population ----------------------------------------------------------------
 
-    # Generate IT Population -------------------------------------------------------------------
+        # Start IT Cortex Robot -----------------------------------------------------------------
+        set_robot_velocity(client_id, 0.2)
+        time.sleep(15)
 
-
-    # Start IT Cortex Robot --------------------------------------------------------------------
-    set_robot_velocity(client_id, 0.2)
-    time.sleep(15)
-
-    # Stop Simulation --------------------------------------------------------------------------
-    set_robot_velocity(client_id, 0)
-    time.sleep(1)
-    result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
-    if result != vrep.simx_return_ok and \
-       result != vrep.simx_return_novalue_flag:
-        print("Failed to stop simulation.")
-    vrep.simxFinish(-1)
+    finally:
+        # Stop Simulation -------------------------------------------------------------_---------
+        print("Stopping Simulation")
+        set_robot_velocity(client_id, 0)
+        time.sleep(1)
+        result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
+        if result != vrep.simx_return_ok and \
+           result != vrep.simx_return_novalue_flag:
+            print("Failed to stop simulation.")
+        vrep.simxFinish(-1)
 
 
 if __name__ == "__main__":

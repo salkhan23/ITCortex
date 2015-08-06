@@ -71,7 +71,7 @@ def connect_vrep(sim_stop_time_s):
 
 
 def get_object_dimensions(c_id, object_handle):
-    """ Return x, y, z dimensions of an object """
+    """ Return x, y, z dimensions of an object. """
     max_x = 0
     max_y = 0
     max_z = 0
@@ -152,7 +152,7 @@ def get_scene_objects(c_id, objects):
 
 
 def print_objects(objects):
-    """ Print all objects stored in objects """
+    """ Print all objects stored in objects. """
     print("Objects in scene %d" % len(objects))
 
     longest_name = max([len(obj.name) for obj in objects])
@@ -200,13 +200,14 @@ def set_robot_velocity(c_id, target_velocity):
 def get_vision_sensor_parameters(c_id):
     """
     Retrieve parameters of the vision sensor.
-    :param c_id     : connected scene id
+    :param c_id         : connected scene id.
 
-    :return: (alpha_rad, aspect_ratio, near_z, far_z)
-        angle       : Perspective angle of vision sensor in radians,
-        ar          : Aspect Ratio. Screen width/height = x_resolution/y_resolution
-        n_z      : Near clipping plane of vision sensor
-        f_z       : Far clipping plane of vision sensor
+    :return: (alpha_rad, aspect_ratio, near_z, far_z).
+        angle           : Perspective angle of vision sensor in radians.
+        ar              : Aspect Ratio. Screen width/height = x_resolution/y_resolution.
+        n_z             : Near clipping plane of vision sensor.
+        f_z             : Far clipping plane of vision sensor.
+        vis_sen_handle  : vrep object handle of vision sensor.
     """
     res, vis_sen_handle = vrep.simxGetObjectHandle(
         c_id,
@@ -265,10 +266,12 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
     """
      Get position (x,y,z) coordinates of object specified by object_handle with respect to
      the reference frame of object specified by reference_frame_handle.
-    :param c_id                     : connected scene id
-    :param object_handle            : vrep handle of object
-    :param reference_frame_handle   : vrep handle of objects whose reference frame to use
-    :return: (x,y,z) co-ordinates of target object
+
+    :param c_id                     : connected scene id.
+    :param object_handle            : vrep handle of object.
+    :param reference_frame_handle   : vrep handle of objects whose reference frame to us.e
+
+    :return: (x,y,z) co-ordinates of target object.
     """
     res, position = vrep.simxGetObjectPosition(
         c_id,
@@ -277,7 +280,7 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
         vrep.simx_opmode_buffer)
 
     if res != vrep.simx_return_ok:
-        print('Initializing position acquisition function')
+        print('Initializing position acquisition function for object handle %d' % object_handle)
         res, position = vrep.simxGetObjectPosition(
             c_id,
             object_handle,
@@ -292,6 +295,88 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
             vrep.simx_opmode_buffer)
 
     return position
+
+
+def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_angle):
+    """
+    Given a list of vrepObjects, Determine if they lie within the projection frame of the vision
+    senor and extract ground truth if they do.
+
+    :param c_id             : connected scene id.
+    :param objects          : list of VrepObject objects.
+    :param vis_sen_handle   : vrep object handle of vision sensor.
+    :param proj_mat         : Camera projection matrix.
+    :param ar               : Aspect Ratio. Screen width/height = x_resolution/y_resolution.
+    :param projection_angle : Perspective angle of vision sensor in radians.
+
+    :return: A list of tuples for each object that lies in the vision sensor projection frame.
+    Each Tuple Entry consists of
+        obj_name,           : vrep name of object.
+        x,                  : object vision frame x coordinate in degree of eccentricity (radians).
+        y,                  : object vision frame y coordinate in degree of eccentricity (radians).
+        size)               : size of object (span of objects maximum dimension) in degree of
+                              eccentricity (radians).
+    """
+    objects_in_frame = []
+
+    for vrep_obj in objects:
+        # Get read world coordinates of object in vision sensor reference frame
+        pos_world = get_object_position(
+            c_id,
+            vrep_obj.handle,
+            vis_sen_handle)
+
+        # Convert to homogeneous world coordinates
+        pos_world.append(1)
+        pos_world = np.array(pos_world)
+
+        # Part 1. Project to Video Sensor Projection Plane
+        camera_homogeneous = np.dot(proj_mat, pos_world)
+
+        # Part 2. Divide by Chw (actual z coordinate) to get vision sensor homogeneous coordinates
+        e = 1.0/camera_homogeneous[-1]
+        p_mat2 = np.array([[e, 0, 0, 0],
+                           [0, e, 0, 0],
+                           [0, 0, e, 0],
+                           [0, 0, 0, 1]])
+
+        camera_cartesian = np.dot(p_mat2, camera_homogeneous)
+
+        # Check if object list within projection frame
+        epsilon = 1*10**-3
+
+        if ((-1 - epsilon <= camera_cartesian[0] <= 1 + epsilon) and
+                (-1 - epsilon <= camera_cartesian[1] <= 1 + epsilon) and
+                (-1 - epsilon <= camera_cartesian[2] <= 1 + epsilon)):
+            # x,y coordinates in degrees
+            # --------------------------
+            # (1) Normalize calculated coordinates so they have the same scale in
+            #     the x & y direction (by multiply x by the aspect_ratio)
+            # (2) Convert to degrees. Assume visual span (180 degrees) covers the
+            #     range of x. -ar to ar. There 2*ar = np.pi
+            # size in degrees
+            # ---------------
+            # (3) np.pi * max_dimension / (2 * aspect_ratio * z * tan(alpha_rad/2)).
+            #     See Notes.
+            f = np.pi / 2
+            g = np.pi / (2 * ar)
+            h = np.pi * vrep_obj.max_dimension / \
+                (2 * ar * camera_cartesian[-1] * np.tan(projection_angle/2))
+
+            ground_truth_mat = np.array([[f, 0, 0, 0],
+                                         [0, g, 0, 0],
+                                         [0, 0, h, 0],
+                                         [0, 0, 0, 0]])
+
+            object_attributes = np.dot(ground_truth_mat, camera_cartesian)
+
+            objects_in_frame.append([
+                vrep_obj.name,
+                object_attributes[0],   # x image coordinate in radians
+                object_attributes[1],   # y coordinates in radians
+                object_attributes[2]])  # size in radians
+
+    return objects_in_frame
 
 
 def main():
@@ -327,79 +412,18 @@ def main():
 
         # Generate IT Population ----------------------------------------------------------------
 
-        # Start IT Cortex Robot -----------------------------------------------------------------
+        # Get Ground Truth  ---------------------------------------------------------------------
+
         set_robot_velocity(client_id, 0.2)
-        time.sleep(0.1)
 
-        # start with a single object
-        obj_idx = None
-        for idx, vrep_obj in enumerate(objects_array):
-            if vrep_obj.name == 'Cuboid':
-                obj_idx = idx
-        print obj_idx
+        while time.time() < (t_start + t_stop):
+            ground_truth = get_ground_truth(client_id, objects_array, vs_handle, p_mat,
+                                            aspect_ratio, alpha_rad)
 
-        # Get projection of all objects in the vision senor projection plane
-        if obj_idx is not None:
-            while time.time() < (t_start + t_stop):
-                pos_world = get_object_position(
-                    client_id,
-                    objects_array[obj_idx].handle,
-                    vs_handle)
-
-                # Convert to homogeneous coordinates
-                pos_world.append(1)
-                pos_world = np.array(pos_world)
-
-                # Part 1. Project to Video Sensor Plane
-                camera_homogeneous = np.dot(p_mat, pos_world)
-
-                # Part 2. Divide by Chw (actual z coordinate)
-                e = 1.0/camera_homogeneous[-1]
-                p_mat2 = np.array([[e, 0, 0, 0],
-                                   [0, e, 0, 0],
-                                   [0, 0, e, 0],
-                                   [0, 0, 0, 1]])
-
-                camera_cartesian = np.dot(p_mat2, camera_homogeneous)
-                # print camera_cartesian
-
-                # Check if object list within projection frame
-                epsilon = 1*10**-3
-
-                if ((-1 - epsilon <= camera_cartesian[0] <= 1 + epsilon) and
-                    (-1 - epsilon <= camera_cartesian[1] <= 1 + epsilon) and
-                    (-1 - epsilon <= camera_cartesian[2] <= 1 + epsilon)):
-                    in_projection_frame = True
-
-                    # x,y coordinates in degrees
-                    # --------------------------
-                    # (1) Normalize calculated coordinates so they have the same scale in the x & y
-                    #     direction (by multiply x by the aspect_ratio)
-                    # (2) Convert to degrees. Assume visual span covers the range of x. -ar to ar
-                    #     Size in degrees
-                    # ---------------
-                    # (3) np.pi * max_dimension / (2 * aspect_ratio * z * tan(alpha_rad/2)).
-                    #     See Notes.
-                    f = np.pi / 2
-                    g = np.pi / (2 * aspect_ratio)
-                    h = np.pi* objects_array[obj_idx].max_dimension / \
-                        (2 * aspect_ratio * camera_cartesian[-1] * np.tan(alpha_rad/2))
-
-                    ground_truth_mat = np.array([[f, 0, 0, 0],
-                                                 [0, g, 0, 0],
-                                                 [0, 0, h, 0],
-                                                 [0, 0, 0, 0]])
-
-                    ground_truth = np.dot(ground_truth_mat, camera_cartesian)
-
-                    print (objects_array[obj_idx].name, ground_truth[0], ground_truth[1], ground_truth[2])
-
-
-
-
-
-
-
+            if ground_truth:
+                print("Objects in Projection Plane %d" % len(ground_truth))
+                for entry in ground_truth:
+                    print entry
 
     finally:
         # Stop Simulation -------------------------------------------------------------_---------

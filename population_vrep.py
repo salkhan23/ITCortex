@@ -203,22 +203,93 @@ def set_robot_velocity(c_id, target_velocity):
             print("Failed to set velocity of IT cortex robot motors, error code %d" % res)
 
 
+def get_vision_sensor_parameters(c_id):
+    '''
+    Retrieve parameters of the vision sensor
+    :param c_id     : connected scene id
+
+    :return: (alpha_rad, aspect_ratio, near_z, far_z)
+        angle       : Perspective angle of vision sensor in radians,
+        ar          : Aspect Ratio. Screen width/height = x_resolution/y_resolution
+        n_z      : Near clipping plane of vision sensor
+        f_z       : Far clipping plane of vision sensor
+    '''
+    res, vs_handle = vrep.simxGetObjectHandle(
+        c_id,
+        'it_cortex_robot_vision_sensor',
+        vrep.simx_opmode_oneshot_wait )
+
+    if res != vrep.simx_return_ok:
+        raise Exception("Failed to get it_cortex_robot_vision_sensor handle. Error Code %d" % res)
+
+    res, angle = vrep.simxGetObjectFloatParameter(
+        c_id,
+        vs_handle,
+        VS_PERSPECTIVE_PROJECTION_ANGLE,
+        vrep.simx_opmode_oneshot_wait)
+    if res != vrep.simx_return_ok:
+        raise Exception("Failed to get VS_PERSPECTIVE_PROJECTION_ANGLE. Error code %d" % res)
+
+    res, resolution_x = vrep.simxGetObjectIntParameter(
+        c_id,
+        vs_handle,
+        VS_RESOLUTION_X,
+        vrep.simx_opmode_oneshot_wait)
+    if res != vrep.simx_return_ok:
+        raise Exception("Failed to get VS_RESOLUTION_X. Error code %d" %res)
+
+    res, resolution_y = vrep.simxGetObjectIntParameter(
+        c_id,
+        vs_handle,
+        VS_RESOLUTION_Y,
+        vrep.simx_opmode_oneshot_wait)
+    if res != vrep.simx_return_ok:
+        raise Exception("Failed to get VS_RESOLUTION_Y. Error code %d" %res)
+
+    ar = resolution_x / resolution_y
+
+    res, z_n = vrep.simxGetObjectFloatParameter(
+        c_id,
+        vs_handle,
+        VS_NEAR_CLIPPING_PLANE,
+        vrep.simx_opmode_oneshot_wait)
+    if res != vrep.simx_return_ok:
+        raise Exception("Failed to get VS_NEAR_CLIPPING_PLANE. Error code %d" % res)
+
+    res, z_f = vrep.simxGetObjectFloatParameter(
+        c_id,
+        vs_handle,
+        VS_FAR_CLIPPING_PLANE,
+        vrep.simx_opmode_oneshot_wait)
+    if res != vrep.simx_return_ok:
+        raise Exception("Failed to get VS_FAR_CLIPPING_PLANE. Error code %d" % res)
+
+    return angle, ar, z_n, z_f
+
 def main():
     t_stop = 20  # Simulation stop time in seconds
     client_id = connect_vrep(t_stop)
 
-    # Create objects list ----------------------------------------------------------------------
+    # Setup ------------------------------------------------------------------------------------
+    #Get list of objects in scene
     objects_array = []
     get_scene_objects(client_id, objects_array)
     print_objects(objects_array)
 
-    # Generate a Population of IT Neurons that react to the list of objects in the scene
+    # Get IT Cortex Robot Vision sensor parameters
+    alpha_rad, aspect_ratio, z_near, z_far, result = get_vision_sensor_parameters(client_id)
+
+    # Construct vision sensor projection matrix
+
+
+    # Generate IT Population -------------------------------------------------------------------
+
 
     # Start IT Cortex Robot --------------------------------------------------------------------
     set_robot_velocity(client_id, 0.2)
     time.sleep(15)
 
-    # Stop Simulation
+    # Stop Simulation --------------------------------------------------------------------------
     set_robot_velocity(client_id, 0)
     time.sleep(1)
     result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)

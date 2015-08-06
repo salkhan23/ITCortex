@@ -218,9 +218,8 @@ def main():
     set_robot_velocity(client_id, 0)
     time.sleep(1)
     result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
-    print result
-    if res != vrep.simx_return_ok and \
-       res != vrep.simx_return_novalue_flag:
+    if result != vrep.simx_return_ok and \
+       result != vrep.simx_return_novalue_flag:
         print("Failed to stop simulation.")
     vrep.simxFinish(-1)
 

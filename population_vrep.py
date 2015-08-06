@@ -131,8 +131,8 @@ def get_object_dimensions(c_id, object_handle):
 def get_scene_objects(c_id, objects):
     """ Get all objects in the VREP scene, find their names, handles and maximum real work size """
 
-    # Ignore all object with default, pioneer (vision sensor robot) and floor in name
-    objects_to_ignore = ['default', 'pioneer', 'floor', 'it_cortex', 'proxy']
+    # Ignore all object with default, it_cortex, proxy and floor in name
+    objects_to_ignore = ['default', 'floor', 'it_cortex', 'proxy']
 
     res, handles, i_data, f_data, s_data = vrep.simxGetObjectGroupData(
         c_id,
@@ -218,6 +218,10 @@ def main():
     set_robot_velocity(client_id, 0)
     time.sleep(1)
     result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
+    print result
+    if res != vrep.simx_return_ok and \
+       res != vrep.simx_return_novalue_flag:
+        print("Failed to stop simulation.")
     vrep.simxFinish(-1)
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ --------------------------------------------------------------------------------------------
-This file is the main entry point for the VREP - IT cortex model. First a connection with
+This file is the main entry point of the VREP - IT cortex model. First a connection with
 VREP is established. Objects from the scene are extracted. Second a population of Interior
 Temporal (IT) neurons that respond to these objects is generated. Third, once the simulation
 is started, ground truth for all objects in the field of vision of the vision sensor(s) is
@@ -129,7 +129,16 @@ def get_object_dimensions(c_id, object_handle):
 
 
 def get_scene_objects(c_id, objects):
-    """ Get all objects in the VREP scene, find their names, handles and maximum real work size """
+    """
+    Get all objects in the VREP scene, find their names, handles and size (length of the side
+    with the largest dimension.
+
+    Find the number of unique objects in the list.Currently this is only displayed locally and
+    not passed on to the calling function.
+
+    :param c_id: connected scene id.
+    :param objects: Empty list to which found objects are appended to.
+    """
 
     # Ignore all object with default, it_cortex, proxy and floor in name
     objects_to_ignore = ['default', 'floor', 'it_cortex', 'proxy']
@@ -141,7 +150,7 @@ def get_scene_objects(c_id, objects):
         vrep.simx_opmode_oneshot_wait)
 
     if res != vrep.simx_return_ok:
-        print ('get_scene_objects: Remote API function call returned with error code: %i' % res)
+        raise Exception('get_scene_objects: Failed to get object names. Error Code %d' % res)
     else:
         for count in np.arange(len(handles)):
 
@@ -150,10 +159,25 @@ def get_scene_objects(c_id, objects):
                 obj = VrepObject(s_data[count], handles[count], max(size))
                 objects.append(obj)
 
+    # Filter only unique (parent) objects
+    unique_objects = set()
+    for obj in objects:
+        res,  parent_handle = vrep.simxGetObjectParent(
+            c_id,
+            obj.handle,
+            vrep.simx_opmode_oneshot_wait)
+
+        if res != vrep.simx_return_ok:
+            raise Exception("get_scene_objects: Failed to get %s parent handle" % obj.name)
+        elif parent_handle == -1:  # no parent and therefore unique
+            unique_objects.add(obj)
+
+    print ("Number of unique objects in scene %d" % len(unique_objects))
+    print_objects(unique_objects)
+
 
 def print_objects(objects):
     """ Print all objects stored in objects. """
-    print("Objects in scene %d" % len(objects))
 
     longest_name = max([len(obj.name) for obj in objects])
 
@@ -269,7 +293,7 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
 
     :param c_id                     : connected scene id.
     :param object_handle            : vrep handle of object.
-    :param reference_frame_handle   : vrep handle of objects whose reference frame to us.e
+    :param reference_frame_handle   : vrep handle of objects whose reference frame to use.
 
     :return: (x,y,z) co-ordinates of target object.
     """
@@ -280,7 +304,7 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
         vrep.simx_opmode_buffer)
 
     if res != vrep.simx_return_ok:
-        print('Initializing position acquisition function for object handle %d' % object_handle)
+        # print('Initializing position acquisition function for object handle %d' % object_handle)
         res, position = vrep.simxGetObjectPosition(
             c_id,
             object_handle,
@@ -391,6 +415,7 @@ def main():
         # Get list of objects in scene
         objects_array = []
         get_scene_objects(client_id, objects_array)
+        print ("Number of objects in scene %d" % len(objects_array))
         print_objects(objects_array)
 
         # Get IT Cortex Robot Vision sensor parameters
@@ -417,13 +442,19 @@ def main():
         set_robot_velocity(client_id, 0.2)
 
         while time.time() < (t_start + t_stop):
-            ground_truth = get_ground_truth(client_id, objects_array, vs_handle, p_mat,
-                                            aspect_ratio, alpha_rad)
+            ground_truth = get_ground_truth(
+                client_id,
+                objects_array,
+                vs_handle,
+                p_mat,
+                aspect_ratio,
+                alpha_rad)
 
             if ground_truth:
-                print("Objects in Projection Plane %d" % len(ground_truth))
+                print("Number of objects %d" % len(ground_truth))
                 for entry in ground_truth:
-                    print entry
+                    print ("%s, %0.2f, %0.2f, %0.2f"
+                           % (entry[0].ljust(30), entry[1], entry[2], entry[3]))
 
     finally:
         # Stop Simulation -------------------------------------------------------------_---------

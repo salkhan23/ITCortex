@@ -48,8 +48,10 @@ class VrepObject:
 
 def connect_vrep(sim_stop_time_s):
     """
-    Establish connection to VREP simulation
-    Add the following command to a child script in the simulation: simExtRemoteApiStart(19999)
+    Establish connection to VREP simulation.
+
+    NOTE: Add the following command to a child script in the simulation:
+        simExtRemoteApiStart(19999)
     """
     vrep.simxFinish(-1)  # Close any open connections.
 
@@ -58,7 +60,7 @@ def connect_vrep(sim_stop_time_s):
         19999,
         True,
         True,
-        sim_stop_time_s*1000,   # TODO: Does not appear to be working.
+        sim_stop_time_s*1000,   # Only closes the remote connection, does not stop simulation.
         5)                      # Data Communication Rate (ms) (packets transferred every 5ms).
 
     if c_id == -1:
@@ -375,30 +377,29 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
             # x,y coordinates in degrees
             # --------------------------
             # (1) Normalize calculated coordinates so they have the same scale in
-            #     the x & y direction (by multiply x by the aspect_ratio)
+            #     the x & y direction (by multiply x by the aspect_ratio). The above
+            #     transformations leave x within (-1, 1), we actually what x
+            #     to range between -ar, ar.
             # (2) Convert to degrees. Assume visual span (180 degrees) covers the
             #     range of x. -ar to ar. There 2*ar = np.pi
             # size in degrees
             # ---------------
-            # (3) np.pi * max_dimension / (2 * aspect_ratio * z * tan(alpha_rad/2)).
+            # (3) np.pi * max_dimension / (2 * aspect_ratio * distance * tan(alpha_rad/2)).
             #     See Notes.
-            f = np.pi / 2
-            g = np.pi / (2 * ar)
-            h = np.pi * vrep_obj.max_dimension / \
-                (2 * ar * camera_cartesian[-1] * np.tan(projection_angle/2))
+            x = np.pi / 2 * camera_cartesian[0]
+            y = np.pi / (2 * ar) * camera_cartesian[1]
 
-            ground_truth_mat = np.array([[f, 0, 0, 0],
-                                         [0, g, 0, 0],
-                                         [0, 0, h, 0],
-                                         [0, 0, 0, 0]])
-
-            object_attributes = np.dot(ground_truth_mat, camera_cartesian)
+            # For correct projection in the plane we actually need the euclidean distance to
+            # object , not only its z coordinate.
+            distance = np.sqrt(x**2 + y**2 + camera_cartesian[-1]**2)
+            size = (np.pi * vrep_obj.max_dimension) / \
+                   (2 * ar * distance * np.tan(projection_angle / 2))
 
             objects_in_frame.append([
                 vrep_obj.name,
-                object_attributes[0],   # x image coordinate in radians
-                object_attributes[1],   # y coordinates in radians
-                object_attributes[2]])  # size in radians
+                x,                  # x image coordinate in radians
+                y,                  # y coordinates in radians
+                size])              # size in radians
 
     return objects_in_frame
 

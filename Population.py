@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import random
 import os
 
-from ObjectSelectivity import selectivityFit as SelFit
+from ObjectSelectivity import selectivity_fit as SelFit
 from PositionTolerance import rfCenterFit as RFCenter
 
 
@@ -92,7 +92,7 @@ def main():
     # Population Distributions
     # ---------------------------------------------------------------------------------------------
     # Selectivity
-    selectivity_dist = SelFit.GenerateSelectivityDistribution(population_size)
+    selectivity_dist = SelFit.get_selectivity_distribution(population_size)
 #     title = 'Population Selectivity Distribution'
 #     plt.figure(title)
 #     plt.title(title)

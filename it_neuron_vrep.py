@@ -52,8 +52,8 @@ class Neuron:
 
         # Position Profile
         if position_profile.lower() == 'gaussian':
-            # import PositionTolerance.gaussian_position_profile as gpt
-            # self.position = gpt.GaussianPositionProfile()
+            import PositionTolerance.gaussian_position_profile as gpt
+            self.position = gpt.GaussianPositionProfile()
 
     def __power_law_selectivity(self, ranked_obj_list):
         """

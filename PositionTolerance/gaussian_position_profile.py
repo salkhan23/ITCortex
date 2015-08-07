@@ -10,56 +10,56 @@ import matplotlib.pyplot as plt
 
 
 class GaussianPositionProfile:
-    """
-    Models neurons position tolerance receptive field using a Gaussian function.
-    Reference [Zoccolan et. al, 2007].
-    """
-    def __init__(self, **kwargs):
-        """
-        :param kwargs: dictionary of required and option parameters for position tuning
-            REQUIRED PARAMETERS:
-                selectivity = Neurons selectivity Index
 
-            OPTIONAL PARAMETERS:
-                rfCenterOffset = List [x, y] in pixel coordinates of center of receptive field
-                                 relative to center of gaze. Default = (0, 0)
-                imageSize = Tuple (x,y) of input image dimensions.
-                            Determines the default center of gaze = center of image, (x/2, y/2).
-                            Default imageSize = (1382, 512). [KITTI Data Set]
+    def __init__(self, selectivity):
+        """
+        1. Models neurons position tolerance receptive field using a 2D Gaussian function.
+        Ref. [Zoccolan et. al, 2007].
+
+        2. Models the Receptive Field Center.
+        Ref. Op de Beeck & Vogels - 2000 - Spatial Sensitivities of Macaque Inferior Temporal
+        Neurons - Fig 6.
+
+        :param selectivity: Activity fraction.
+            Number of objects neuron responds to divided by total number of objects.
 
         :rtype : Object gaussian position profile class
         """
-        self.type = 'gaussian'
+        self.type = '2d_gaussian'
 
-        # Check required parameters
-        required_params = ['selectivity']
-        for param in required_params:
-            if param not in kwargs.keys():
-                raise Exception("Required Parameter '%s' not provided" % param)
+        self.rf_center = self.__get_receptive_field_center()
 
-        self.params = kwargs
+        self.position_tolerance = self.__get_position_tolerance(selectivity)
 
-        # Check & Set optional parameters
-        if 'rfCenterOffset' not in self.params.keys():
-            self.params['rfCenterOffset'] = np.array([0, 0])
 
-        if 'imageSize' not in kwargs.keys():
-            self.params['imageSize'] = np.array([1382, 512])  # KITTI Data image size
+    def __get_receptive_field_center(self):
+        """ Generate RF centers based on data from Op de Beeck & Vogels - 2000 -
+        Spatial Sensitivities of Macaque Inferior Temporal Neurons - Fig 6.
 
-        # Get position tolerance
-        self.params['posTolDeg'] = self.__get_position_tolerance()
+        In file rfCenterFit.py, data was fit using maximum likelihood fitting to Gaussian and
+        Gamma Distributions. A Gaussian distribution with the parameters below was selected.
+        Even though the gamma provides a slightly better fit, log likelihood ratios are similar
+        and the Gaussian RV uses less parameters.
 
-        if not isinstance(self.params['rfCenterOffset'], np.ndarray):
-            self.params['rfCenterOffset'] = np.array(self.params['rfCenterOffset'])
-        if not isinstance(self.params['imageSize'], np.ndarray):
-            self.params['imageSize'] = np.array(self.params['imageSize'])
+        :rtype : 1x2 array of the RF Center (x, y) in degrees of eccentricity. (Radians)
+        """
+        sigma_x = 2.02
+        mu_x = 1.82
 
-    def __get_position_tolerance(self):
+        sigma_y = 2.12
+        mu_y = 0.61
+
+        x = ss.norm.rvs(size=1, loc=mu_x, scale=sigma_x) * np.pi / 180
+        y = ss.norm.rvs(size=1, loc=mu_y, scale=sigma_y) * np.pi / 180
+
+        z = np.array([x, y])
+
+        return z
+
+    def __get_position_tolerance(self, s_idx):
         """
         Method determines the position tolerance of the Neuron. Position Tolerance is
-        defined as 2*standard deviation of the Gaussian function
-
-        :rtype : Position tolerance of the neuron in degree of eccentricity
+        defined as 2*standard deviation of the Gaussian function.
 
         Two properties of position tolerance are modeled: (1) Position tolerance decreases
         as selectivity/spareness of neuron increases, (2) Position tolerance variations
@@ -76,141 +76,85 @@ class GaussianPositionProfile:
 
         Gamma RV Mean(sparseness) = -9.820*sparseness + 13.9730
         Gamma RV Scale(sparseness) = mean(spareness)\ alpha
+
+        :param s_idx: Activity fraction.
+            Number of objects neuron responds to divided by total number of objects.
+
+        :rtype : Position tolerance of the neuron in degree of eccentricity (Radians).
         """
         alpha = 4.04
-        mean_position_tolerance = -9.820*self.params['selectivity'] + 13.9730
+        mean_position_tolerance = -9.820*s_idx + 13.9730
+        pos_tol = ss.gamma.rvs(a=alpha, scale=mean_position_tolerance/alpha) * np.pi / 180
 
-        return ss.gamma.rvs(a=alpha, scale=mean_position_tolerance/alpha)
+        return pos_tol
 
-    def firing_rate_modifier(self, x, y, deg2pixel, gaze_center=None):
+    def firing_rate_modifier(self, x, y):
         """
         Given (x,y) pixel position coordinates return how much firing rate of neuron is
         impacted by distance from neuron's receptive field center. Receptive field center
         is a function of gaze center and the receptive filed center offset from the gaze
         center.
 
-        :rtype : normalized firing rate.
+        :param x: x coordinate of object in radians of eccentricity
+        :param y: y coordinate of object in radians of eccentricity
 
-        :param x:           x pixel coordinate of position
-        :param y:           y pixel coordinate of position
-        :param deg2pixel:   Degree to pixel conversion factor
-        :param gaze_center: Tuple of (x,y) coordinates of center of gaze. Default = Image Center,
-                            Determined from image size specified during initialization
+        :rtype  : Normalized firing rate (Rate modifier)
         """
-        if gaze_center is None:
-            gaze_center = self.params['imageSize']/2
-
-        x_deg = (x-(gaze_center[0]-self.params['rfCenterOffset'][0]))/deg2pixel
-        y_deg = (y-(gaze_center[1]-self.params['rfCenterOffset'][1]))/deg2pixel
-
-        sigma = self.params['posTolDeg']/2
-
-        mean_rsp = np.exp(-(x_deg**2 + y_deg**2) / (2 * sigma**2))
+        mean_rsp = np.exp(-((x - self.rf_center[0])**2 + (y - self.rf_center[1])**2) /
+                          (self.position_tolerance**2))
 
         # TODO: Add noise Spatial Sensitivity of TE Neurons - H.OP BEECK and R Vogels(2000)
         # 1.1*log(mean response)+ 1.5
 
         return mean_rsp
+#
 
     def print_parameters(self):
-        print("Profile: %s" % self.type)
-        print("Image Size: %s" % self.params['imageSize'])
-        print("Position Tolerance: %0.2f(degrees)" % self.params['posTolDeg'])
-        print("RF Center Offset (from Gaze Center): %s(degrees)" % self.params['rfCenterOffset'])
-#        keys = sorted(self.params.keys())
-#        for keyword in keys:
-#            print ("%s : %s" %(keyword, self.params[keyword]))
-
-    def plot_position_tolerance(self,
-                                deg2pixel,
-                                x_start=0, x_stop=None, x_step=1,
-                                y_start=0, y_stop=None, y_step=1,
-                                gaze_center=None):
-
-        # Necessary for 3D Plot
-        from mpl_toolkits.mplot3d import Axes3D
-
-        if gaze_center is None:
-            gaze_center = self.params['imageSize']/2
-
-        if x_stop is None:
-            x_stop = self.params["imageSize"][0]
-        if y_stop is None:
-            y_stop = self.params["imageSize"][1]
-
-        x = np.arange(x_start, x_stop, x_step)
-        y = np.arange(y_start, y_stop, y_step)
-
-        xx, yy = np.meshgrid(x, y)
-        zz = self.firing_rate_modifier(xx, yy, deg2pixel=deg2pixel, gaze_center=gaze_center)
-        f1 = plt.figure()
-        ax = f1.gca(projection='3d')
-        ax.set_title("Position Tolerance Profile Gaze Center=(%i,%i), RF Center Offset=(%i, %i)"
-                     % (gaze_center[0], gaze_center[1],
-                        self.params['rfCenterOffset'][0],
-                        self.params['rfCenterOffset'][1]))
-        ax.plot_surface(xx, yy, zz)
-        ax.scatter(gaze_center[0], gaze_center[1], 1, color='red', marker='+', linewidth=2,
-                   label='Gaze Center')
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_zlabel('Normalized Firing Rate (spikes/s)')
+        print("Profile            = %s" % self.type)
+        print("Position Tolerance = %0.4f (Radians)" % self.position_tolerance)
+        print("RF Center          = [%0.4f, %0.4f] (Radians)"
+              % (self.rf_center[0], self.rf_center[1]))
 
     def plot_position_tolerance_contours(self,
-                                         deg2pixel,
-                                         x_start=0, x_stop=None, x_step=0.5,
-                                         y_start=0, y_stop=None, y_step=0.5,
-                                         gaze_center=None, axis=None, n_contours=6):
+                                         x_start=-np.pi/2,
+                                         x_stop=np.pi/2,
+                                         y_start=-np.pi/2,
+                                         y_stop=np.pi/2,
+                                         axis=None,
+                                         n_contours=6):
+        """
+        """
+        n_points = 180
+        x = np.linspace(start=x_start, stop=x_stop, num=n_points)
+        y = np.linspace(start=y_start, stop=y_stop, num=n_points)
 
-        if gaze_center is None:
-            gaze_center = self.params['imageSize']/2
-
-        if x_stop is None:
-            x_stop = self.params['imageSize'][0]
-        if y_stop is None:
-            y_stop = self.params['imageSize'][1]
-
-        x = np.arange(x_start, x_stop, x_step)
-        y = np.arange(y_start, y_stop, y_step)
         xx, yy = np.meshgrid(x, y)
-        zz = self.firing_rate_modifier(xx, yy, deg2pixel=deg2pixel, gaze_center=gaze_center)
+        zz = self.firing_rate_modifier(xx, yy)
 
         if axis is None:
-            f, axis = plt.subplots()
+            fig, axis = plt.subplots()
 
-        c_plot = axis.contour(xx, yy, zz, n_contours, colors='k')
+        axis.contour(xx, yy, zz, n_contours, colors='k')
         axis.set_xlim([x_start, x_stop])
         axis.set_ylim([y_start, y_stop])
-#        plt.clabel(c_plot, inline=1)
 
-        axis.scatter(gaze_center[0], gaze_center[1], 1, color='red',
-                     marker='+', linewidth=4, label='Gaze Center (%i, %i)'
-                     % (gaze_center[0], gaze_center[1]))
-
-        rf_center_x = gaze_center[0] - self.params['rfCenterOffset'][0]
-        rf_center_y = gaze_center[1] - self.params['rfCenterOffset'][1]
-        axis.scatter(rf_center_x, rf_center_y, 1, color='blue',
-                     marker='o', linewidth=4,
-                     label='Rf Center (%i, %i)' % (rf_center_x, rf_center_y))
+        axis.scatter(0, 0, 1, color='red', marker='+', linewidth=4, label='Gaze Center')
+        axis.scatter(self.rf_center[0], self.rf_center[1], color='blue', marker='o', linewidth=4,
+                     label='Rf Center (%i, %i)' % (self.rf_center[0], self.rf_center[1]))
 
         axis.set_ylabel('Y')
         axis.set_xlabel('X')
-        axis.set_title('Positional Tolerance(Degrees) = %0.2f'
-                       % (self.params['posTolDeg']))
-        axis.grid()
+
+        # If more details are required use a higher contour value.
+        if n_contours != 1:
+            axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance)
+            axis.grid()
 
 
 if __name__ == "__main__":
     plt.ion()
-    x1params = {'selectivity': 0.1}
 
-    n1 = GaussianPositionProfile(**x1params)
+    n1 = GaussianPositionProfile(selectivity=0.1)
     n1.print_parameters()
-    n1.plot_position_tolerance(deg2pixel=10)
+    n1.plot_position_tolerance_contours()
 
-    # Create a Neuron that processes different image sizes and RF Centers
-    n2 = GaussianPositionProfile(imageSize=(800, 800),
-                                 rfCenterOffset=(20, 20), **x1params)
-    n2.print_parameters()
-    # Plot profile at a different center of gaze
-    n2.plot_position_tolerance(gaze_center=(100, 100), deg2pixel=10)

@@ -104,7 +104,7 @@ class Neuron:
 
         # POSITION TOLERANCE
         if position_profile.lower() == 'gaussian':
-            from PositionTolerance import gaussianPositionProfile as pT
+            from PositionTolerance import gaussian_position_profile as pT
             self.position = pT.GaussianPositionProfile(selectivity=self.s,
                                                        deg2pixel=self.deg2pixel,
                                                        **position_params)

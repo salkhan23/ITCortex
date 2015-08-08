@@ -46,6 +46,7 @@ class Neuron:
         # Objects
         ranked_object_list = [item.lower() for item in ranked_object_list]
         self.objects = self.__power_law_selectivity(ranked_object_list)
+        self.selectivity_type = 'power_law'
 
         # Max Firing Rate
         self.max_fire_rate = max_fire_rate
@@ -68,6 +69,31 @@ class Neuron:
         """
         return({item: np.power(idx, -self.selectivity)
                for idx, item in enumerate(ranked_obj_list, start=1)})
+
+    def get_ranked_object_list(self):
+        """ Return neurons rank list of objects and rate modification factors """
+        return sorted(self.objects.items(), key=lambda item: item[1], reverse=True)
+
+    def print_object_list(self):
+        """ Print a ranked list of neurons object preferences """
+        print("Object Preferences           :")
+
+        max_name_length = np.max([len(name) for name in self.objects.keys()])
+
+        lst = self.get_ranked_object_list()
+        for obj, rate in lst:
+            print ("\t%s : %0.4f" % (obj.ljust(max_name_length), rate))
+
+    def print_properties(self):
+        """ Print all parameters of neuron """
+        print ("*"*20 + " Neuron Properties " + "*"*20)
+        print("Neuron Selectivity           : %0.2f" % self.selectivity)
+        print("Selectivity Profile          : %s" % self.selectivity_type)
+        print("Max Firing Rate (spikes/s)   : %i" % self.max_fire_rate)
+        self.print_object_list()
+
+        print("POSITION TOLERANCE %s" % ('-'*30))
+        self.position.print_parameters()
 
 
 def main(population_size, list_of_objects):
@@ -100,6 +126,11 @@ if __name__ == "__main__":
 
     it_cortex = main(n, obj_list)
 
-    f, axis = plt.subplots()
-    for it_neuron in it_cortex:
-        it_neuron.position.plot_position_tolerance_contours(axis=axis, n_contours=1)
+    # Print RFs of all Neurons
+    # TODO: Move/Use function into population.py
+    # f, axis = plt.subplots()
+    # for it_neuron in it_cortex:
+    #     it_neuron.position.plot_position_tolerance_contours(axis=axis, n_contours=1)
+
+    #TODO: Temporary. Validation code.
+    it_cortex[0].print_properties()

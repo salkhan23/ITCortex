@@ -51,9 +51,7 @@ class GaussianPositionProfile:
         x = ss.norm.rvs(size=1, loc=mu_x, scale=sigma_x) * np.pi / 180
         y = ss.norm.rvs(size=1, loc=mu_y, scale=sigma_y) * np.pi / 180
 
-        z = np.array([x, y])
-
-        return z
+        return np.hstack((x, y))
 
     def __get_position_tolerance(self, s_idx):
         """

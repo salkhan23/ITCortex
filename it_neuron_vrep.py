@@ -95,9 +95,47 @@ class Neuron:
         print("POSITION TOLERANCE %s" % ('-'*30))
         self.position.print_parameters()
 
+    def firing_rate(self, ground_truth_list):
+        """
+        Get Neurons overall firing rate to specified input.
+
+        :param ground_truth_list: list of (object_name, x, y) entries for all objects in the
+        screen. Add more elements to this  list/tuple and update the zip function.
+
+        :rtype :  Return the average firing rate of the neuron given for the specified input(s)
+        """
+        if not isinstance(ground_truth_list, list):
+            ground_truth_list = [ground_truth_list]
+
+        objects, x_arr, y_arr = zip(*ground_truth_list)
+
+        objects = list(objects)
+        x_arr = np.array(x_arr)
+        y_arr = np.array(y_arr)
+
+        obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in objects])
+
+
+        # Get position rate modifiers they will by used to weight isolated responses to get the
+        # single clutter responses.
+        position_weights = self.position.firing_rate_modifier(x_arr, y_arr)
+        sum_position_weights = np.sum(position_weights, axis=0)
+
+        rate = self.max_fire_rate * obj_pref_list
+
+        # Single response to multiple objects
+        # TODO: Add noise to the averaged response based on Zoccolan-2005
+        rate = rate * position_weights / sum_position_weights
+
+        return np.sum(rate, axis=0)
+
 
 def main(population_size, list_of_objects):
 
+    """
+
+    :rtype : Population of IT neurons of specifed size and that respond to the list of objects.
+    """
     population = []
 
     for _ in np.arange(population_size):
@@ -132,5 +170,20 @@ if __name__ == "__main__":
     # for it_neuron in it_cortex:
     #     it_neuron.position.plot_position_tolerance_contours(axis=axis, n_contours=1)
 
-    #TODO: Temporary. Validation code.
+    # TODO: Temporary. Validation code.
     it_cortex[0].print_properties()
+    
+    most_pref_object = it_cortex[0].get_ranked_object_list()[0][0]
+    rf_center = it_cortex[0].position.rf_center
+
+    print ("most preferred object %s " % most_pref_object)
+    print ("RF center %s" % rf_center)
+
+    ground_truth = (most_pref_object, rf_center[0], rf_center[1])
+    print it_cortex[0].firing_rate(ground_truth)
+
+    ground_truth = [
+        [most_pref_object, rf_center[0], rf_center[1]],
+        ['monkey',         rf_center[0], rf_center[1]]]
+
+    print it_cortex[0].firing_rate(ground_truth)

@@ -31,7 +31,6 @@ class GaussianPositionProfile:
 
         self.position_tolerance = self.__get_position_tolerance(selectivity)
 
-
     def __get_receptive_field_center(self):
         """ Generate RF centers based on data from Op de Beeck & Vogels - 2000 -
         Spatial Sensitivities of Macaque Inferior Temporal Neurons - Fig 6.
@@ -68,14 +67,14 @@ class GaussianPositionProfile:
         A set of gamma random variables with constant shape (alpha) and variable spread
         (scale) that decreases with neuron selectivity are used to fit scatter points in
         Figure 4.A of of Zoccolan et. al, 2007. A best fit linear regression line to all
-        scatter points is used to model decreasing mean (scale = Mean\alpha) of the
+        scatter points is used to model decreasing mean (scale = Mean \ alpha) of the
         gamma random variables.
 
         Maximum likelihood fitting (alpha value that best fits the data) is used to
-        determine alpha. See mLGammmaFit.py for ML fitting.
+        determine alpha. See mLGammaFit.py for ML fitting.
 
         Gamma RV Mean(sparseness) = -9.820*sparseness + 13.9730
-        Gamma RV Scale(sparseness) = mean(spareness)\ alpha
+        Gamma RV Scale(sparseness) = mean(spareness) \ alpha
 
         :param s_idx: Activity fraction.
             Number of objects neuron responds to divided by total number of objects.
@@ -107,7 +106,6 @@ class GaussianPositionProfile:
         # 1.1*log(mean response)+ 1.5
 
         return mean_rsp
-#
 
     def print_parameters(self):
         print("Profile            = %s" % self.type)
@@ -123,6 +121,19 @@ class GaussianPositionProfile:
                                          axis=None,
                                          n_contours=6):
         """
+        Contour Plots of the spatial receptive field of the neuron.
+
+        :param x_start      : Default = -np.pi/2
+        :param x_stop       : Default = np.pi/2
+        :param y_start      : Default = -np.pi/2
+        :param y_stop       : Default = np.pi/2
+        :param axis         : Python axis object for where to plot. Useful for adding contour plot
+                              as a subplot in an image. Default = None
+        :param n_contours   : Number of contour lines to plot. Specifying a single contour line,
+                              for example when plotting the receptive fields of multiple neurons,
+                              does not plot add a title.
+
+        :rtype              : None.
         """
         n_points = 180
         x = np.linspace(start=x_start, stop=x_stop, num=n_points)
@@ -139,17 +150,17 @@ class GaussianPositionProfile:
         axis.set_ylim([y_start, y_stop])
 
         axis.scatter(0, 0, 1, color='red', marker='+', linewidth=4, label='Gaze Center')
-        axis.scatter(self.rf_center[0], self.rf_center[1], color='blue', marker='o', linewidth=4,
-                     label='Rf Center (%i, %i)' % (self.rf_center[0], self.rf_center[1]))
 
         axis.set_ylabel('Y')
         axis.set_xlabel('X')
 
         # If more details are required use a higher contour value.
-        if n_contours != 1:
+        if 1 != n_contours:
+            axis.scatter(self.rf_center[0], self.rf_center[1], color='blue', marker='o',
+                         linewidth=4,
+                         label='Rf Center (%i, %i)' % (self.rf_center[0], self.rf_center[1]))
             axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance)
             axis.grid()
-
 
 if __name__ == "__main__":
     plt.ion()
@@ -157,4 +168,3 @@ if __name__ == "__main__":
     n1 = GaussianPositionProfile(selectivity=0.1)
     n1.print_parameters()
     n1.plot_position_tolerance_contours()
-

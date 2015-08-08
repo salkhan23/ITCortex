@@ -53,7 +53,7 @@ class Neuron:
         # Position Profile
         if position_profile.lower() == 'gaussian':
             import PositionTolerance.gaussian_position_profile as gpt
-            self.position = gpt.GaussianPositionProfile()
+            self.position = gpt.GaussianPositionProfile(self.selectivity)
 
     def __power_law_selectivity(self, ranked_obj_list):
         """
@@ -78,7 +78,7 @@ def main(population_size, list_of_objects):
         sel_idx = selectivity.get_selectivity_distribution(1)
         random.shuffle(list_of_objects)
 
-        neuron = Neuron(sel_idx, list_of_objects)
+        neuron = Neuron(sel_idx, list_of_objects, position_profile='gaussian')
 
         population.append(neuron)
 
@@ -99,3 +99,7 @@ if __name__ == "__main__":
                 'person sitting']
 
     it_cortex = main(n, obj_list)
+
+    f, axis = plt.subplots()
+    for it_neuron in it_cortex:
+        it_neuron.position.plot_position_tolerance_contours(axis=axis, n_contours=1)

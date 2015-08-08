@@ -11,6 +11,26 @@ import matplotlib.pyplot as plt
 import ObjectSelectivity.selectivity_fit as selectivity
 
 
+class CompleteTolerance:
+    def __init__(self):
+        """
+        Default Tuning Profile. Complete Tolerance, No rate modification. This is overloaded for
+        each property IT neuron expects but for which the parameters are not provided.
+        It makes getting the firing_rate_modifier easier instead of adding multiple conditions
+        that check whether a profile exist or not before getting its firing rate modifier.
+
+        :rtype : object
+        """
+        self.type = 'none'
+
+    def firing_rate_modifier(self, *args, **kwargs):
+        """Return 1 no matter what inputs are provided"""
+        return 1
+
+    def print_parameters(self):
+        print("Profile: %s" % self.type)
+
+
 class Neuron:
     def __init__(
             self,
@@ -51,10 +71,17 @@ class Neuron:
         # Max Firing Rate
         self.max_fire_rate = max_fire_rate
 
-        # Position Profile
-        if position_profile.lower() == 'gaussian':
+        # Position Tuning
+        if position_profile is None:
+            self.position = CompleteTolerance()
+
+        elif position_profile.lower() == 'gaussian':
             import PositionTolerance.gaussian_position_profile as gpt
             self.position = gpt.GaussianPositionProfile(self.selectivity)
+
+        # Size Tuning
+        if size_profile is None:
+            self.size = CompleteTolerance()
 
     def __power_law_selectivity(self, ranked_obj_list):
         """
@@ -95,11 +122,16 @@ class Neuron:
         print("POSITION TOLERANCE %s" % ('-'*30))
         self.position.print_parameters()
 
+        print("SIZE TOLERANCE: %s" % ('-'*33))
+        self.size.print_parameters()
+
+        print ("*"*60)
+
     def firing_rate(self, ground_truth_list):
         """
         Get Neurons overall firing rate to specified input.
 
-        :param ground_truth_list: list of (object_name, x, y) entries for all objects in the
+        :param ground_truth_list: list of (object_name, x, y, size) entries for all objects in the
         screen. Add more elements to this  list/tuple and update the zip function.
 
         :rtype :  Return the average firing rate of the neuron given for the specified input(s)
@@ -107,14 +139,13 @@ class Neuron:
         if not isinstance(ground_truth_list, list):
             ground_truth_list = [ground_truth_list]
 
-        objects, x_arr, y_arr = zip(*ground_truth_list)
+        objects, x_arr, y_arr, _ = zip(*ground_truth_list)
 
         objects = list(objects)
         x_arr = np.array(x_arr)
         y_arr = np.array(y_arr)
 
         obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in objects])
-
 
         # Get position rate modifiers they will by used to weight isolated responses to get the
         # single clutter responses.
@@ -131,10 +162,9 @@ class Neuron:
 
 
 def main(population_size, list_of_objects):
-
     """
 
-    :rtype : Population of IT neurons of specifed size and that respond to the list of objects.
+    :rtype : Population of IT neurons of specified size and that respond to the list of objects.
     """
     population = []
 
@@ -142,7 +172,7 @@ def main(population_size, list_of_objects):
         sel_idx = selectivity.get_selectivity_distribution(1)
         random.shuffle(list_of_objects)
 
-        neuron = Neuron(sel_idx, list_of_objects, position_profile='gaussian')
+        neuron = Neuron(sel_idx, list_of_objects, position_profile='Gaussian')
 
         population.append(neuron)
 
@@ -179,11 +209,12 @@ if __name__ == "__main__":
     print ("most preferred object %s " % most_pref_object)
     print ("RF center %s" % rf_center)
 
-    ground_truth = (most_pref_object, rf_center[0], rf_center[1])
+    ground_truth = (most_pref_object, rf_center[0], rf_center[1], 0.0)
     print it_cortex[0].firing_rate(ground_truth)
 
     ground_truth = [
-        [most_pref_object, rf_center[0], rf_center[1]],
-        ['monkey',         rf_center[0], rf_center[1]]]
+        # object,           x,            y,            size,
+        [most_pref_object, rf_center[0], rf_center[1], 0.0],
+        ['monkey',         rf_center[0], rf_center[1], 0.2]]
 
     print it_cortex[0].firing_rate(ground_truth)

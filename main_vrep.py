@@ -13,9 +13,13 @@ Created on Mon Aug  3 10:15:01 2015
 import sys
 import time
 import numpy as np
+import random
 import matplotlib.pyplot as plt
-from vrep.src import vrep
 
+import ObjectSelectivity.selectivity_fit as selectivity
+import it_neuron_vrep as it
+
+from vrep.src import vrep
 
 # VREP CONSTANTS ----------------------------------------------------------------------------------
 
@@ -307,14 +311,14 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
 
     if res != vrep.simx_return_ok:
         # print('Initializing position acquisition function for object handle %d' % object_handle)
-        res, position = vrep.simxGetObjectPosition(
+        _, position = vrep.simxGetObjectPosition(
             c_id,
             object_handle,
             reference_frame_handle,
             vrep.simx_opmode_streaming)
 
         time.sleep(0.1)  # wait 100ms after initializing
-        res, position = vrep.simxGetObjectPosition(
+        _, position = vrep.simxGetObjectPosition(
             c_id,
             object_handle,
             reference_frame_handle,
@@ -414,6 +418,7 @@ def main():
 
         # SETUP VREP  ---------------------------------------------------------------------------
         # Get list of objects in scene
+        print("Initializing VREP simulation...")
         objects_array = []
         get_scene_objects(client_id, objects_array)
         print ("Number of objects in scene %d" % len(objects_array))
@@ -437,9 +442,22 @@ def main():
                           [0, 0, 1, 0]])
 
         # Generate IT Population ----------------------------------------------------------------
+        print("Initializing IT Population...")
+
+        population_size = 5
+        list_of_objects = [obj.name for obj in objects_array]
+        it_cortex = []
+
+        for _ in np.arange(population_size):
+            sel_idx = selectivity.get_selectivity_distribution(1)
+            random.shuffle(list_of_objects)
+
+            neuron = it.Neuron(sel_idx, list_of_objects, position_profile='Gaussian')
+
+            it_cortex.append(neuron)
 
         # Get Ground Truth  ---------------------------------------------------------------------
-
+        print("Starting Simulation...")
         set_robot_velocity(client_id, 0.2)
 
         while time.time() < (t_start + t_stop):
@@ -457,9 +475,13 @@ def main():
                     print ("%s, %0.2f, %0.2f, %0.2f"
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3]))
 
+                # Get IT cortex Firing Rates
+                for neuron in it_cortex:
+                    print neuron.firing_rate(ground_truth)
+
     finally:
         # Stop Simulation -------------------------------------------------------------_---------
-        print("Stopping Simulation")
+        print("Stopping Simulation...")
         set_robot_velocity(client_id, 0)
         time.sleep(1)
         result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)

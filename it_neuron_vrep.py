@@ -23,8 +23,11 @@ class CompleteTolerance:
         """
         self.type = 'none'
 
-    def firing_rate_modifier(self, *args, **kwargs):
+    @staticmethod
+    def firing_rate_modifier(*args, **kwargs):
         """Return 1 no matter what inputs are provided"""
+        del args
+        del kwargs
         return 1
 
     def print_parameters(self):
@@ -54,10 +57,10 @@ class Neuron:
             Allowed types = {None (default), gaussian}
 
         :param size_profile         : Type of size tuning.
-            Allowed types = {None(default, 'Lognormal)}
+            Allowed types = {None(default), 'Lognormal)}
 
         :rtype : It neuron instance.
-    """
+        """
         # Selectivity Index
         if not (0 < selectivity_idx <= 1):
             raise Exception("Selectivity %0.2f not within [0, 1]" % self.selectivity)

@@ -97,7 +97,7 @@ class Neuron:
 
         :rtype : Dictionary of {object: rate modification factor}.
         """
-        return({item: np.power(idx, -self.selectivity)
+        return({item: np.power(np.float(idx), -self.selectivity)
                for idx, item in enumerate(ranked_obj_list, start=1)})
 
     def get_ranked_object_list(self):
@@ -151,18 +151,29 @@ class Neuron:
 
         obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in objects])
 
-        # Get position rate modifiers they will by used to weight isolated responses to get the
-        # single clutter responses.
+        # Get position rate modifiers they will by used to weight isolated responses to get a
+        # single clutter response.
         position_weights = self.position.firing_rate_modifier(x_arr, y_arr)
         sum_position_weights = np.sum(position_weights, axis=0)
 
-        rate = self.max_fire_rate * obj_pref_list
+        rate = self.max_fire_rate * obj_pref_list * position_weights
 
-        # Single response to multiple objects
+        # Clutter Response
         # TODO: Add noise to the averaged response based on Zoccolan-2005
-        rate = rate * position_weights / sum_position_weights
+        if 0 != sum_position_weights:
+            rate2 = rate * position_weights / sum_position_weights
+        else:
+            rate2 = 0
 
-        return np.sum(rate, axis=0)
+        # # Debug Code
+        # for ii in np.arange(len(objects)):
+        #     print("Object %s, pref %0.2f,pos_weight %0.2f, isolated FR %0.2f, weighted FR %0.2f"
+        #           % (objects[ii], obj_pref_list[ii], position_weights[ii], rate[ii], rate2[ii]))
+        #
+        # print ("firing rate sum %0.2f" % np.sum(rate2, axis=0))
+        # raw_input('Continue?')
+
+        return np.sum(rate2, axis=0)
 
 
 def main(population_size, list_of_objects):

@@ -481,7 +481,7 @@ def main():
                     print neuron.firing_rate(ground_truth)
 
     finally:
-        # Stop Simulation -------------------------------------------------------------_---------
+        # Stop Simulation -----------------------------------------------------------------------
         print("Stopping Simulation...")
         set_robot_velocity(client_id, 0)
         time.sleep(1)

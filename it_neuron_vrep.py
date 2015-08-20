@@ -45,7 +45,7 @@ class Neuron:
         """
         Create an Inferior Temporal Cortex  neuron instance.
 
-        :param selectivity_idx          : Activity fraction.
+        :param selectivity_idx      : Activity fraction.
             Number of objects neuron responds to divided by total number of objects.
             Defined in [Zoccolan et. al. 2007]. {1 - [sum(Ri/n)^2 / sum(Ri^2/n)] } / (1-1/n).
 
@@ -166,7 +166,7 @@ class Neuron:
             rate2 = 0
 
         # # Debug Code
-        # for ii in np.arange(len(objects)):
+        # for ii in np.arrange(len(objects)):
         #     print("Object %s, pref %0.2f,pos_weight %0.2f, isolated FR %0.2f, weighted FR %0.2f"
         #           % (objects[ii], obj_pref_list[ii], position_weights[ii], rate[ii], rate2[ii]))
         #

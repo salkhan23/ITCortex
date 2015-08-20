@@ -410,7 +410,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
 def main():
 
-    t_stop = 20  # Simulation stop time in seconds
+    t_stop = 25  # Simulation stop time in seconds
     t_start = time.time()
     client_id = connect_vrep(t_stop)
 
@@ -470,6 +470,7 @@ def main():
                 alpha_rad)
 
             if ground_truth:
+                # Print the Ground Truth
                 print("Number of objects %d" % len(ground_truth))
                 for entry in ground_truth:
                     print ("%s, %0.2f, %0.2f, %0.2f"
@@ -490,7 +491,9 @@ def main():
             print("Failed to stop simulation.")
         vrep.simxFinish(-1)
 
+    return it_cortex
+
 
 if __name__ == "__main__":
     plt.ion()
-    main()
+    population = main()

@@ -64,7 +64,7 @@ class Neuron:
         # Selectivity Index
         if not (0 < selectivity_idx <= 1):
             raise Exception("Selectivity %0.2f not within [0, 1]" % self.selectivity)
-        self.selectivity = selectivity_idx
+        self.selectivity = np.float(selectivity_idx)
 
         # Objects
         ranked_object_list = [item.lower() for item in ranked_object_list]
@@ -137,7 +137,8 @@ class Neuron:
         :param ground_truth_list: list of (object_name, x, y, size) entries for all objects in the
         screen. Add more elements to this  list/tuple and update the zip function.
 
-        :rtype :  Return the average firing rate of the neuron given for the specified input(s)
+        :rtype : Return the net average (multi object response) firing rate of the neuron
+                 for the specified input(s)
         """
         if not isinstance(ground_truth_list, list):
             ground_truth_list = [ground_truth_list]

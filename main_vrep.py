@@ -411,7 +411,6 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_stop = 25  # Simulation stop time in seconds
-    t_start = time.time()
     client_id = connect_vrep(t_stop)
 
     try:
@@ -460,7 +459,13 @@ def main():
         print("Starting Simulation...")
         set_robot_velocity(client_id, 0.2)
 
-        while time.time() < (t_start + t_stop):
+        t_start = time.time()
+        t_stop_ms = np.int(t_stop * 1000)
+        t_current_ms = 0
+
+        rates_vs_time_arr = []
+
+        while t_current_ms < t_stop_ms:
             ground_truth = get_ground_truth(
                 client_id,
                 objects_array,
@@ -476,9 +481,16 @@ def main():
                     print ("%s, %0.2f, %0.2f, %0.2f"
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3]))
 
-                # Get IT cortex Firing Rates
-                for neuron in it_cortex:
-                    print neuron.firing_rate(ground_truth)
+                # Get IT cortex firing rates
+                firing_rates = [t_current_ms]
+
+                for n_idx, neuron in enumerate(it_cortex):
+                    firing_rates.append(neuron.firing_rate(ground_truth))
+
+                # print firing_rates
+                rates_vs_time_arr.append(firing_rates)
+
+            t_current_ms = np.int((time.time() - t_start) * 1000)
 
     finally:
         # Stop Simulation -----------------------------------------------------------------------
@@ -491,9 +503,10 @@ def main():
             print("Failed to stop simulation.")
         vrep.simxFinish(-1)
 
-    return it_cortex
+    return it_cortex, rates_vs_time_arr
 
 
 if __name__ == "__main__":
     plt.ion()
-    population = main()
+    population, rates_array = main()
+    rates_array = np.array(rates_array)

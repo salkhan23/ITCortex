@@ -510,3 +510,11 @@ if __name__ == "__main__":
     plt.ion()
     population, rates_array = main()
     rates_array = np.array(rates_array)
+
+    plt.figure()
+    plt.plot(rates_array[:,0], rates_array[:,1], marker='+')
+    plt.plot(rates_array[:,0], rates_array[:,2], marker='.')
+    plt.plot(rates_array[:,0], rates_array[:,3], marker='o')
+    plt.plot(rates_array[:,0], rates_array[:,4], marker='*')
+    plt.plot(rates_array[:,0], rates_array[:,5], marker='d')
+    plt.axis([0,25000,0,100])

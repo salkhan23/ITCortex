@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 
 import ObjectSelectivity.selectivity_fit as selectivity
 import it_neuron_vrep as it
+import population_utils as utils
 
 from vrep.src import vrep
 
@@ -521,7 +522,8 @@ def main():
             ax.set_ylim(0, 100)
             ax.set_yticks([])
 
-        ax_array[-1].set_yticks(np.arange(0, 101, step=20))
+        ax_array[-1].set_yticks(
+            np.arange(0, utils.population_max_firing_rate(it_cortex), step=20))
         ax_array[-1].set_xlabel("Time (ms)")
         ax_array[-1].set_ylabel("Firing Rate")
         fig_rates_vs_time.suptitle("Population Firing Rates ", fontsize=16)

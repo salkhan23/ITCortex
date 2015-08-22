@@ -499,39 +499,40 @@ def main():
             t_current_ms = np.int((time.time() - t_start) * 1000)
 
         # Plot firing rates ---------------------------------------------------------------------
-        print("Plotting Results...")
-        rates_vs_time_arr = np.array(rates_vs_time_arr)
+        if rates_vs_time_arr:
+            print("Plotting Results...")
+            rates_vs_time_arr = np.array(rates_vs_time_arr)
 
-        markers = ['+', '.', '*', '^', 'o', '8', 'd', 's']
+            markers = ['+', '.', '*', '^', 'o', '8', 'd', 's']
 
-        quotient, remainder = divmod(population_size, len(markers))
-        n_subplots = quotient
-        if 0 != remainder:
-            n_subplots += 1
+            quotient, remainder = divmod(population_size, len(markers))
+            n_subplots = quotient
+            if 0 != remainder:
+                n_subplots += 1
 
-        fig_rates_vs_time, ax_array = plt.subplots(n_subplots, sharex=True)
-        fig_rates_vs_time.subplots_adjust(hspace=0.0)
+            fig_rates_vs_time, ax_array = plt.subplots(n_subplots, sharex=True)
+            fig_rates_vs_time.subplots_adjust(hspace=0.0)
 
-        for neuron_idx in np.arange(population_size):
-            marker_idx = neuron_idx % len(markers)
-            subplot_idx = neuron_idx / len(markers)
+            for neuron_idx in np.arange(population_size):
+                marker_idx = neuron_idx % len(markers)
+                subplot_idx = neuron_idx / len(markers)
 
-            ax_array[subplot_idx].plot(
-                rates_vs_time_arr[:, 0],
-                rates_vs_time_arr[:, neuron_idx + 1],
-                marker=markers[marker_idx],
-                label='N%i' % neuron_idx)
+                ax_array[subplot_idx].plot(
+                    rates_vs_time_arr[:, 0],
+                    rates_vs_time_arr[:, neuron_idx + 1],
+                    marker=markers[marker_idx],
+                    label='N%i' % neuron_idx)
 
-        for ax in ax_array:
-            ax.legend(fontsize='5')
-            ax.set_ylim(0, 100)
-            ax.set_yticks([])
+            for ax in ax_array:
+                ax.legend(fontsize='5')
+                ax.set_ylim(0, 100)
+                ax.set_yticks([])
 
-        ax_array[-1].set_yticks(
-            np.arange(0, utils.population_max_firing_rate(it_cortex), step=20))
-        ax_array[-1].set_xlabel("Time (ms)")
-        ax_array[-1].set_ylabel("Firing Rate")
-        fig_rates_vs_time.suptitle("Population Firing Rates ", fontsize=16)
+            ax_array[-1].set_yticks(
+                np.arange(0, utils.population_max_firing_rate(it_cortex), step=20))
+            ax_array[-1].set_xlabel("Time (ms)")
+            ax_array[-1].set_ylabel("Firing Rate")
+            fig_rates_vs_time.suptitle("Population Firing Rates ", fontsize=16)
 
     finally:
         # Stop Simulation -----------------------------------------------------------------------

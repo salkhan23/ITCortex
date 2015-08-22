@@ -544,4 +544,11 @@ def main():
 
 if __name__ == "__main__":
     plt.ion()
-    _ = main()
+    population = main()
+
+    # Population Plots -------------------------------------------------------------------------
+    # Plot the selectivity distribution of the population
+    utils.plot_population_selectivity_distribution(population)
+
+    # Plot Object preferences of population
+    utils.plot_population_obj_preferences(population)

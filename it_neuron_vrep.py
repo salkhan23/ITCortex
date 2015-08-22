@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import ObjectSelectivity.selectivity_fit as selectivity
+# Force reload (compile) IT cortex modules to pick changes not included in cached version.
+reload(selectivity)
 
 
 class CompleteTolerance:
@@ -80,6 +82,7 @@ class Neuron:
 
         elif position_profile.lower() == 'gaussian':
             import PositionTolerance.gaussian_position_profile as gpt
+            reload(gpt)
             self.position = gpt.GaussianPositionProfile(self.selectivity)
 
         # Size Tuning

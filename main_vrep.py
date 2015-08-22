@@ -16,11 +16,16 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 
+from vrep.src import vrep
+
 import ObjectSelectivity.selectivity_fit as selectivity
 import it_neuron_vrep as it
 import population_utils as utils
+# Force reload (compile) IT cortex modules to pick changes not included in cached version.
+reload(selectivity)
+reload(it)
+reload(utils)
 
-from vrep.src import vrep
 
 # VREP CONSTANTS ----------------------------------------------------------------------------------
 
@@ -539,16 +544,17 @@ def main():
             print("Failed to stop simulation.")
         vrep.simxFinish(-1)
 
-    return it_cortex
+    return it_cortex, rates_vs_time_arr
 
 
 if __name__ == "__main__":
     plt.ion()
-    population = main()
+
+    population, rates_array = main()
 
     # Population Plots -------------------------------------------------------------------------
-    # Plot the selectivity distribution of the population
-    utils.plot_population_selectivity_distribution(population)
-
-    # Plot Object preferences of population
-    utils.plot_population_obj_preferences(population)
+    # # Plot the selectivity distribution of the population
+    # utils.plot_population_selectivity_distribution(population)
+    #
+    # # Plot Object preferences of population
+    # utils.plot_population_obj_preferences(population)

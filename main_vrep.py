@@ -443,7 +443,7 @@ def main():
         # Generate IT Population ----------------------------------------------------------------
         print("Initializing IT Population...")
 
-        population_size = 5
+        population_size = 100
         list_of_objects = [obj.name for obj in objects_array]
         it_cortex = []
 
@@ -492,6 +492,40 @@ def main():
 
             t_current_ms = np.int((time.time() - t_start) * 1000)
 
+        # Plot firing rates ---------------------------------------------------------------------
+        print("Plotting Results...")
+        rates_vs_time_arr = np.array(rates_vs_time_arr)
+
+        markers = ['+', '.', '*', '^', 'o', '8', 'd', 's']
+
+        quotient, remainder = divmod(population_size, len(markers))
+        n_subplots = quotient
+        if 0 != remainder:
+            n_subplots += 1
+
+        fig_rates_vs_time, ax_array = plt.subplots(n_subplots, sharex=True)
+        fig_rates_vs_time.subplots_adjust(hspace=0.0)
+
+        for neuron_idx in np.arange(population_size):
+            marker_idx = neuron_idx % len(markers)
+            subplot_idx = neuron_idx / len(markers)
+
+            ax_array[subplot_idx].plot(
+                rates_vs_time_arr[:, 0],
+                rates_vs_time_arr[:, neuron_idx + 1],
+                marker=markers[marker_idx],
+                label='N%i' % neuron_idx)
+
+        for ax in ax_array:
+            ax.legend(fontsize='5')
+            ax.set_ylim(0, 100)
+            ax.set_yticks([])
+
+        ax_array[-1].set_yticks(np.arange(0, 101, step=20))
+        ax_array[-1].set_xlabel("Time (ms)")
+        ax_array[-1].set_ylabel("Firing Rate")
+        fig_rates_vs_time.suptitle("Population Firing Rates ", fontsize=16)
+
     finally:
         # Stop Simulation -----------------------------------------------------------------------
         print("Stopping Simulation...")
@@ -503,18 +537,9 @@ def main():
             print("Failed to stop simulation.")
         vrep.simxFinish(-1)
 
-    return it_cortex, rates_vs_time_arr
+    return it_cortex
 
 
 if __name__ == "__main__":
     plt.ion()
-    population, rates_array = main()
-    rates_array = np.array(rates_array)
-
-    plt.figure()
-    plt.plot(rates_array[:,0], rates_array[:,1], marker='+')
-    plt.plot(rates_array[:,0], rates_array[:,2], marker='.')
-    plt.plot(rates_array[:,0], rates_array[:,3], marker='o')
-    plt.plot(rates_array[:,0], rates_array[:,4], marker='*')
-    plt.plot(rates_array[:,0], rates_array[:,5], marker='d')
-    plt.axis([0,25000,0,100])
+    _ = main()

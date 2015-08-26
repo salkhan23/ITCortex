@@ -457,7 +457,11 @@ def main():
             sel_idx = selectivity.get_selectivity_distribution(1)
             random.shuffle(list_of_objects)
 
-            neuron = it.Neuron(sel_idx, list_of_objects, position_profile='Gaussian')
+            neuron = it.Neuron(sel_idx,
+                               list_of_objects,
+                               position_profile='Gaussian',
+                               size_profile='Lognormal',
+                               )
 
             it_cortex.append(neuron)
 

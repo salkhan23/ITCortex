@@ -63,8 +63,7 @@ class LogNormalSizeProfile:
 
         We assume a peak at 3.4 and a long tail ending at the maximum stimulus size.
         """
-        preferred_size = ss.lognorm.rvs(s=0.80, scale=5.40, size=1) * np.pi / 180.0
-        print preferred_size
+        preferred_size = np.float(ss.lognorm.rvs(s=0.80, scale=5.40, size=1)) * np.pi / 180.0
 
         preferred_size = np.max((preferred_size, self.min_stim_size))
         preferred_size = np.min((preferred_size, self.max_stim_size))

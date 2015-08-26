@@ -83,11 +83,24 @@ class Neuron:
         elif position_profile.lower() == 'gaussian':
             import PositionTolerance.gaussian_position_profile as gpt
             reload(gpt)
+
             self.position = gpt.GaussianPositionProfile(self.selectivity)
 
         # Size Tuning
         if size_profile is None:
             self.size = CompleteTolerance()
+        elif size_profile.lower() == 'lognormal':
+
+            import SizeTolerance.log_normal_size_profile as lst
+            reload(lst)
+
+            # Lognormal size tolerance expects a position tolerance parameter.
+            try:
+                pos_tol = self.position.position_tolerance
+            except:
+                raise Exception("Position Tolerance needed to create log normal size tuning")
+
+            self.size = lst.LogNormalSizeProfile(pos_tol)
 
     def __power_law_selectivity(self, ranked_obj_list):
         """
@@ -146,11 +159,12 @@ class Neuron:
         if not isinstance(ground_truth_list, list):
             ground_truth_list = [ground_truth_list]
 
-        objects, x_arr, y_arr, _ = zip(*ground_truth_list)
+        objects, x_arr, y_arr, size_arr = zip(*ground_truth_list)
 
         objects = list(objects)
         x_arr = np.array(x_arr)
         y_arr = np.array(y_arr)
+        size_arr = np.array(size_arr)
 
         obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in objects])
 
@@ -159,7 +173,10 @@ class Neuron:
         position_weights = self.position.firing_rate_modifier(x_arr, y_arr)
         sum_position_weights = np.sum(position_weights, axis=0)
 
-        rate = self.max_fire_rate * obj_pref_list * position_weights
+        rate = self.max_fire_rate * \
+            obj_pref_list * \
+            position_weights * \
+            self.size.firing_rate_modifier(size_arr)
 
         # Clutter Response
         # TODO: Add noise to the averaged response based on Zoccolan-2005
@@ -190,7 +207,10 @@ def main(population_size, list_of_objects):
         sel_idx = selectivity.get_selectivity_distribution(1)
         random.shuffle(list_of_objects)
 
-        neuron = Neuron(sel_idx, list_of_objects, position_profile='Gaussian')
+        neuron = Neuron(sel_idx,
+                        list_of_objects,
+                        position_profile='Gaussian',
+                        size_profile='Lognormal')
 
         population.append(neuron)
 
@@ -223,16 +243,18 @@ if __name__ == "__main__":
     
     most_pref_object = it_cortex[0].get_ranked_object_list()[0][0]
     rf_center = it_cortex[0].position.rf_center
+    pref_size = it_cortex[0].size.pref_size
 
-    print ("most preferred object %s " % most_pref_object)
-    print ("RF center %s" % rf_center)
+    print("most preferred object %s " % most_pref_object)
+    print("RF center %s" % rf_center)
+    print("Preferred Size %0.4f Radians" % pref_size)
 
     ground_truth = (most_pref_object, rf_center[0], rf_center[1], 0.0)
     print it_cortex[0].firing_rate(ground_truth)
 
     ground_truth = [
         # object,           x,            y,            size,
-        [most_pref_object, rf_center[0], rf_center[1], 0.0],
-        ['monkey',         rf_center[0], rf_center[1], 0.2]]
+        [most_pref_object, rf_center[0], rf_center[1], pref_size],
+        ['monkey',         rf_center[0], rf_center[1], pref_size]]
 
     print it_cortex[0].firing_rate(ground_truth)

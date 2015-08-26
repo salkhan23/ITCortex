@@ -38,6 +38,10 @@ class LogNormalSizeProfile:
         self.pref_size = self.__get_preferred_size()
         self.size_bw = self.__get_size_bandwidth()
 
+        # Internal parameters - Needed for calculating the firing rate
+        self.__log2_mu = np.log2(self.pref_size)
+        self.__log2_sigma = (self.size_bw / 2) / np.sqrt(2 * np.log(2))
+
     def __get_preferred_size(self):
         """
         Generate a preferred (optimum) stimulus size for the neuron based on figure 6+7 of Ito 95.
@@ -91,12 +95,10 @@ class LogNormalSizeProfile:
 
         :param stimulus_size: The distance in Radians between the outer edges along the longest
                               axis of the stimulus.
-        :rtype             : Normalized firing rate
+        :rtype             : Normalized firing rate.
         """
-        log_mu = np.log2(self.pref_size)
-        log_sigma = (self.size_bw / 2) / np.sqrt(2 * np.log(2))
-
-        fire_rate = np.exp(-(np.log2(stimulus_size) - log_mu) ** 2 / (2 * log_sigma ** 2))
+        fire_rate = np.exp(-(np.log2(stimulus_size) - self.__log2_mu) ** 2
+                           / (2 * self.__log2_sigma ** 2))
 
         # Neuron does not respond to stimuli outside its maximum supported size. This allows
         # the different type of tuning profiles as described in the paper.(1) <2 octaves log normal

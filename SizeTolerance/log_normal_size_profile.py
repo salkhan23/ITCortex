@@ -99,12 +99,21 @@ class LogNormalSizeProfile:
                               axis of the stimulus.
         :rtype             : Normalized firing rate.
         """
+
+        zero_safe_guard = 0.0000001
+        if type(stimulus_size) == np.ndarray:
+            stimulus_size[stimulus_size == 0] = zero_safe_guard
+        elif 0 == stimulus_size:
+            stimulus_size = zero_safe_guard
+
         fire_rate = np.exp(-(np.log2(stimulus_size) - self.__log2_mu) ** 2
                            / (2 * self.__log2_sigma ** 2))
 
-        # Neuron does not respond to stimuli outside its maximum supported size. This allows
-        # the different type of tuning profiles as described in the paper.(1) <2 octaves log normal
-        # (2) >5 octaves bandwidth and (3) responds only to the largest stimulus size.
+        # Do not respond to stimuli outside max. supported size. This allows the 3 different
+        # types of tuning profiles as described in the paper.
+        # (1) <2 octaves lognormal,
+        # (2) >5 octaves bandwidth and
+        # (3) Responds only to the largest stimulus size.
         mask_upper = stimulus_size <= self.max_stim_size
         mask_lower = stimulus_size > self.min_stim_size
 
@@ -116,7 +125,7 @@ class LogNormalSizeProfile:
               % (self.min_stim_size, self.max_stim_size))
         print("Preferred Stimulus Size      = %0.4f (Radians)" % self.pref_size)
         print("Size bandwidth               = %0.4f octaves" % self.size_bw)
-        print ("RF Size (area extent of RF) = %0.4f" % self.rf_size)
+        print("RF Size (area extent of RF)  = %0.4f" % self.rf_size)
 
     def plot_size_tolerance(self, axis=None):
         x = np.linspace(0, self.max_stim_size*1.2, num=100)
@@ -139,9 +148,9 @@ if __name__ == "__main__":
     n1.plot_size_tolerance()
 
     stimSize = 3 / 180.0 * np.pi
-    print ("N1 Firing Rate to stimulus of size %0.2f=%0.2f"
+    print ("N1 Firing Rate to stimulus of size %0.4f=%0.2f"
            % (stimSize, n1.firing_rate_modifier(stimSize)))
 
     stimSize = n1.pref_size
-    print ("N1 Firing Rate to stimulus of size %0.2f=%0.2f"
+    print ("N1 Firing Rate to stimulus of size %0.4f=%0.2f"
            % (stimSize, n1.firing_rate_modifier(stimSize)))

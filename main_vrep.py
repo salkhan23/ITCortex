@@ -482,9 +482,9 @@ def main():
 
             if ground_truth:
                 # Print the Ground Truth
-                print("Number of objects %d" % len(ground_truth))
+                print("Time=%d ms, Number of objects %d" % (t_current_ms, len(ground_truth)))
                 for entry in ground_truth:
-                    print ("%s, %0.2f, %0.2f, %0.2f"
+                    print ("\t %s, %0.2f, %0.2f, %0.2f"
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3]))
 
                 # Get IT cortex firing rates
@@ -493,7 +493,6 @@ def main():
                 for n_idx, neuron in enumerate(it_cortex):
                     firing_rates.append(neuron.firing_rate(ground_truth))
 
-                # print firing_rates
                 rates_vs_time_arr.append(firing_rates)
 
             t_current_ms = np.int((time.time() - t_start) * 1000)

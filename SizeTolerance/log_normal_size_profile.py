@@ -92,6 +92,9 @@ class LogNormalSizeProfile:
     def firing_rate_modifier(self, stimulus_size):
         """
         Returns the normalized firing rate of the neuron to stimulus of given size.
+        Note that data fitting (hence the parameters) has been done on the log2 of the data.
+        Therefore we need to take the log2 of the stimulus size and use a normal distribution,
+        with mu = log2(preferred size) and sigma =  (self.size_bw / 2) / np.sqrt(2 * np.log(2)).
 
         :param stimulus_size: The distance in Radians between the outer edges along the longest
                               axis of the stimulus.

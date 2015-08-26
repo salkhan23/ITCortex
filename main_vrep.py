@@ -499,6 +499,8 @@ def main():
             t_current_ms = np.int((time.time() - t_start) * 1000)
 
         # Plot firing rates ---------------------------------------------------------------------
+        population_max_fire_rate = utils.population_max_firing_rate(it_cortex)
+
         if rates_vs_time_arr:
             print("Plotting Results...")
             rates_vs_time_arr = np.array(rates_vs_time_arr)
@@ -525,11 +527,11 @@ def main():
 
             for ax in ax_array:
                 ax.legend(fontsize='5')
-                ax.set_ylim(0, 100)
+                ax.set_ylim(0, population_max_fire_rate + 1)
                 ax.set_yticks([])
 
             ax_array[-1].set_yticks(
-                np.arange(0, utils.population_max_firing_rate(it_cortex), step=20))
+                np.arange(0, population_max_fire_rate + 1, step=20))
             ax_array[-1].set_xlabel("Time (ms)")
             ax_array[-1].set_ylabel("Firing Rate")
             fig_rates_vs_time.suptitle("Population Firing Rates ", fontsize=16)

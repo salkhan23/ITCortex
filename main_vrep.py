@@ -307,7 +307,7 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
     :param object_handle            : vrep handle of object.
     :param reference_frame_handle   : vrep handle of objects whose reference frame to use.
 
-    :return: (x,y,z) co-ordinates of target object.
+    :rtype: (x,y,z) co-ordinates of target object.
     """
     res, position = vrep.simxGetObjectPosition(
         c_id,
@@ -333,6 +333,41 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
     return position
 
 
+def get_object_rotations(c_id, object_handle, reference_frame_handle):
+    """
+    Get euler rotations (alpha, beta, gamma) of object specified by object_handle with respect to
+    the reference frame of object specified by reference_frame_handle.
+
+    :param c_id                     : connected scene id.
+    :param object_handle            : vrep handle of object.
+    :param reference_frame_handle   : vrep handle of objects whose reference frame to use.
+
+    :rtype: (alpha,beta,gamma) co-ordinates of target object.
+    """
+    res, rotations = vrep.simxGetObjectOrientation(
+        c_id,
+        object_handle,
+        reference_frame_handle,
+        vrep.simx_opmode_buffer)
+
+    if res != vrep.simx_return_ok:
+        print('Initializing rotation acquisition function for object handle %d' % object_handle)
+        _, rotations = vrep.simxGetObjectOrientation(
+            c_id,
+            object_handle,
+            reference_frame_handle,
+            vrep.simx_opmode_streaming)
+
+        time.sleep(0.1)  # wait 100ms after initializing
+        _, rotations = vrep.simxGetObjectOrientation(
+            c_id,
+            object_handle,
+            reference_frame_handle,
+            vrep.simx_opmode_buffer)
+
+    return rotations
+
+
 def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_angle):
     """
     Given a list of vrepObjects, Determine if they lie within the projection frame of the vision
@@ -356,7 +391,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
     objects_in_frame = []
 
     for vrep_obj in objects:
-        # Get read world coordinates of object in vision sensor reference frame
+        # Get real world coordinates of object in vision sensor reference frame
         pos_world = get_object_position(
             c_id,
             vrep_obj.handle,
@@ -378,7 +413,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
         camera_cartesian = np.dot(p_mat2, camera_homogeneous)
 
-        # Check if object list within projection frame
+        # Check if object lies within projection frame
         epsilon = 1*10**-3
 
         if ((-1 - epsilon <= camera_cartesian[0] <= 1 + epsilon) and
@@ -405,11 +440,23 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
             size = (np.pi * vrep_obj.max_dimension) / \
                    (2 * ar * distance * np.tan(projection_angle / 2))
 
+            # Get object orientation
+            rot_alpha, rot_beta, rot_gamma = get_object_rotations(
+                c_id,
+                vrep_obj.handle,
+                vis_sen_handle)
+
+            # Add Ground Truth
             objects_in_frame.append([
                 vrep_obj.name,
-                x,                  # x image coordinate in radians
-                y,                  # y coordinates in radians
-                size])              # size in radians
+                x,                  # x image coordinate in Radians
+                y,                  # y coordinates in Radians
+                size,               # size in Radians
+                rot_alpha,          # Rotation around the x-axis in Radians
+                rot_beta,           # Rotation around the y-axis in Radians
+                rot_gamma           # Rotation around the z-axis in Radians.
+            ])
+
 
     return objects_in_frame
 
@@ -488,8 +535,9 @@ def main():
                 # Print the Ground Truth
                 print("Time=%d ms, Number of objects %d" % (t_current_ms, len(ground_truth)))
                 for entry in ground_truth:
-                    print ("\t %s, %0.2f, %0.2f, %0.2f"
-                           % (entry[0].ljust(30), entry[1], entry[2], entry[3]))
+                    print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f"
+                           % (entry[0].ljust(30), entry[1], entry[2], entry[3],
+                              entry[4], entry[5], entry[6]))
 
                 # Get IT cortex firing rates
                 firing_rates = [t_current_ms]

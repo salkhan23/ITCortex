@@ -150,8 +150,9 @@ class Neuron:
         """
         Get Neurons overall firing rate to specified input.
 
-        :param ground_truth_list: list of (object_name, x, y, size) entries for all objects in the
-        screen. Add more elements to this  list/tuple and update the zip function.
+        :param ground_truth_list: list of:
+        [object_name, x, y, size, rot_x, rot_y, rot_z] entries for all objects in the
+        screen. Add more elements to this list and update the zip function.
 
         :rtype : Return the net average (multi object response) firing rate of the neuron
                  for the specified input(s)
@@ -159,7 +160,7 @@ class Neuron:
         if not isinstance(ground_truth_list, list):
             ground_truth_list = [ground_truth_list]
 
-        objects, x_arr, y_arr, size_arr = zip(*ground_truth_list)
+        objects, x_arr, y_arr, size_arr, _, _, _ = zip(*ground_truth_list)
 
         objects = list(objects)
         x_arr = np.array(x_arr)

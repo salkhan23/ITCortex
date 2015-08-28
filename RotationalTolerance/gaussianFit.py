@@ -79,18 +79,17 @@ def quadruple_gaussian(
     return s
 
 
-def main(angles_org, firing_rates_org, initial_est):
-
-    # Plot the original data
+def main(angles_org, firing_rates_org, initial_est, fig_title=''):
     """
-
     :param angles_org:      : Measured (original data) angles.
     :param firing_rates_org : Measured (original)Firing rates for angles specified in angles_org.
     :param initial_est      : List of initial estimates of fit parameters for each component
                               Gaussian function.
+    :param fig_title        : Title of figure. Default = ''.
     """
-    plt.figure('Rotation')
-    plt.title('Rotation Tuning using LSE fitting')
+    # Plot the original data
+    plt.figure()
+    plt.title('Rotation Tuning ' + fig_title)
     plt.xlabel('Angle(Deg)')
     plt.ylabel('Normalized Firing Rate')
     plt.scatter(angles_org, firing_rates_org, label='Original Data')
@@ -110,7 +109,7 @@ def main(angles_org, firing_rates_org, initial_est):
     # REF: (1) http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-
     # parameters-using-the-optimize-leastsq-method-i
     # (2) http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
-    fit_standard_deviation = np.sqrt(np.diag(params_cov_mat))
+    params_err_std_dev = np.sqrt(np.diag(params_cov_mat))
     
     plt.plot(
         angles_arr,
@@ -118,135 +117,222 @@ def main(angles_org, firing_rates_org, initial_est):
         label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f$'
               % (params_fit[0], params_fit[1], params_fit[2]))
 
-    print ("1 Gaussian Fit standard deviation of fit %0.4f" % fit_standard_deviation)
+    print ("1 Gaussian Fit - standard deviation of errors in parameters:" +
+           "\n\tmu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
+           % (params_err_std_dev[0], params_err_std_dev[1], params_err_std_dev[2]))
 
-    ''' ----------------------------------------------------------------------------------
-    Double Gaussian Curve Fitting
-    -----------------------------------------------------------------------------------'''
-    if -255 not in (initial_est[1,:]):
-        pFit2, pCov2 = curve_fit(double_gaussian, angles_org, firing_rates_org,  \
-                         p0 = np.concatenate((initial_est[0,:],initial_est[1,:]), axis=0))
+    # ------------------------------------------------------------------------------------------
+    # Double Gaussian Curve Fitting
+    # ------------------------------------------------------------------------------------------
+    # 255 = initial value of the initialization parameters estimates, if any parameter
+    # in initial_est list = 255, skip estimation for this curve fitting function.
+    if -255 not in (initial_est[1, :]):
+
+        params_fit_g2, params_cov_mat_g2 = curve_fit(
+            double_gaussian,
+            angles_org,
+            firing_rates_org,
+            p0=np.concatenate((initial_est[0, :], initial_est[1, :]), axis=0))
+
+        params_err_std_dev_g2 = np.sqrt(np.diag(params_cov_mat_g2))
         
-        plt.plot(angles_arr, double_gaussian(angles_arr,
-                                        pFit2[0], pFit2[1], pFit2[2], 
-                                        pFit2[3], pFit2[4], pFit2[5]), \
-             label = r'$2\ Gaussian:\ $' +
-             r'$\mu_1=%0.2f,\ \sigma_1=%0.2f,\ A_1=%0.2f\ $' %(pFit2[0],pFit2[1],pFit2[2]) +
-             r'$\mu_2=%0.2f,\ \sigma_2=%0.2f,\ A_2=%0.2f\ $' %(pFit2[3],pFit2[4],pFit2[5]) )
-        
-        print ("2 Gaussian Fit Variances %s" %str(np.diag(pCov2)))  
-        
-    ''' ----------------------------------------------------------------------------------
-    Triple Gaussian Curve Fitting
-    -----------------------------------------------------------------------------------'''
-    if -255 not in (initial_est[2,:]):
-        pFit3, pCov3 = curve_fit(triple_gaussian, angles_org, firing_rates_org,  \
-                         p0 = np.concatenate((initial_est[0,:],
-                                              initial_est[1,:],
-                                              initial_est[2,:]), axis=0))
-        
-        plt.plot(angles_arr, triple_gaussian(angles_arr,
-                                        pFit3[0], pFit3[1], pFit3[2], 
-                                        pFit3[3], pFit3[4], pFit3[5],
-                                        pFit3[6], pFit3[7], pFit3[8]), \
-             label = r'$3\ Gaussian:\ $' +
-             r'$\mu_1=%0.2f,\ \sigma_1=%0.2f,\ A_1=%0.2f\ $' %(pFit3[0],pFit3[1],pFit3[2]) +
-             r'$\mu_2=%0.2f,\ \sigma_2=%0.2f,\ A_2=%0.2f\ $' %(pFit3[3],pFit3[4],pFit3[5]) +
-             r'$\mu_3=%0.2f,\ \sigma_3=%0.2f,\ A_3=%0.2f\ $' %(pFit3[6],pFit3[7],pFit3[8]) )
-        
-        print ("3 Gaussian Fit Variances %s" %str(np.diag(pCov3))) 
+        plt.plot(
+            angles_arr,
+            double_gaussian(angles_arr,
+                            params_fit_g2[0], params_fit_g2[1], params_fit_g2[2],
+                            params_fit_g2[3], params_fit_g2[4], params_fit_g2[5]),
+            label=r'$2\ Gaussian:\ $' +
+                  r'$\mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f\ $'
+                  % (params_fit_g2[0], params_fit_g2[1], params_fit_g2[2]) +
+                  r'$\mu_2=%0.2f,\ \sigma_2=%0.2f,\ Amp_2=%0.2f\ $'
+                  % (params_fit_g2[3], params_fit_g2[4], params_fit_g2[5])
+        )
+
+        print ("2 Gaussian Fit - standard deviation of errors in parameters:" +
+               "\n\t mu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
+               % (params_err_std_dev_g2[0], params_err_std_dev_g2[1], params_err_std_dev_g2[2]) +
+               "\n\t mu_2=%0.4f, sigma_2=%0.4f, Amp_2=%0.4f"
+               % (params_err_std_dev_g2[3], params_err_std_dev_g2[4], params_err_std_dev_g2[5])
+               )
+
+    # -----------------------------------------------------------------------------------------
+    # Triple Gaussian Curve Fitting
+    # -----------------------------------------------------------------------------------------
+    if -255 not in (initial_est[2, :]):
+
+        params_fit_g3, params_cov_mat_g3 = curve_fit(
+            triple_gaussian,
+            angles_org,
+            firing_rates_org,
+            p0=np.concatenate((initial_est[0, :], initial_est[1, :], initial_est[2, :]), axis=0))
+
+        params_err_std_dev_g3 = np.sqrt(np.diag(params_cov_mat_g3))
+
+        plt.plot(
+            angles_arr,
+            triple_gaussian(angles_arr,
+                            params_fit_g3[0], params_fit_g3[1], params_fit_g3[2],
+                            params_fit_g3[3], params_fit_g3[4], params_fit_g3[5],
+                            params_fit_g3[6], params_fit_g3[7], params_fit_g3[8]),
+            label=r'$3\ Gaussian:\ $' +
+                  r'$\mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f\ $'
+                  % (params_fit_g3[0], params_fit_g3[1], params_fit_g3[2]) +
+                  r'$\mu_2=%0.2f,\ \sigma_2=%0.2f,\ Amp_2=%0.2f\ $'
+                  % (params_fit_g3[3], params_fit_g3[4], params_fit_g3[5]) +
+                  r'$\mu_3=%0.2f,\ \sigma_3=%0.2f,\ Amp_3=%0.2f\ $'
+                  % (params_fit_g3[6], params_fit_g3[7], params_fit_g3[8])
+        )
+
+        print ("3 Gaussian Fit - standard deviation of errors in parameters:" +
+               "\n\t mu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
+               % (params_err_std_dev_g3[0], params_err_std_dev_g3[1], params_err_std_dev_g3[2]) +
+               "\n\t mu_2=%0.4f, sigma_2=%0.4f, Amp_2=%0.4f"
+               % (params_err_std_dev_g3[3], params_err_std_dev_g3[4], params_err_std_dev_g3[5]) +
+               "\n\t mu_3=%0.4f, sigma_3=%0.4f, Amp_3=%0.4f"
+               % (params_err_std_dev_g3[6], params_err_std_dev_g3[7], params_err_std_dev_g3[8])
+               )
         
     ''' ----------------------------------------------------------------------------------
     Quadruple Gaussian Curve Fitting
     -----------------------------------------------------------------------------------'''
-    if -255 not in (initial_est[3,:]):
-        pFit4, pCov4 = curve_fit(quadruple_gaussian, angles_org, firing_rates_org,  \
-                         p0 = np.concatenate((initial_est[0,:],
-                                              initial_est[1,:],
-                                              initial_est[2,:],
-                                              initial_est[3,:] ), axis=0))
+    if -255 not in (initial_est[3, :]):
+
+        params_fit_g4, params_cov_mat_g4 = curve_fit(
+            quadruple_gaussian,
+            angles_org,
+            firing_rates_org,
+            p0=np.concatenate((initial_est[0, :],
+                               initial_est[1, :],
+                               initial_est[2, :],
+                               initial_est[3, :]), axis=0)
+        )
+
+        params_err_std_dev_g4 = np.sqrt(np.diag(params_cov_mat_g4))
         
-        plt.plot(angles_arr, quadruple_gaussian(angles_arr,
-                                           pFit4[0], pFit4[1], pFit4[2], 
-                                           pFit4[3], pFit4[4], pFit4[5],
-                                           pFit4[6], pFit4[7], pFit4[8],
-                                           pFit4[9], pFit4[10], pFit4[11]), \
-             label = r'$4\ Gaussian:\ $' +
-             r'$\mu_1=%0.2f,\ \sigma_1=%0.2f,\ A_1=%0.2f\ $' %(pFit4[0],pFit4[1],pFit4[2]) +
-             r'$\mu_2=%0.2f,\ \sigma_2=%0.2f,\ A_2=%0.2f\ $' %(pFit4[3],pFit4[4],pFit4[5]) +
-             r'$\mu_3=%0.2f,\ \sigma_3=%0.2f,\ A_3=%0.2f\ $' %(pFit4[6],pFit4[7],pFit4[8]) +
-             r'$\mu_4=%0.2f,\ \sigma_4=%0.2f,\ A_4=%0.2f\ $' %(pFit4[9],pFit4[10],pFit4[11]) )
-        
-        print ("4 Gaussian Fit Variances %s" %str(np.diag(pCov4)))
-        
+        plt.plot(
+            angles_arr,
+            quadruple_gaussian(angles_arr,
+                               params_fit_g4[0], params_fit_g4[1], params_fit_g4[2],
+                               params_fit_g4[3], params_fit_g4[4], params_fit_g4[5],
+                               params_fit_g4[6], params_fit_g4[7], params_fit_g4[8],
+                               params_fit_g4[9], params_fit_g4[10], params_fit_g4[11]),
+            label=r'$4\ Gaussian:\ $' +
+                  r'$\mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f\ $'
+                  % (params_fit_g4[0], params_fit_g4[1], params_fit_g4[2]) +
+                  r'$\mu_2=%0.2f,\ \sigma_2=%0.2f,\ A_2=%0.2f\ $'
+                  % (params_fit_g4[3], params_fit_g4[4], params_fit_g4[5]) +
+                  r'$\mu_3=%0.2f,\ \sigma_3=%0.2f,\ A_3=%0.2f\ $'
+                  % (params_fit_g4[6], params_fit_g4[7], params_fit_g4[8]) +
+                  r'$\mu_4=%0.2f,\ \sigma_4=%0.2f,\ A_4=%0.2f\ $'
+                  % (params_fit_g4[9], params_fit_g4[10], params_fit_g4[11])
+        )
+
+        print ("4 Gaussian Fit - standard deviation of errors in parameters:" +
+               "\n\t mu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
+               % (params_err_std_dev_g4[0], params_err_std_dev_g4[1], params_err_std_dev_g4[2]) +
+               "\n\t mu_2=%0.4f, sigma_2=%0.4f, Amp_2=%0.4f"
+               % (params_err_std_dev_g4[3], params_err_std_dev_g4[4], params_err_std_dev_g4[5]) +
+               "\n\t mu_3=%0.4f, sigma_3=%0.4f, Amp_3=%0.4f"
+               % (params_err_std_dev_g4[6], params_err_std_dev_g4[7], params_err_std_dev_g4[8]) +
+               "\n\t mu_4=%0.4f, sigma_4=%0.4f, Amp_4=%0.4f"
+               % (params_err_std_dev_g4[9], params_err_std_dev_g4[10], params_err_std_dev_g4[11])
+               )
+
 if __name__ == "__main__":
     # if you call this script from the command line (the shell) it will
     # run the 'main' function
     plt.ion()
-    InitialEst = -255 * np.ones(shape=(4, 3))
-    
+
     # Load extracted data
     with open('rotationalTolerance.pkl', 'rb') as handle:
         data = pickle.load(handle)
-      
-    # Fig 5a, Logothesis, Pauls & Poggio -1995 ------------------------------------------
+
+    # # -------------------------------------------------------------------------------------------
+    title = 'Rotation Tuning - Fig 5a, Logothesis, Pauls & Poggio -1995'
+
     x = data['fig5ax']
     y = data['fig5ay']
     y = y/max(y)
-            
+
+    InitialEst = -255 * np.ones(shape=(4, 3))
     InitialEst[0, :] = [100, 20, 1.00]
     InitialEst[1, :] = [-30, 10, 0.30]
     InitialEst[2, :] = [-90, 20, 0.25]
 
-    main(x, y, InitialEst)
+    print title
+    main(x, y, InitialEst, title)
     plt.legend()
-      
-    # # Fig 5b, logothesis, Pauls & poggio -1995 ------------------------------------------
-    # x = data['fig5bx']
-    # y = data['fig5by']
-    # y = y/max(y)
-    #
-    # InitialEst[0, :] = [-10, 20, 1.00]
-    # InitialEst[1, :] = [180, 30, 0.30]
-    # InitialEst[2, :] = [90,  30, 0.20]
-    # InitialEst[3, :] = [135, 30, 0.20]
-    #
-    # main(x, y, InitialEst)
-    # plt.legend()
-      
-#    # Fig 5c, logothesis, Pauls & poggio -1995 -------------------------------------------
-#    x = data['fig5cx']
-#    y = data['fig5cy']
-#    y = y/max(y)
-#    
-#    InitialEst[0,:] = [     120,     30,    1.00]
-#    InitialEst[1,:] = [     -60,     30,    0.40]
-#    InitialEst[2,:] = [     -145,    20,    0.20]
-   
-    # Fig 5d, logothesis, Pauls & poggio -1995 -------------------------------------------
-#    x = data['fig5dx']
-#    y = data['fig5dy']
-#    y = y/max(y)
-#    
-#    InitialEst[0,:] = [     -90,     30,    1.00]
-#    InitialEst[1,:] = [     -30,     60,    0.25]
 
-#    # Fig 5d, logothesis, Pauls & poggio -1995 -------------------------------------------
-#    x = data['fig5ex']
-#    y = data['fig5ey']
-#    y = y/max(y)
-#    
-#    InitialEst[0,:] = [     -70,     100,   1.00]
-#    InitialEst[1,:] = [     -10,     80,    0.90]
-#    InitialEst[2,:] = [     170,     80,    0.80]
+    # -------------------------------------------------------------------------------------------
+    title = 'Fig 5b, logothesis, Pauls & poggio -1995'
+    x = data['fig5bx']
+    y = data['fig5by']
+    y = y/max(y)
 
-#    # Fig 8b, Hung, Carlson & Conner -2012 -------------------------------------------
-#    x = data['hungFig8bx']
-#    y = data['hungFig8by']
-#    y = y/max(y)
-#    
-#    InitialEst[0,:] = [      70,     10,   1.00]
-#    InitialEst[1,:] = [       0,     40,   0.70]
+    InitialEst = -255 * np.ones(shape=(4, 3))
+    InitialEst[0, :] = [-10, 20, 1.00]
+    InitialEst[1, :] = [180, 30, 0.30]
+    InitialEst[2, :] = [90,  30, 0.20]
+    InitialEst[3, :] = [135, 30, 0.20]
 
-    # main(x, y, InitialEst)
-    # plt.legend()
+    print title
+    main(x, y, InitialEst, title)
+    plt.legend()
+
+    # -------------------------------------------------------------------------------------------
+    title = 'Fig 5c, logothesis, Pauls & poggio -1995'
+    x = data['fig5cx']
+    y = data['fig5cy']
+    y = y/max(y)
+
+    InitialEst = -255 * np.ones(shape=(4, 3))
+    InitialEst[0, :] = [120,  30, 1.00]
+    InitialEst[1, :] = [-60,  30, 0.40]
+    InitialEst[2, :] = [-145, 20, 0.20]
+
+    print title
+    main(x, y, InitialEst, title)
+    plt.legend()
+
+    # -------------------------------------------------------------------------------------------
+    title = 'Fig 5d, logothesis, Pauls & poggio -1995'
+    x = data['fig5dx']
+    y = data['fig5dy']
+    y = y/max(y)
+
+    InitialEst = -255 * np.ones(shape=(4, 3))
+    InitialEst[0, :] = [-90, 30, 1.00]
+    InitialEst[1, :] = [-30, 60, 0.25]
+
+    print title
+    main(x, y, InitialEst, title)
+    plt.legend()
+
+    # -------------------------------------------------------------------------------------------
+    title = 'Fig 5d, logothesis, Pauls & poggio -1995'
+    x = data['fig5ex']
+    y = data['fig5ey']
+    y = y/max(y)
+
+    InitialEst = -255 * np.ones(shape=(4, 3))
+    InitialEst[0, :] = [-70, 100, 1.00]
+    InitialEst[1, :] = [-10, 80,  0.90]
+    InitialEst[2, :] = [170, 80,  0.80]
+
+    print title
+    main(x, y, InitialEst, title)
+    plt.legend()
+
+    # -------------------------------------------------------------------------------------------
+    title = 'Fig 8b, Hung, Carlson & Conner -2012'
+    x = data['hungFig8bx']
+    y = data['hungFig8by']
+    y = y/max(y)
+
+    InitialEst = -255 * np.ones(shape=(4, 3))
+    InitialEst[0, :] = [70, 10, 1.00]
+    InitialEst[1, :] = [0,  40, 0.70]
+
+    print title
+    main(x, y, InitialEst, title)
+    plt.legend()

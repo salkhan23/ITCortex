@@ -82,6 +82,13 @@ def quadruple_gaussian(
 def main(angles_org, firing_rates_org, initial_est):
 
     # Plot the original data
+    """
+
+    :param angles_org:      : Measured (original data) angles.
+    :param firing_rates_org : Measured (original)Firing rates for angles specified in angles_org.
+    :param initial_est      : List of initial estimates of fit parameters for each component
+                              Gaussian function.
+    """
     plt.figure('Rotation')
     plt.title('Rotation Tuning using LSE fitting')
     plt.xlabel('Angle(Deg)')
@@ -90,23 +97,29 @@ def main(angles_org, firing_rates_org, initial_est):
     
     angles_arr = np.arange(-180, 180, step=1)
     
-    ''' ----------------------------------------------------------------------------------
-    Single Gaussian Curve Fitting
-    -----------------------------------------------------------------------------------'''
+    # -------------------------------------------------------------------------------------------
+    # Single Gaussian Curve Fit
+    # -------------------------------------------------------------------------------------------
     params_fit, params_cov_mat = curve_fit(
         single_gaussian,
         angles_org,
         firing_rates_org,
         p0=initial_est[0, :])
+
+    # Standard deviation of fit parameters:
+    # REF: (1) http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-
+    # parameters-using-the-optimize-leastsq-method-i
+    # (2) http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+    fit_standard_deviation = np.sqrt(np.diag(params_cov_mat))
     
     plt.plot(
         angles_arr,
         single_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]),
-        label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ A_1=%0.2f$'
+        label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f$'
               % (params_fit[0], params_fit[1], params_fit[2]))
-    
-    print ("1 Gaussian Fit Variances %s" % str(np.diag(params_cov_mat)))
-    
+
+    print ("1 Gaussian Fit standard deviation of fit %0.4f" % fit_standard_deviation)
+
     ''' ----------------------------------------------------------------------------------
     Double Gaussian Curve Fitting
     -----------------------------------------------------------------------------------'''

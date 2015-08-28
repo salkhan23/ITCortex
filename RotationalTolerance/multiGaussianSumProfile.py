@@ -110,7 +110,7 @@ class multiGaussianSumProfile():
 
 
 def main():
-    import gaussianFit as gF
+    import lse_gaussian_mixture_fit as gF
     import pickle
     
     # Load Extracted data

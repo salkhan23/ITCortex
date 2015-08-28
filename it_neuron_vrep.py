@@ -160,6 +160,13 @@ class Neuron:
         if not isinstance(ground_truth_list, list):
             ground_truth_list = [ground_truth_list]
 
+        # In the VREP scene, rotations are specified with respect to the world reference
+        # frame. Rotations in the extracted ground truth are with respect to the vision sensor
+        # coordinate system and include the rotations of the vision sensor. Currently the vision
+        # sensor is rotated by +90 degrees around the y (beta) & z (gamma) axes.
+        # The IT cortex rotation tuning profile is around the vertical axis which is defined
+        # as the y-axis of the vision sensor. Rotating the object (in real world coordinates)
+        # around the x-axis results in rotations around the y axis of the vision sensor.
         objects, x_arr, y_arr, size_arr, _, _, _ = zip(*ground_truth_list)
 
         objects = list(objects)

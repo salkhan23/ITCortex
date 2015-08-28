@@ -244,16 +244,16 @@ def main():
        
         #Plot Multi-Gaussian sum fit
         if (idx == 0):
-            plt.plot(anglesAll, gF.singleGaussian(anglesAll, 
+            plt.plot(anglesAll, gF.single_gaussian(anglesAll,
                      x1Params['muArray'], x1Params['sigmaArray'], x1Params['ampArray']),
                      label = 'Multi-Gaussian Fit') 
         elif (idx == 1):
-            plt.plot(anglesAll, gF.doubleGaussian(anglesAll,
+            plt.plot(anglesAll, gF.double_gaussian(anglesAll,
                      x2Params['muArray'][0], x2Params['sigmaArray'][0], x2Params['ampArray'][0], 
                      x2Params['muArray'][1], x2Params['sigmaArray'][1], x2Params['ampArray'][1]),
                      label = 'Multi-Gaussian Fit')
         elif (idx == 2):
-            plt.plot(anglesAll, gF.tripleGaussian(anglesAll,
+            plt.plot(anglesAll, gF.triple_gaussian(anglesAll,
                      x3Params['muArray'][0], x3Params['sigmaArray'][0], x3Params['ampArray'][0], 
                      x3Params['muArray'][1], x3Params['sigmaArray'][1], x3Params['ampArray'][1],
                      x3Params['muArray'][2], x3Params['sigmaArray'][2], x3Params['ampArray'][2]),

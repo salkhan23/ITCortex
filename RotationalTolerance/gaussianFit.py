@@ -15,75 +15,106 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-def correctedRotation(x, mu):
-    """Given an input rotation angle [-180,180), return corrected angle to ensure
-    such that angle lies within mu-180 and mu+180.
+
+def corrected_rotation(x_arr, mu):
     """
-    if (x < (mu-180)):
-        x+=360
-    elif (x> mu+180):
-        x-=360
-    return(x)
-    
-def singleGaussian(xArray, mu, sigma, A):
-    xCorrected = np.array([correctedRotation(x,mu) for x in xArray])
-    return(A*np.exp( -(xCorrected-mu)**2/(2.0*sigma**2) ))
+    Given an input rotation angle [-180,180), return corrected angle to ensure
+    such that angle lies within mu-180 and mu+180.
+    :param x_arr:
+    :param mu:
 
-def doubleGaussian(xArray, 
-                   mu1, sigma1, A1,
-                   mu2, sigma2, A2):
-    S  = singleGaussian(xArray, mu1, sigma1, A1)
-    S += singleGaussian(xArray, mu2, sigma2, A2)
-    return(S)
+    :rtype :
+    """
+    if x_arr < (mu-180):
+        x_arr += 360
+    elif x_arr > mu+180:
+        x_arr -= 360
 
-def tripleGaussian(xArray, 
-                   mu1, sigma1, A1,
-                   mu2, sigma2, A2,
-                   mu3, sigma3, A3):
-    S  = singleGaussian(xArray, mu1, sigma1, A1)
-    S += singleGaussian(xArray, mu2, sigma2, A2)
-    S += singleGaussian(xArray, mu3, sigma3, A3)
-    return(S)
+    return x_arr
 
-def quadrupleGaussian(xArray, 
-                      mu1, sigma1, A1,
-                      mu2, sigma2, A2,
-                      mu3, sigma3, A3,
-                      mu4, sigma4, A4):
-    S  = singleGaussian(xArray, mu1, sigma1, A1)
-    S += singleGaussian(xArray, mu2, sigma2, A2)
-    S += singleGaussian(xArray, mu3, sigma3, A3)
-    S += singleGaussian(xArray, mu4, sigma4, A4)
-    return(S)
-    
-def main(x, y, InitialEst):
+
+def single_gaussian(angles, mu, sigma, amp):
+
+    x_corrected = np.array([corrected_rotation(angle, mu) for angle in angles])
+
+    return amp * np.exp(-(x_corrected - mu)**2/(2.0 * sigma**2))
+
+
+def double_gaussian(
+        angles,
+        mu1, sigma1, amp1,
+        mu2, sigma2, amp2):
+
+    s = single_gaussian(angles, mu1, sigma1, amp1)
+    s += single_gaussian(angles, mu2, sigma2, amp2)
+
+    return s
+
+
+def triple_gaussian(
+        angles,
+        mu1, sigma1, amp1,
+        mu2, sigma2, amp2,
+        mu3, sigma3, amp3):
+
+    s = single_gaussian(angles, mu1, sigma1, amp1)
+    s += single_gaussian(angles, mu2, sigma2, amp2)
+    s += single_gaussian(angles, mu3, sigma3, amp3)
+
+    return s
+
+
+def quadruple_gaussian(
+        angles,
+        mu1, sigma1, amp1,
+        mu2, sigma2, amp2,
+        mu3, sigma3, amp3,
+        mu4, sigma4, amp4):
+
+    s = single_gaussian(angles, mu1, sigma1, amp1)
+    s += single_gaussian(angles, mu2, sigma2, amp2)
+    s += single_gaussian(angles, mu3, sigma3, amp3)
+    s += single_gaussian(angles, mu4, sigma4, amp4)
+
+    return s
+
+
+def main(angles_org, firing_rates_org, initial_est):
+
+    # Plot the original data
     plt.figure('Rotation')
-    plt.title('Rotation Tuning using LSE fitting (scipy.optimize.curve_fit)')
+    plt.title('Rotation Tuning using LSE fitting')
     plt.xlabel('Angle(Deg)')
     plt.ylabel('Normalized Firing Rate')
-    plt.scatter(x, y, label = 'Original Data')
+    plt.scatter(angles_org, firing_rates_org, label='Original Data')
     
-    angles = np.arange(-180, 180, step=1)
+    angles_arr = np.arange(-180, 180, step=1)
     
     ''' ----------------------------------------------------------------------------------
     Single Gaussian Curve Fitting
     -----------------------------------------------------------------------------------'''
-    pFit, pCov = curve_fit(singleGaussian, x, y, p0 = InitialEst[0,:])
+    params_fit, params_cov_mat = curve_fit(
+        single_gaussian,
+        angles_org,
+        firing_rates_org,
+        p0=initial_est[0, :])
     
-    plt.plot(angles, singleGaussian(angles, pFit[0], pFit[1], pFit[2]), \
-       label = r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ A_1=%0.2f$' \
-       %(pFit[0], pFit[1], pFit[2])) 
+    plt.plot(
+        angles_arr,
+        single_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]),
+        label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ A_1=%0.2f$'
+              % (params_fit[0], params_fit[1], params_fit[2]))
     
-    print ("1 Gaussian Fit Variances %s" %str(np.diag(pCov)))
+    print ("1 Gaussian Fit Variances %s" % str(np.diag(params_cov_mat)))
     
     ''' ----------------------------------------------------------------------------------
     Double Gaussian Curve Fitting
     -----------------------------------------------------------------------------------'''
-    if -255 not in (InitialEst[1,:]):
-        pFit2, pCov2 = curve_fit(doubleGaussian, x, y,  \
-                         p0 = np.concatenate((InitialEst[0,:],InitialEst[1,:]), axis=0))
+    if -255 not in (initial_est[1,:]):
+        pFit2, pCov2 = curve_fit(double_gaussian, angles_org, firing_rates_org,  \
+                         p0 = np.concatenate((initial_est[0,:],initial_est[1,:]), axis=0))
         
-        plt.plot(angles, doubleGaussian(angles, 
+        plt.plot(angles_arr, double_gaussian(angles_arr,
                                         pFit2[0], pFit2[1], pFit2[2], 
                                         pFit2[3], pFit2[4], pFit2[5]), \
              label = r'$2\ Gaussian:\ $' +
@@ -95,13 +126,13 @@ def main(x, y, InitialEst):
     ''' ----------------------------------------------------------------------------------
     Triple Gaussian Curve Fitting
     -----------------------------------------------------------------------------------'''
-    if -255 not in (InitialEst[2,:]):
-        pFit3, pCov3 = curve_fit(tripleGaussian, x, y,  \
-                         p0 = np.concatenate((InitialEst[0,:], 
-                                              InitialEst[1,:], 
-                                              InitialEst[2,:]), axis=0))
+    if -255 not in (initial_est[2,:]):
+        pFit3, pCov3 = curve_fit(triple_gaussian, angles_org, firing_rates_org,  \
+                         p0 = np.concatenate((initial_est[0,:],
+                                              initial_est[1,:],
+                                              initial_est[2,:]), axis=0))
         
-        plt.plot(angles, tripleGaussian(angles, 
+        plt.plot(angles_arr, triple_gaussian(angles_arr,
                                         pFit3[0], pFit3[1], pFit3[2], 
                                         pFit3[3], pFit3[4], pFit3[5],
                                         pFit3[6], pFit3[7], pFit3[8]), \
@@ -115,14 +146,14 @@ def main(x, y, InitialEst):
     ''' ----------------------------------------------------------------------------------
     Quadruple Gaussian Curve Fitting
     -----------------------------------------------------------------------------------'''
-    if -255 not in (InitialEst[3,:]):
-        pFit4, pCov4 = curve_fit(quadrupleGaussian, x, y,  \
-                         p0 = np.concatenate((InitialEst[0,:], 
-                                              InitialEst[1,:], 
-                                              InitialEst[2,:],
-                                              InitialEst[3,:] ), axis=0))
+    if -255 not in (initial_est[3,:]):
+        pFit4, pCov4 = curve_fit(quadruple_gaussian, angles_org, firing_rates_org,  \
+                         p0 = np.concatenate((initial_est[0,:],
+                                              initial_est[1,:],
+                                              initial_est[2,:],
+                                              initial_est[3,:] ), axis=0))
         
-        plt.plot(angles, quadrupleGaussian(angles, 
+        plt.plot(angles_arr, quadruple_gaussian(angles_arr,
                                            pFit4[0], pFit4[1], pFit4[2], 
                                            pFit4[3], pFit4[4], pFit4[5],
                                            pFit4[6], pFit4[7], pFit4[8],
@@ -139,30 +170,36 @@ if __name__ == "__main__":
     # if you call this script from the command line (the shell) it will
     # run the 'main' function
     plt.ion()
-    InitialEst = -255* np.ones(shape =(4,3))
+    InitialEst = -255 * np.ones(shape=(4, 3))
     
     # Load extracted data
     with open('rotationalTolerance.pkl', 'rb') as handle:
         data = pickle.load(handle)
       
-    # Fig 5a, logothesis, Pauls & poggio -1995 ------------------------------------------
+    # Fig 5a, Logothesis, Pauls & Poggio -1995 ------------------------------------------
     x = data['fig5ax']
     y = data['fig5ay']
     y = y/max(y)
             
-    InitialEst[0,:] = [     100,     20,    1.00]
-    InitialEst[1,:] = [     -30,     10,    0.30]
-    InitialEst[2,:] = [     -90,     20,    0.25]
+    InitialEst[0, :] = [100, 20, 1.00]
+    InitialEst[1, :] = [-30, 10, 0.30]
+    InitialEst[2, :] = [-90, 20, 0.25]
+
+    main(x, y, InitialEst)
+    plt.legend()
       
-#    # Fig 5b, logothesis, Pauls & poggio -1995 ------------------------------------------
-#    x = data['fig5bx']
-#    y = data['fig5by']
-#    y = y/max(y)
-#    
-#    InitialEst[0,:] = [     -10,     20,    1.00]
-#    InitialEst[1,:] = [     180,     30,    0.30]
-#    InitialEst[2,:] = [      90,     30,    0.20]
-#    InitialEst[3,:] = [      135,    30,    0.20]
+    # # Fig 5b, logothesis, Pauls & poggio -1995 ------------------------------------------
+    # x = data['fig5bx']
+    # y = data['fig5by']
+    # y = y/max(y)
+    #
+    # InitialEst[0, :] = [-10, 20, 1.00]
+    # InitialEst[1, :] = [180, 30, 0.30]
+    # InitialEst[2, :] = [90,  30, 0.20]
+    # InitialEst[3, :] = [135, 30, 0.20]
+    #
+    # main(x, y, InitialEst)
+    # plt.legend()
       
 #    # Fig 5c, logothesis, Pauls & poggio -1995 -------------------------------------------
 #    x = data['fig5cx']
@@ -198,16 +235,5 @@ if __name__ == "__main__":
 #    InitialEst[0,:] = [      70,     10,   1.00]
 #    InitialEst[1,:] = [       0,     40,   0.70]
 
-
-
-
-
-    
-    main(x, y, InitialEst)
-    plt.legend()
-    
-    
-    
-    
-    
-    
+    # main(x, y, InitialEst)
+    # plt.legend()

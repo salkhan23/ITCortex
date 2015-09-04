@@ -257,12 +257,12 @@ if __name__ == "__main__":
     print("RF center %s" % rf_center)
     print("Preferred Size %0.4f Radians" % pref_size)
 
-    ground_truth = (most_pref_object, rf_center[0], rf_center[1], 0.0)
+    ground_truth = (most_pref_object, rf_center[0], rf_center[1], 0.0, 0.0, 0.0, 0.0)
     print it_cortex[0].firing_rate(ground_truth)
 
     ground_truth = [
-        # object,           x,            y,            size,
-        [most_pref_object, rf_center[0], rf_center[1], pref_size],
-        ['monkey',         rf_center[0], rf_center[1], pref_size]]
+        # object,           x,            y,            size,     rot_x, rot_y, rot_z
+        [most_pref_object, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0],
+        ['monkey',         rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0]]
 
     print it_cortex[0].firing_rate(ground_truth)

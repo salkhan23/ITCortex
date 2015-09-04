@@ -457,7 +457,6 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
                 rot_gamma           # Rotation around the z-axis in Radians.
             ])
 
-
     return objects_in_frame
 
 
@@ -513,7 +512,7 @@ def main():
             it_cortex.append(neuron)
 
         # Get Ground Truth  ---------------------------------------------------------------------
-        print("Starting Simulation...")
+        print("Starting Data collection...")
         set_robot_velocity(client_id, 0.2)
 
         t_start = time.time()

@@ -101,10 +101,7 @@ class LogNormalSizeProfile:
         """
 
         zero_safe_guard = 0.0000001
-        if type(stimulus_size) == np.ndarray:
-            stimulus_size[stimulus_size == 0] = zero_safe_guard
-        elif 0 == stimulus_size:
-            stimulus_size = zero_safe_guard
+        stimulus_size = np.maximum(stimulus_size, zero_safe_guard)
 
         fire_rate = np.exp(-(np.log2(stimulus_size) - self.__log2_mu) ** 2
                            / (2 * self.__log2_sigma ** 2))

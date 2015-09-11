@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import random
 import os
 
-from ObjectSelectivity import selectivity_fit as SelFit
+from ObjectSelectivity import activity_fraction_fit as SelFit
 from PositionTolerance import rfCenterFit as RFCenter
 
 

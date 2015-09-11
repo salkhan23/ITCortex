@@ -5,7 +5,7 @@ Created on Fri September 11 9:26:45 2015
 @author: s362khan
 """
 
-import selectivity_fit as selectivity
+import activity_fraction_fit as selectivity
 import random
 import numpy as np
 import matplotlib.pyplot as plt

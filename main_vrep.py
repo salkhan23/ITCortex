@@ -17,11 +17,9 @@ import matplotlib.pyplot as plt
 
 from vrep.src import vrep
 
-import ObjectSelectivity.selectivity_fit as selectivity
 import it_neuron_vrep as it
 import population_utils as utils
 # Force reload (compile) IT cortex modules to pick changes not included in cached version.
-reload(selectivity)
 reload(it)
 reload(utils)
 

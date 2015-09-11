@@ -28,7 +28,7 @@ def plot_population_selectivity_distribution(it_population, axis=None):
     if axis is None:
         f, axis = plt.subplots()
 
-    selectivity_arr = [n.selectivity for n in it_population]
+    selectivity_arr = [n.selectivity.sparseness_activity_fraction for n in it_population]
 
     axis.hist(selectivity_arr, bins=np.arange(1, step=0.1))
     axis.set_ylabel('Frequency')
@@ -42,7 +42,7 @@ def plot_population_obj_preferences(it_population, axis=None):
         f, axis = plt.subplots()
 
     for n in it_population:
-        lst = n.get_ranked_object_list()
+        lst = n.selectivity.get_ranked_object_list()
         objs, rate = zip(*lst)
         x = np.arange(len(rate))
         axis.plot(x, rate)

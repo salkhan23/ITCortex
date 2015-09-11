@@ -92,7 +92,7 @@ def main():
     # Population Distributions
     # ---------------------------------------------------------------------------------------------
     # Selectivity
-    selectivity_dist = SelFit.get_selectivity_distribution(population_size)
+    selectivity_dist = SelFit.get_activity_fraction_sparseness(population_size)
 #     title = 'Population Selectivity Distribution'
 #     plt.figure(title)
 #     plt.title(title)

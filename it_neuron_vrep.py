@@ -4,13 +4,12 @@
 
 @author: s362khan
 """
-import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-import ObjectSelectivity.selectivity_fit as selectivity
+import population_utils as utils
 # Force reload (compile) IT cortex modules to pick changes not included in cached version.
-reload(selectivity)
+reload(utils)
 
 
 class CompleteTolerance:
@@ -39,17 +38,16 @@ class CompleteTolerance:
 class Neuron:
     def __init__(
             self,
-            selectivity_idx,
             object_list,
+            selectivity_profile='power_law',
             max_fire_rate=100,
             position_profile=None,
             size_profile=None):
         """
         Create an Inferior Temporal Cortex  neuron instance.
 
-        :param selectivity_idx      : Activity fraction.
-            Number of objects neuron responds to divided by total number of objects.
-            Defined in [Zoccolan et. al. 2007]. {1 - [sum(Ri/n)^2 / sum(Ri^2/n)] } / (1-1/n).
+        :param selectivity_profile  : Type of object selectivity tuning.
+            Allowed types: {power_law(Default)}
 
         :param object_list          : List of objects in scene.
 
@@ -63,16 +61,15 @@ class Neuron:
 
         :rtype : It neuron instance.
         """
-        # Selectivity Index
-        if not (0 < selectivity_idx <= 1):
-            raise Exception("Selectivity %0.2f not within [0, 1]" % self.selectivity)
-        self.selectivity = np.float(selectivity_idx)
 
-        # Objects
-        object_list = [item.lower() for item in object_list]
-        random.shuffle(object_list)  # Randomize the list of objects the neuron responds to.
-        self.objects = self.__power_law_selectivity(object_list)
-        self.selectivity_type = 'power_law'
+        # Selectivity Profile
+        if selectivity_profile.lower() == 'power_law':
+            from ObjectSelectivity import power_law_selectivity_profile as pls
+            reload(pls)  # Force recompile to pick up any new changes not in cached module.
+
+            self.selectivity = pls.PowerLawSelectivity(object_list)
+        else:
+            raise Exception("Invalid selectivity profile:%s" % selectivity_profile)
 
         # Max Firing Rate
         self.max_fire_rate = max_fire_rate
@@ -85,7 +82,8 @@ class Neuron:
             import PositionTolerance.gaussian_position_profile as gpt
             reload(gpt)
 
-            self.position = gpt.GaussianPositionProfile(self.selectivity)
+            self.position = gpt.GaussianPositionProfile(
+                self.selectivity.sparseness_activity_fraction)
 
         # Size Tuning
         if size_profile is None:
@@ -103,41 +101,12 @@ class Neuron:
 
             self.size = lst.LogNormalSizeProfile(pos_tol)
 
-    def __power_law_selectivity(self, ranked_obj_list):
-        """
-        Object preference normalized rate (rate modifier) modeled as a power law distribution.
-            Rate Modifier = objectIdx^(-selectivity)
-
-        REF: Zoccolan et.al. 2007 - Fig2
-
-        :param ranked_obj_list: Ranked list of neurons preferred objects.
-
-        :rtype : Dictionary of {object: rate modification factor}.
-        """
-        return({item: np.power(np.float(idx), -self.selectivity)
-               for idx, item in enumerate(ranked_obj_list, start=1)})
-
-    def get_ranked_object_list(self):
-        """ Return neurons rank list of objects and rate modification factors """
-        return sorted(self.objects.items(), key=lambda item: item[1], reverse=True)
-
-    def print_object_list(self):
-        """ Print a ranked list of neurons object preferences """
-        print("Object Preferences           :")
-
-        max_name_length = np.max([len(name) for name in self.objects.keys()])
-
-        lst = self.get_ranked_object_list()
-        for obj, rate in lst:
-            print ("\t%s : %0.4f" % (obj.ljust(max_name_length), rate))
-
     def print_properties(self):
         """ Print all parameters of neuron """
         print ("*"*20 + " Neuron Properties " + "*"*20)
-        print("Neuron Selectivity           : %0.2f" % self.selectivity)
-        print("Selectivity Profile          : %s" % self.selectivity_type)
-        print("Max Firing Rate (spikes/s)   : %i" % self.max_fire_rate)
-        self.print_object_list()
+
+        print("SELECTIVITY TOLERANCE %s" % ('-'*27))
+        self.selectivity.print_parameters()
 
         print("POSITION TOLERANCE %s" % ('-'*30))
         self.position.print_parameters()
@@ -175,7 +144,7 @@ class Neuron:
         y_arr = np.array(y_arr)
         size_arr = np.array(size_arr)
 
-        obj_pref_list = np.array([self.objects.get(obj.lower(), 0) for obj in objects])
+        obj_pref_list = np.array([self.selectivity.objects.get(obj.lower(), 0) for obj in objects])
 
         # Get position rate modifiers they will by used to weight isolated responses to get a
         # single clutter response.
@@ -213,10 +182,8 @@ def main(population_size, list_of_objects):
     population = []
 
     for _ in np.arange(population_size):
-        sel_idx = selectivity.get_selectivity_distribution(1)
-
-        neuron = Neuron(sel_idx,
-                        list_of_objects,
+        neuron = Neuron(list_of_objects,
+                        selectivity_profile='power_law',
                         position_profile='Gaussian',
                         size_profile='Lognormal')
 
@@ -249,7 +216,7 @@ if __name__ == "__main__":
     # TODO: Temporary. Validation code.
     it_cortex[0].print_properties()
     
-    most_pref_object = it_cortex[0].get_ranked_object_list()[0][0]
+    most_pref_object = it_cortex[0].selectivity.get_ranked_object_list()[0][0]
     rf_center = it_cortex[0].position.rf_center
     pref_size = it_cortex[0].size.pref_size
 
@@ -266,3 +233,10 @@ if __name__ == "__main__":
         ['monkey',         rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0]]
 
     print it_cortex[0].firing_rate(ground_truth)
+
+    # Population Plots -------------------------------------------------------------------------
+    # Plot the selectivity distribution of the population
+    utils.plot_population_selectivity_distribution(it_cortex)
+
+    # Plot Object preferences of population
+    utils.plot_population_obj_preferences(it_cortex)

@@ -13,7 +13,6 @@ Created on Mon Aug  3 10:15:01 2015
 import sys
 import time
 import numpy as np
-import random
 import matplotlib.pyplot as plt
 
 from vrep.src import vrep
@@ -500,10 +499,8 @@ def main():
         it_cortex = []
 
         for _ in np.arange(population_size):
-            sel_idx = selectivity.get_selectivity_distribution(1)
-
-            neuron = it.Neuron(sel_idx,
-                               list_of_objects,
+            neuron = it.Neuron(list_of_objects,
+                               selectivity_profile='power_law',
                                position_profile='Gaussian',
                                size_profile='Lognormal',
                                )

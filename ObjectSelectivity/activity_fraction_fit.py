@@ -15,7 +15,7 @@ def get_activity_fraction_sparseness(n=1):
     REF: Zoccolan et. al. 2007 - Trade-Off between Object Selectivity and Tolerance in Monkey
     Inferotemporal Cortex.
 
-    The selectivity of each neuron was quantified by the activity fraction sparseness of its
+    The selectivity (sparseness) of each neuron was quantified by the activity fraction of its
     response (Rolls and Tovee, 1995a; Vinje and Gallant, 2000; Olshausen and Field, 2004):
 
         S =  {1 - [(sum(Ri/n))^2 / sum(Ri^2/n)] / [1 - (1/n)]

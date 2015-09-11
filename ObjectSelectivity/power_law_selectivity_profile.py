@@ -14,6 +14,18 @@ import matplotlib.pyplot as plt
 class PowerLawSelectivity:
 
     def __init__(self, list_of_objects):
+        """
+        Models object selectivity as a power law over sparseness defined as the
+        activity fraction.
+
+        The selectivity (sparseness) of each neuron was quantified by the activity fraction of its
+        response (Rolls and Tovee, 1995a; Vinje and Gallant, 2000; Olshausen and Field, 2004):
+
+            S =  {1 - [(sum(Ri/n))^2 / sum(Ri^2/n)] / [1 - (1/n)]
+
+        REF: Zoccolan et. al. - 2007 - Trade-Off between Object Selectivity and Tolerance in Monkey
+        Inferotemporal Cortex.
+        """
 
         self.type = 'power_law'
 

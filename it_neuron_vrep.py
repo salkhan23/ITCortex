@@ -40,7 +40,7 @@ class Neuron:
     def __init__(
             self,
             selectivity_idx,
-            ranked_object_list,
+            object_list,
             max_fire_rate=100,
             position_profile=None,
             size_profile=None):
@@ -51,7 +51,7 @@ class Neuron:
             Number of objects neuron responds to divided by total number of objects.
             Defined in [Zoccolan et. al. 2007]. {1 - [sum(Ri/n)^2 / sum(Ri^2/n)] } / (1-1/n).
 
-        :param ranked_object_list   : Ranked list of preferred objects.
+        :param object_list          : List of objects in scene.
 
         :param max_fire_rate        : Maximum firing Rate (Spikes/second). (default = 100)
 
@@ -69,8 +69,9 @@ class Neuron:
         self.selectivity = np.float(selectivity_idx)
 
         # Objects
-        ranked_object_list = [item.lower() for item in ranked_object_list]
-        self.objects = self.__power_law_selectivity(ranked_object_list)
+        object_list = [item.lower() for item in object_list]
+        random.shuffle(object_list)  # Randomize the list of objects the neuron responds to.
+        self.objects = self.__power_law_selectivity(object_list)
         self.selectivity_type = 'power_law'
 
         # Max Firing Rate
@@ -213,7 +214,6 @@ def main(population_size, list_of_objects):
 
     for _ in np.arange(population_size):
         sel_idx = selectivity.get_selectivity_distribution(1)
-        random.shuffle(list_of_objects)
 
         neuron = Neuron(sel_idx,
                         list_of_objects,

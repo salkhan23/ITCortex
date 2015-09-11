@@ -501,7 +501,6 @@ def main():
 
         for _ in np.arange(population_size):
             sel_idx = selectivity.get_selectivity_distribution(1)
-            random.shuffle(list_of_objects)
 
             neuron = it.Neuron(sel_idx,
                                list_of_objects,

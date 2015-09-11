@@ -69,7 +69,7 @@ class Neuron:
 
             self.selectivity = pls.PowerLawSelectivity(object_list)
         else:
-            raise Exception("Invalid selectivity profile:%s" % selectivity_profile)
+            raise Exception("Invalid selectivity profile: %s" % selectivity_profile)
 
         # Max Firing Rate
         self.max_fire_rate = max_fire_rate
@@ -84,6 +84,8 @@ class Neuron:
 
             self.position = gpt.GaussianPositionProfile(
                 self.selectivity.sparseness_activity_fraction)
+        else:
+            raise Exception("Invalid position profile: %s" % position_profile)
 
         # Size Tuning
         if size_profile is None:
@@ -97,9 +99,11 @@ class Neuron:
             try:
                 pos_tol = self.position.position_tolerance
             except:
-                raise Exception("Position Tolerance needed to create log normal size tuning")
+                raise Exception("Position tolerance needed to create log normal size tuning")
 
             self.size = lst.LogNormalSizeProfile(pos_tol)
+        else:
+            raise Exception("Invalid size profile: %s" % size_profile)
 
     def print_properties(self):
         """ Print all parameters of neuron """

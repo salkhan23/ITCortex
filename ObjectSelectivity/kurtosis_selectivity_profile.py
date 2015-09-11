@@ -10,7 +10,7 @@ class LehkySparseness:
 
     def __init__(self, scale_samples):
         """
-        A statistical model of max spike rate distribution based on:
+        A statistical model of selectivity & max spike rate distribution based on:
 
         Lehky, S. R., Kiani, R., Esteky, H., & Tanaka, K. (2011). Statistics of
             visual responses in primate inferotemporal cortex to object stimuli.
@@ -42,49 +42,50 @@ class LehkySparseness:
         """
 
         # Lehky et al. parameters ...
-        ala = 4 # shape parameter (a) of Lehky (l) for PDF of shape parameters (a) for rate PDFs
-        alb = 2
-        bla = 0.5
-        blb = 0.5
+        ala = 4    # shape parameter (a) of Lehky (l) for PDF of shape parameters a for rate PDFs
+        bla = 0.5  # shape parameter (b) of Lehky (l) for PDF of shape parameters a for rate PDFs
+
+        alb = 2    # shape parameter (a) of Lehky (l) for PDF of shape parameters b for rate PDFs
+        blb = 0.5  # shape parameter (a) of Lehky (l) for PDF of shape parameters b for rate PDFs
 
         # empirical expectation and variance of scales ...
-        Es = np.mean(scale_samples)
-        Vs = np.var(scale_samples)
+        mu_s = np.mean(scale_samples)
+        var_s = np.var(scale_samples)
 
         # expectation and variance of Lehky et al. distribution of mean rates ...
-        El = ala*bla*alb*blb
-        Vl = ala*bla**2*alb*blb**2 + ala*bla**2*(alb*blb)**2 + alb*blb**2*(ala*bla)**2
+        mu_l = ala*bla*alb*blb
+        var_l = ala*bla**2*alb*blb**2 + ala*bla**2*(alb*blb)**2 + alb*blb**2*(ala*bla)**2
 
         # expectation and variance of "full" (unscaled) distribution of mean rates
         #   that will approximate Lehky after scaling ...
-        Ef = El / Es
-        Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
+        mu_f = mu_l / mu_s
+        var_f = (var_l - var_s*(mu_l/mu_s)**2) / (var_s + mu_s**2)
 
         # shape and scale parameters for full distribution (keeping shape same as scaled one) ...
         self._afa = ala
         self._bfa = bla
-        self._bfb = (Vf - Ef**2/ala) / (Ef*bla*(1+ala))
-        self._afb = Ef / (self._afa*self._bfa*self._bfb)
+        self._bfb = (var_f - mu_f**2/ala) / (mu_f*bla*(1+ala))
+        self._afb = mu_f / (self._afa*self._bfa*self._bfb)
 
-    def sample_max_rates(self, n):
+    def sample_max_rates(self, n_samples):
         """
-        :param n: Number of maximum spike rates needed
+        :param n_samples: Number of maximum spike rates needed
         :return: n random spike-rate samples
         """
-        a = np.random.gamma(self._afa, scale=self._bfa, size=n)  # Samples of shape parameter
-        b = np.random.gamma(self._afb, scale=self._bfb, size=n)  # Samples of scale parameter
+        a = np.random.gamma(self._afa, scale=self._bfa, size=n_samples)  # Samples of shape
+        b = np.random.gamma(self._afb, scale=self._bfb, size=n)  # Samples of scale
 
-        a = np.maximum(1.01, a)  #avoid making PDF go to infinity at zero spike rate
+        a = np.maximum(1.01, a)  # Avoid making PDF go to infinity at zero spike rate
 
         return gamma.ppf(.99, a, loc=0, scale=b)
 
 if __name__ == '__main__':
-    scale_factor_samples = np.random.rand(500)
+    scale_factor_samples = np.random.rand(500, 1)
     ls = LehkySparseness(scale_factor_samples)
 
     n = 1000
     full_max_rates = ls.sample_max_rates(n)
-    scale_factors = np.random.rand(n)
+    scale_factors = np.random.rand(n, 1)
     scaled_max_rates = scale_factors * full_max_rates
 
     plt.subplot(211)

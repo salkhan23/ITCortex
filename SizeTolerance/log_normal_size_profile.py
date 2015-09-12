@@ -86,7 +86,7 @@ class LogNormalSizeProfile:
         in the > 4 bandwidth bin and assume it follows the trend as in the lower bandwidths
         continues.
         """
-        return ss.lognorm.rvs(s=0.30, scale=1.90, loc=0, size=1)
+        return np.float(ss.lognorm.rvs(s=0.30, scale=1.90, loc=0, size=1))
 
     def firing_rate_modifier(self, stimulus_size):
         """

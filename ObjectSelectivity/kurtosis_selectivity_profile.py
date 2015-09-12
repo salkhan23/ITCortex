@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from scipy.stats import gamma
 
 
-class LehkySparseness:
+class KurtosisSparseness:
 
-    def __init__(self, scale_samples):
+    def __init__(self, list_of_objects):
         """
         A statistical model of selectivity & max spike rate distribution based on:
 
@@ -22,76 +22,103 @@ class LehkySparseness:
         model (see pg. 1112) that explains this difference in terms of heterogeneity
         of spike rate distributions.
 
-        They model these spike rate distributions as gamma functions, whereas we need
-        a distribution of maximum rates. To relate this to the Lehky et al. model
-        we take the point at which the CDF = 0.99 as the maximum.
+        They model these spike rate distributions as gamma functions,  We don't directly use
+        Lehky et al.'s distribution of gamma PDF parameters, since probably some of their
+        variability was due to stimulus parameters such as size, position, etc. being
+        non-optimal for many neurons. We do use their shape-parameter distribution, but we
+        use a different scale parameter distribution that approximates that of Lehky et al.
+        after being scaled by a realistic distribution of scale factors for non-optimal size,
+        position, etc. For derivation of scale factors see kurtosis_fit.py
 
-        We don't directly use Lehky et al.'s distribution of gamma PDF parameters, since
-        probably some of their variability was due to stimulus parameters such as size,
-        position, etc. being non-optimal for many neurons. We do use their shape-
-        parameter distribution, but we use a different scale parameter distribution that
-        approximates that of Lehky et al. after being scaled by a realistic distribution
-        of scale factors for non-optimal size, position, etc.
-
-        The distribution of scale factors must come from the rest of the IT model. It is
-        needed here as a list of samples.
-
-        :param scale_samples: Random samples of scale factors that would be expected in
-            the Lehky et al. experiment. The number of samples isn't critical as they are
-            just used to estimate a distribution. Samples should lie between [0,1].
+        Additionally a function is provided to get the max firing rate of the neuron. Once
+        parameters of the gamma distribution over the objects is calculated, we take the point at
+        which the CDF = 0.99 as the maximum.
         """
+        self.type = 'kurtosis'
 
-        # Lehky et al. parameters ...
-        ala = 4    # shape parameter (a) of Lehky (l) for PDF of shape parameters a for rate PDFs
-        bla = 0.5  # shape parameter (b) of Lehky (l) for PDF of shape parameters a for rate PDFs
+        self.a = self.__get_distribution_shape_parameter()
+        self.b = self.__get_distribution_scale_parameter()
 
-        alb = 2    # shape parameter (a) of Lehky (l) for PDF of shape parameters b for rate PDFs
-        blb = 0.5  # shape parameter (a) of Lehky (l) for PDF of shape parameters b for rate PDFs
+        # Note do not need to shuffle here as preferences are randomly assigned.
+        self.objects = {item: self.__get_object_preference() for item in list_of_objects}
 
-        # empirical expectation and variance of scales ...
-        mu_s = np.mean(scale_samples)
-        var_s = np.var(scale_samples)
+        # TODO:
+        # self.kurtosis_absolute
+        # self.activity_fraction_absolute
+        # self.activity_fraction_population
 
-        # expectation and variance of Lehky et al. distribution of mean rates ...
-        mu_l = ala*bla*alb*blb
-        var_l = ala*bla**2*alb*blb**2 + ala*bla**2*(alb*blb)**2 + alb*blb**2*(ala*bla)**2
-
-        # expectation and variance of "full" (unscaled) distribution of mean rates
-        #   that will approximate Lehky after scaling ...
-        mu_f = mu_l / mu_s
-        var_f = (var_l - var_s*(mu_l/mu_s)**2) / (var_s + mu_s**2)
-
-        # shape and scale parameters for full distribution (keeping shape same as scaled one) ...
-        self._afa = ala
-        self._bfa = bla
-        self._bfb = (var_f - mu_f**2/ala) / (mu_f*bla*(1+ala))
-        self._afb = mu_f / (self._afa*self._bfa*self._bfb)
-
-    def sample_max_rates(self, n_samples):
+    @staticmethod
+    def __get_distribution_shape_parameter():
         """
-        :param n_samples: Number of maximum spike rates needed
-        :return: n random spike-rate samples
+        Get sample shape parameter for the gamma distribution of firing rates over objects.
+        See derivation in kurtosis_fit.py.
+
+        :rtype : shape parameter.
         """
-        a = np.random.gamma(self._afa, scale=self._bfa, size=n_samples)  # Samples of shape
-        b = np.random.gamma(self._afb, scale=self._bfb, size=n)  # Samples of scale
+        shape_param = np.float(gamma.rvs(4.0, scale=0.5, loc=0, size=1))
 
-        a = np.maximum(1.01, a)  # Avoid making PDF go to infinity at zero spike rate
+        return np.maximum(1.01, shape_param)  # Avoid making PDF go to infinity at zero spike rate.
 
-        return gamma.ppf(.99, a, loc=0, scale=b)
+    @staticmethod
+    def __get_distribution_scale_parameter():
+        """
+        Get sample shape parameter for the gamma distribution of firing rate over objects.
+        See derivation in kurtosis_fit.py.
+
+        :rtype : scale parameter.
+        """
+        return np.float(gamma.rvs(4.6987, scale=0.3200, loc=0, size=1))
+
+    def __get_object_preference(self):
+        """
+        Use the inverse cdf to get a random firing rate modifier, its normalized firing rate.
+
+        :rtype : Firing rate modifier
+        """
+        cdf_loc = np.random.uniform(size=1)
+        obj_pref = gamma.ppf(cdf_loc, self.a, scale=self.b, loc=0)
+
+        return obj_pref / self.get_max_firing_rate()
+
+    def get_max_firing_rate(self):
+        """
+        Return the maximum firing rate of the neuron. Where the maximum firing rate is defined
+        as the rate at which the CDF =0.99
+
+        :return: maximum firing rate of the neuron.
+        """
+        return gamma.ppf(0.99, self.a, scale=self.b, loc=0)
+
+    def get_ranked_object_list(self):
+        """ Return neurons rank list of objects and rate modification factors """
+        return sorted(self.objects.items(), key=lambda item: item[1], reverse=True)
+
+    def print_parameters(self):
+        """ Print parameters of the selectivity profile """
+        print("Profile                          = %s" % self.type)
+        # print("Sparseness(activity fraction)    = %0.4f " % self.sparseness_activity_fraction)
+        print("Object Preferences               = ")
+
+        max_name_length = np.max([len(name) for name in self.objects.keys()])
+
+        lst = self.get_ranked_object_list()
+        for obj, rate in lst:
+            print ("\t%s : %0.4f" % (obj.ljust(max_name_length), rate))
+
 
 if __name__ == '__main__':
-    scale_factor_samples = np.random.rand(500, 1)
-    ls = LehkySparseness(scale_factor_samples)
+    plt.ion()
 
-    n = 1000
-    full_max_rates = ls.sample_max_rates(n)
-    scale_factors = np.random.rand(n, 1)
-    scaled_max_rates = scale_factors * full_max_rates
+    obj_list = ['car',
+                'van',
+                'Truck',
+                'bus',
+                'pedestrian',
+                'cyclist',
+                'tram',
+                'person sitting']
 
-    plt.subplot(211)
-    plt.hist(full_max_rates)
-    plt.title('histogram of full (unscaled) max spike rates')
-    plt.subplot(212)
-    plt.hist(scaled_max_rates)
-    plt.title('histogram of scaled max spike rates')
-    plt.show()
+    profile1 = KurtosisSparseness(obj_list)
+    profile1.get_ranked_object_list()
+    profile1.print_parameters()
+    print profile1.get_max_firing_rate()

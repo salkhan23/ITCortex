@@ -9,6 +9,10 @@ REF:  Lehky, S. R., Kiani, R., Esteky, H., & Tanaka, K. (2011). Statistics of
             visual responses in primate inferotemporal cortex to object stimuli.
             Journal of Neurophysiology, 106(3), 1097–117.
 
+Random samples of scale factors that would be expected in the Lehky et al. experiment.
+The number of samples isn't critical as they are just used to estimate a distribution.
+Samples should lie between [0,1].
+
 POSITION:
 All stimuli were presented foveally at (0, 0) radians. However the receptive field centers
 of IT neurons and their preferred positions are distributed around the fovea. To account for this
@@ -85,14 +89,41 @@ plt.hist(size_samples, bins=np.arange(1, step=0.1))
 # TODO: Account for non-optimal rotation/orientation angles.
 
 #  Calculate mean and variance of collected samples --------------------------------------------
-scale_samples = []
-scale_samples.append(position_samples)
-scale_samples.append(size_samples)
+scale_samples = [position_samples, size_samples]
 
 mu_s = np.mean(scale_samples)
 var_s = np.var(scale_samples)
 
-print ("Scale samples: mean%0.4f, var=%0.4f" % (mu_s, var_s))
+print ("Scale samples: mean%f, var=%f" % (np.float(mu_s), np.float(var_s)))
+
+# Original Lehky et al. parameters ...
+ala = 4    # shape parameter (a) of Lehky (l) for PDF of shape parameters a for rate PDFs
+bla = 0.5  # shape parameter (b) of Lehky (l) for PDF of shape parameters a for rate PDFs
+
+alb = 2    # shape parameter (a) of Lehky (l) for PDF of shape parameters b for rate PDFs
+blb = 0.5  # shape parameter (a) of Lehky (l) for PDF of shape parameters b for rate PDFs
+
+
+# expectation and variance of Lehky et al. distribution of mean rates.
+# Product of two independent gamma rvs
+mu_l = ala*bla*alb*blb
+var_l = ala*bla**2*alb*blb**2 + ala*bla**2*(alb*blb)**2 + alb*blb**2*(ala*bla)**2
+
+# expectation and variance of "full" (unscaled) distribution of mean rates
+# That will approximate Lehky after scaling ...
+mu_f = mu_l / mu_s
+var_f = (var_l - var_s*(mu_l/mu_s)**2) / (var_s + mu_s**2)
+
+# shape and scale parameters for full distribution (keeping shape same as scaled one) ...
+afa = ala
+bfa = bla
+bfb = (var_f - mu_f**2/ala) / (mu_f*bla*(1 + ala))
+afb = mu_f / (afa*bfa*bfb)
+
+print ("Shape parameter (a) gamma distribution (Full, unscaled) a=%f, b=%f" % (afa, bfa))
+print ("Scale Parameter (b) gamma distribution (Full, unscaled) a=%f, b=%f"
+       % (np.float(afb), np.float(bfb)))
+
 
 if __name__ == '__main__':
     plt.ion()

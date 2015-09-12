@@ -11,8 +11,40 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class PowerLawSelectivity:
+def get_activity_fraction(rates_per_object):
+    """
+    Given an array of firing rates of the neuron to objects, return the sparseness metric
+    activity fraction of the neuron as defined in
 
+    [1] REF: Zoccolan et. al. 2007 - Trade-Off between Object Selectivity and Tolerance in Monkey
+    Inferotemporal Cortex.
+
+    [2] SI_R in REF:  Lehky, S. R., Kiani, R., Esteky, H., & Tanaka, K. (2011). Statistics of
+    visual responses in primate inferotemporal cortex to object stimuli.
+    Journal of Neurophysiology, 106(3), 1097–117.
+
+        activity_fraction  =  {1 - [(sum(Ri/n))^2 / sum(Ri^2/n)] / [1 - (1/n)]
+
+    Originally defined by Rolls & Tovee in Rolls ET, Tovée MJ. Sparseness of the neuronal
+    representation of stimuli in the primate temporal visual cortex.
+    J Neurophysiology 73: 713–726, 1995.
+
+    :param rates_per_object: array of firing rates of the neuron to multiple objects.
+    :return: activity fraction sparseness. Ranges from 0 (low selectivity) to 1(high selectivity).
+
+    This is defined outside the class as it is used by other selectivity profiles.
+    """
+    n = rates_per_object.shape[0]
+
+    rates_square = rates_per_object ** 2
+
+    activity_fraction = n / (n - 1) * \
+                        (1 - ((rates_per_object.sum() / n) ** 2 / (rates_square.sum() / n)))
+
+    return activity_fraction
+
+
+class PowerLawSelectivity:
     def __init__(self, list_of_objects):
         """
         Models object selectivity as a power law over sparseness defined as the
@@ -29,13 +61,20 @@ class PowerLawSelectivity:
 
         self.type = 'power_law'
 
-        self.sparseness_activity_fraction = \
+        # Absolute activity fraction if all rates for all objects the neuron responds
+        # are included.
+        self.activity_fraction_absolute = \
             np.float(selectivity.get_activity_fraction_sparseness(1))
 
         list_of_objects = [obj.lower() for obj in list_of_objects]
         random.shuffle(list_of_objects)  # Randomize (in place) objects the neuron responds to.
 
         self.objects = self.__power_law_selectivity(list_of_objects)
+
+        # Activity fraction for the list of included objects. As the number of stimuli increases
+        # measured activity fraction should approach the absolute value.
+        self.activity_fraction_measured = \
+            get_activity_fraction(np.array(self.objects.values()))
 
     def __power_law_selectivity(self, ranked_obj_list):
         """
@@ -50,8 +89,8 @@ class PowerLawSelectivity:
 
         Note: Implementation assumes the first object is the neurons most preferred object.
         """
-        return({item: np.power(np.float(idx), -self.sparseness_activity_fraction)
-               for idx, item in enumerate(ranked_obj_list, start=1)})
+        return ({item: np.power(np.float(idx), -self.activity_fraction_absolute)
+                 for idx, item in enumerate(ranked_obj_list, start=1)})
 
     def get_ranked_object_list(self):
         """ Return neurons rank list of objects and rate modification factors """
@@ -59,9 +98,13 @@ class PowerLawSelectivity:
 
     def print_parameters(self):
         """ Print parameters of the selectivity profile """
-        print("Profile                          = %s" % self.type)
-        print("Sparseness(activity fraction)    = %0.4f " % self.sparseness_activity_fraction)
-        print("Object Preferences               = ")
+        print("Profile                                   = %s" % self.type)
+        print("Sparseness(absolute activity fraction)    = %0.4f"
+              % self.activity_fraction_absolute)
+        print("Sparseness(measured activity fraction)    = %0.4f"
+              % self.activity_fraction_measured)
+
+        print("Object Preferences                        = ")
 
         max_name_length = np.max([len(name) for name in self.objects.keys()])
 
@@ -85,4 +128,6 @@ if __name__ == "__main__":
     profile1 = PowerLawSelectivity(obj_list)
     profile1.print_parameters()
 
-    profile2 = PowerLawSelectivity
+    firing_rates = np.array(profile1.objects.values())
+
+    print "Sparseness (Activity Fraction) of neuron: %f " % get_activity_fraction(firing_rates)

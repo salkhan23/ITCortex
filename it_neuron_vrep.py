@@ -83,7 +83,7 @@ class Neuron:
             reload(gpt)
 
             self.position = gpt.GaussianPositionProfile(
-                self.selectivity.sparseness_activity_fraction)
+                self.selectivity.activity_fraction_absolute)
         else:
             raise Exception("Invalid position profile: %s" % position_profile)
 

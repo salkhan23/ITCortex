@@ -5,7 +5,7 @@ Created on Fri September 11 9:26:45 2015
 @author: s362khan
 """
 
-import activity_fraction_fit as selectivity
+import activity_fraction_fit as selectivity_fit
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -64,7 +64,7 @@ class PowerLawSelectivity:
         # Absolute activity fraction if all rates for all objects the neuron responds
         # are included.
         self.activity_fraction_absolute = \
-            np.float(selectivity.get_activity_fraction_sparseness(1))
+            np.float(selectivity_fit.get_activity_fraction_sparseness(1))
 
         list_of_objects = [obj.lower() for obj in list_of_objects]
         random.shuffle(list_of_objects)  # Randomize (in place) objects the neuron responds to.

@@ -498,7 +498,7 @@ def main():
 
         for _ in np.arange(population_size):
             neuron = it.Neuron(list_of_objects,
-                               selectivity_profile='power_law',
+                               selectivity_profile='Kurtosis',
                                position_profile='Gaussian',
                                size_profile='Lognormal',
                                )
@@ -600,8 +600,8 @@ if __name__ == "__main__":
     population, rates_array = main()
 
     # Population Plots -------------------------------------------------------------------------
-    # # Plot the selectivity distribution of the population
-    # utils.plot_population_selectivity_distribution(population)
-    #
-    # # Plot Object preferences of population
-    # utils.plot_population_obj_preferences(population)
+    # Plot the selectivity distribution of the population
+    utils.plot_population_selectivity_distribution(population)
+
+    # Plot Object preferences of population
+    utils.plot_population_obj_preferences(population)

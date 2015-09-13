@@ -68,6 +68,7 @@ class Neuron:
             reload(pls)  # Force recompile to pick up any new changes not in cached module.
 
             self.selectivity = pls.PowerLawSparseness(object_list)
+
         elif selectivity_profile.lower() == 'kurtosis':
             from ObjectSelectivity import kurtosis_selectivity_profile as ks
             reload(ks)
@@ -78,7 +79,10 @@ class Neuron:
             raise Exception("Invalid selectivity profile: %s" % selectivity_profile)
 
         # Max Firing Rate Distribution
-        self.max_fire_rate = max_fire_rate
+        if self.selectivity.type == 'kurtosis':
+            self.max_fire_rate = self.selectivity.get_max_firing_rate()
+        else:
+            self.max_fire_rate = max_fire_rate
 
         # Position Tuning
         if position_profile is None:

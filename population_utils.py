@@ -28,7 +28,7 @@ def plot_population_selectivity_distribution(it_population, axis=None):
     if axis is None:
         f, axis = plt.subplots()
 
-    selectivity_arr = [n.selectivity.sparseness_activity_fraction for n in it_population]
+    selectivity_arr = [n.selectivity.activity_fraction_absolute for n in it_population]
 
     axis.hist(selectivity_arr, bins=np.arange(1, step=0.1))
     axis.set_ylabel('Frequency')

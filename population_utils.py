@@ -30,9 +30,9 @@ def plot_population_selectivity_distribution(it_population, axis=None):
 
     selectivity_arr = [n.selectivity.activity_fraction_absolute for n in it_population]
 
-    axis.hist(selectivity_arr, bins=np.arange(1, step=0.1))
+    axis.hist(selectivity_arr, bins=np.arange(1, step=0.05))
     axis.set_ylabel('Frequency')
-    axis.set_xlabel('Selectivity')
+    axis.set_xlabel('Selectivity (Absolute Activity Fraction)')
     axis.set_title('Population Selectivity Distribution')
 
 

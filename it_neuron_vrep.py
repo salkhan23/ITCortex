@@ -62,16 +62,22 @@ class Neuron:
         :rtype : It neuron instance.
         """
 
-        # Selectivity Profile
+        # Selectivity Tuning
         if selectivity_profile.lower() == 'power_law':
             from ObjectSelectivity import power_law_selectivity_profile as pls
             reload(pls)  # Force recompile to pick up any new changes not in cached module.
 
             self.selectivity = pls.PowerLawSparseness(object_list)
+        elif selectivity_profile.lower() == 'kurtosis':
+            from ObjectSelectivity import kurtosis_selectivity_profile as ks
+            reload(ks)
+
+            self.selectivity = ks.KurtosisSparseness(object_list)
+
         else:
             raise Exception("Invalid selectivity profile: %s" % selectivity_profile)
 
-        # Max Firing Rate
+        # Max Firing Rate Distribution
         self.max_fire_rate = max_fire_rate
 
         # Position Tuning
@@ -178,39 +184,7 @@ class Neuron:
         return np.sum(rate2, axis=0)
 
 
-def main(population_size, list_of_objects):
-    """
-
-    :rtype : Population of IT neurons of specified size and that respond to the list of objects.
-    """
-    population = []
-
-    for _ in np.arange(population_size):
-        neuron = Neuron(list_of_objects,
-                        selectivity_profile='power_law',
-                        position_profile='Gaussian',
-                        size_profile='Lognormal')
-
-        population.append(neuron)
-
-    return np.array(population)
-
-
-if __name__ == "__main__":
-    plt.ion()
-
-    n = 100
-    obj_list = ['car',
-                'van',
-                'Truck',
-                'bus',
-                'pedestrian',
-                'cyclist',
-                'tram',
-                'person sitting']
-
-    it_cortex = main(n, obj_list)
-
+def main(it_cortex):
     # Print RFs of all Neurons
     # TODO: Move/Use function into population.py
     # f, axis = plt.subplots()
@@ -219,7 +193,7 @@ if __name__ == "__main__":
 
     # TODO: Temporary. Validation code.
     it_cortex[0].print_properties()
-    
+
     most_pref_object = it_cortex[0].selectivity.get_ranked_object_list()[0][0]
     rf_center = it_cortex[0].position.rf_center
     pref_size = it_cortex[0].size.pref_size
@@ -238,9 +212,47 @@ if __name__ == "__main__":
 
     print it_cortex[0].firing_rate(ground_truth)
 
-    # Population Plots -------------------------------------------------------------------------
+    # Population Plots
     # Plot the selectivity distribution of the population
     utils.plot_population_selectivity_distribution(it_cortex)
 
     # Plot Object preferences of population
     utils.plot_population_obj_preferences(it_cortex)
+
+
+if __name__ == "__main__":
+    plt.ion()
+
+    n = 100
+    obj_list = ['car',
+                'van',
+                'Truck',
+                'bus',
+                'pedestrian',
+                'cyclist',
+                'tram',
+                'person sitting']
+
+    # Example 1: Neuron Population with power_law selectivity distribution ----------------------
+    it_population = []
+    for _ in np.arange(n):
+        neuron = Neuron(obj_list,
+                        selectivity_profile='power_law',
+                        position_profile='Gaussian',
+                        size_profile='Lognormal')
+
+        it_population.append(neuron)
+
+    main(it_population)
+
+    # Example 2: Neuron Population with kurtosis based selectivity distribution -----------------
+    it_population = []
+    for _ in np.arange(n):
+        neuron = Neuron(obj_list,
+                        selectivity_profile='kurtosis',
+                        position_profile='Gaussian',
+                        size_profile='Lognormal')
+
+        it_population.append(neuron)
+
+    main(it_population)

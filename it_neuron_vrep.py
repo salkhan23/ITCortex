@@ -158,7 +158,7 @@ class Neuron:
         y_arr = np.array(y_arr)
         size_arr = np.array(size_arr)
 
-        obj_pref_list = np.array([self.selectivity.objects.get(obj.lower(), 0) for obj in objects])
+        obj_pref_list = np.array([self.selectivity.objects.get(obj, 0) for obj in objects])
 
         # Get position rate modifiers they will by used to weight isolated responses to get a
         # single clutter response.

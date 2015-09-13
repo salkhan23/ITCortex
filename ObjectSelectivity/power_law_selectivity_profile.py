@@ -66,7 +66,6 @@ class PowerLawSparseness:
         self.activity_fraction_absolute = \
             np.float(selectivity_fit.get_activity_fraction_sparseness(1))
 
-        list_of_objects = [obj.lower() for obj in list_of_objects]
         random.shuffle(list_of_objects)  # Randomize (in place) objects the neuron responds to.
 
         self.objects = self.__power_law_selectivity(list_of_objects)

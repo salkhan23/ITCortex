@@ -41,7 +41,7 @@ class KurtosisSparseness:
         self.a = self.__get_distribution_shape_parameter()
         self.b = self.__get_distribution_scale_parameter()
 
-        self.objects = {item: self.__get_object_preference(np.random.uniform(size=1))
+        self.objects = {item: self.__get_object_preference(np.float(np.random.uniform(size=1)))
                         for item in list_of_objects}
 
         self.activity_fraction_measured = \

@@ -28,12 +28,15 @@ def plot_population_selectivity_distribution(it_population, axis=None):
     if axis is None:
         f, axis = plt.subplots()
 
-    selectivity_arr = [n.selectivity.activity_fraction_absolute for n in it_population]
+    selectivity_arr_abs = [n.selectivity.activity_fraction_absolute for n in it_population]
+    selectivity_arr_meas = [n.selectivity.activity_fraction_measured for n in it_population]
 
-    axis.hist(selectivity_arr, bins=np.arange(1, step=0.05))
+    axis.hist(selectivity_arr_abs, bins=np.arange(1, step=0.05), label='absolute')
+    axis.hist(selectivity_arr_meas, bins=np.arange(1, step=0.05), label='measured')
     axis.set_ylabel('Frequency')
-    axis.set_xlabel('Selectivity (Absolute Activity Fraction)')
+    axis.set_xlabel('Selectivity (Activity Fraction)')
     axis.set_title('Population Selectivity Distribution')
+    axis.legend()
 
 
 def plot_population_obj_preferences(it_population, axis=None):

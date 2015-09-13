@@ -39,6 +39,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import os
+from scipy.stats import gamma
 
 # Do relative import of the main folder to get files in sibling directories
 top_level_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -79,16 +80,18 @@ for index in np.arange(sample_size):
 # Stimuli at position (0, 0)
 position_samples = [profile.firing_rate_modifier(0, 0) for profile in position_profiles]
 plt.figure('Position Samples')
+plt.title("Distribution of position scale parameters")
 plt.hist(position_samples, bins=np.arange(1, step=0.1))
 
 # Stimuli of size 7
 size_samples = [profile.firing_rate_modifier(7 * np.pi / 180.0) for profile in size_profiles]
 plt.figure('Size Samples')
+plt.title("Distribution of size scale parameters")
 plt.hist(size_samples, bins=np.arange(1, step=0.1))
 
 # TODO: Account for non-optimal rotation/orientation angles.
 
-#  Calculate mean and variance of collected samples --------------------------------------------
+#  Adjust the shape and scale parameters for non-optimal stimuli set ----------------------------
 scale_samples = [position_samples, size_samples]
 
 mu_s = np.mean(scale_samples)
@@ -123,6 +126,40 @@ afb = mu_f / (afa*bfa*bfb)
 print ("Shape parameter (a) gamma distribution (Full, unscaled) a=%f, b=%f" % (afa, bfa))
 print ("Scale Parameter (b) gamma distribution (Full, unscaled) a=%f, b=%f"
        % (np.float(afb), np.float(bfb)))
+
+# Plot Max firing rates based on Lehky (non-optimal stimuli set) & the full (optimal stimuli set)
+n = 1000
+shape_param_dist_f = gamma.rvs(afa, scale=bfa, loc=0, size=n)
+scale_param_dist_f = gamma.rvs(afb, scale=bfb, loc=0, size=n)
+
+shape_param_dist_l = gamma.rvs(ala, scale=bla, loc=0, size=n)
+scale_param_dist_l = gamma.rvs(alb, scale=blb, loc=0, size=n)
+
+max_rates_f = []
+max_rates_l = []
+
+for index in np.arange(n):
+    max_rates_f.append(
+        gamma.ppf(0.99, shape_param_dist_f[index], loc=0, scale=scale_param_dist_f[index]))
+
+    max_rates_l.append(
+        gamma.ppf(0.99, shape_param_dist_l[index], loc=0, scale=scale_param_dist_l[index]))
+
+plt.figure("Max Fire Rate Distributions")
+plt.subplot(211)
+plt.hist(max_rates_f)
+plt.title('Histogram of full (unscaled) max spike rates')
+plt.subplot(212)
+plt.hist(max_rates_l, label='method1')
+plt.title('Histogram of scaled (Lehky) max spike rates')
+
+# Method 2 of getting Lehky distribution from full spike rates
+# noinspection PyArgumentList
+scale_factors = np.random.rand(n)
+scaled_max_rates = max_rates_f*scale_factors
+plt.subplot(212)
+plt.hist(scaled_max_rates, label='method2')
+plt.legend()
 
 
 if __name__ == '__main__':

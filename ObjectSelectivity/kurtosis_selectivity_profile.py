@@ -48,16 +48,16 @@ class KurtosisSparseness:
             get_activity_fraction(np.array(self.objects.values()))
 
         # To calculate absolute activity fraction, the stimuli set consists of all objects the
-        # neuron responds. Model this by getting firing rates distributed over the entire
-        #  distribution with a small step
+        # neuron responds. Model this by getting firing rates distributed over the entire cdf
+        #  with a small step
         rates_distribution_for_cdf = np.linspace(start=0, stop=1, num=100, endpoint=False)
         rates_all_obj = self.__get_object_preference(rates_distribution_for_cdf)
 
         self.activity_fraction_absolute = \
             get_activity_fraction(rates_all_obj)
 
-        # TODO:
-        # self.kurtosis_absolute
+        # Calculate the excess kurtosis of the neuron
+        self.kurtosis = 6.0 / self.a
 
     @staticmethod
     def __get_distribution_shape_parameter():
@@ -111,6 +111,7 @@ class KurtosisSparseness:
               % self.activity_fraction_absolute)
         print("Sparseness(measured activity fraction)    = %0.4f"
               % self.activity_fraction_measured)
+        print("Sparseness (kurtosis)                     = %0.4f" % self.kurtosis)
         print("Object Preferences                        = ")
 
         max_name_length = np.max([len(name) for name in self.objects.keys()])
@@ -135,4 +136,4 @@ if __name__ == '__main__':
     profile1 = KurtosisSparseness(obj_list)
     profile1.get_ranked_object_list()
     profile1.print_parameters()
-    print profile1.get_max_firing_rate()
+    print ("Max Firing Rate: %0.4f" % profile1.get_max_firing_rate())

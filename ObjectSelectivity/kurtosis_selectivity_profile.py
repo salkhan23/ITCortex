@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gamma
 
+from power_law_selectivity_profile import get_activity_fraction
+
 
 class KurtosisSparseness:
 
@@ -39,13 +41,23 @@ class KurtosisSparseness:
         self.a = self.__get_distribution_shape_parameter()
         self.b = self.__get_distribution_scale_parameter()
 
-        # Note do not need to shuffle here as preferences are randomly assigned.
-        self.objects = {item: self.__get_object_preference() for item in list_of_objects}
+        self.objects = {item: self.__get_object_preference(np.random.uniform(size=1))
+                        for item in list_of_objects}
+
+        self.activity_fraction_measured = \
+            get_activity_fraction(np.array(self.objects.values()))
+
+        # To calculate absolute activity fraction, the stimuli set consists of all objects the
+        # neuron responds. Model this by getting firing rates distributed over the entire
+        #  distribution with a small step
+        rates_distribution_for_cdf = np.linspace(start=0, stop=1, num=100, endpoint=False)
+        rates_all_obj = self.__get_object_preference(rates_distribution_for_cdf)
+
+        self.activity_fraction_absolute = \
+            get_activity_fraction(rates_all_obj)
 
         # TODO:
         # self.kurtosis_absolute
-        # self.activity_fraction_absolute
-        # self.activity_fraction_population
 
     @staticmethod
     def __get_distribution_shape_parameter():
@@ -69,13 +81,12 @@ class KurtosisSparseness:
         """
         return np.float(gamma.rvs(4.6987, scale=0.3200, loc=0, size=1))
 
-    def __get_object_preference(self):
+    def __get_object_preference(self, cdf_loc):
         """
         Use the inverse cdf to get a random firing rate modifier, its normalized firing rate.
 
         :rtype : Firing rate modifier
         """
-        cdf_loc = np.random.uniform(size=1)
         obj_pref = gamma.ppf(cdf_loc, self.a, scale=self.b, loc=0)
 
         return obj_pref / self.get_max_firing_rate()
@@ -95,9 +106,12 @@ class KurtosisSparseness:
 
     def print_parameters(self):
         """ Print parameters of the selectivity profile """
-        print("Profile                          = %s" % self.type)
-        # print("Sparseness(activity fraction)    = %0.4f " % self.sparseness_activity_fraction)
-        print("Object Preferences               = ")
+        print("Profile                                   = %s" % self.type)
+        print("Sparseness(absolute activity fraction)    = %0.4f"
+              % self.activity_fraction_absolute)
+        print("Sparseness(measured activity fraction)    = %0.4f"
+              % self.activity_fraction_measured)
+        print("Object Preferences                        = ")
 
         max_name_length = np.max([len(name) for name in self.objects.keys()])
 

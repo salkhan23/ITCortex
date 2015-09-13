@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-__author__ = 'bptripp'
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -7,9 +6,10 @@ from scipy.stats import gamma
 
 from power_law_selectivity_profile import get_activity_fraction
 
+__author__ = 'bptripp'
+
 
 class KurtosisSparseness:
-
     def __init__(self, list_of_objects):
         """
         A statistical model of selectivity & max spike rate distribution based on:

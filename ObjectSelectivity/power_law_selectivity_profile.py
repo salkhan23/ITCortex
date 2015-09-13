@@ -44,7 +44,7 @@ def get_activity_fraction(rates_per_object):
     return activity_fraction
 
 
-class PowerLawSelectivity:
+class PowerLawSparseness:
     def __init__(self, list_of_objects):
         """
         Models object selectivity as a power law over sparseness defined as the
@@ -125,7 +125,7 @@ if __name__ == "__main__":
                 'tram',
                 'person sitting']
 
-    profile1 = PowerLawSelectivity(obj_list)
+    profile1 = PowerLawSparseness(obj_list)
     profile1.print_parameters()
 
     firing_rates = np.array(profile1.objects.values())

@@ -67,7 +67,7 @@ class Neuron:
             from ObjectSelectivity import power_law_selectivity_profile as pls
             reload(pls)  # Force recompile to pick up any new changes not in cached module.
 
-            self.selectivity = pls.PowerLawSelectivity(object_list)
+            self.selectivity = pls.PowerLawSparseness(object_list)
         else:
             raise Exception("Invalid selectivity profile: %s" % selectivity_profile)
 

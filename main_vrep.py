@@ -64,7 +64,7 @@ def connect_vrep(sim_stop_time_s):
 
     c_id = vrep.simxStart(
         '127.0.0.1',
-        19999,
+        19997,
         True,
         True,
         sim_stop_time_s*1000,   # Only closes the remote connection, does not stop simulation.
@@ -75,6 +75,16 @@ def connect_vrep(sim_stop_time_s):
         sys.exit("could not connect")
     else:
         print ('Connected to remote API server')
+
+    # Synchronous operation mode
+    res = vrep.simxSynchronous(c_id, True)
+    if res != vrep.simx_return_ok:
+        raise Exception('Failed to set synchronous operation mode for simulation! Err %s' % res)
+
+    # Start the simulation
+    res = vrep.simxStartSimulation(c_id, vrep.simx_opmode_oneshot_wait)
+    if res != vrep.simx_return_ok:
+        raise Exception('Failed to  start simulation! Err %s' % res)
 
     return c_id
 
@@ -516,6 +526,13 @@ def main():
         rates_vs_time_arr = []
 
         while t_current_ms < t_stop_ms:
+
+            # Step the simulation
+            res = vrep.simxSynchronousTrigger(client_id)
+            if res != vrep.simx_return_ok:
+                print ("Failed to step simulation! Err %s" % res)
+                break
+
             ground_truth = get_ground_truth(
                 client_id,
                 objects_array,
@@ -600,8 +617,8 @@ if __name__ == "__main__":
     population, rates_array = main()
 
     # Population Plots -------------------------------------------------------------------------
-    # Plot the selectivity distribution of the population
-    utils.plot_population_selectivity_distribution(population)
-
-    # Plot Object preferences of population
-    utils.plot_population_obj_preferences(population)
+    # # Plot the selectivity distribution of the population
+    # utils.plot_population_selectivity_distribution(population)
+    #
+    # # Plot Object preferences of population
+    # utils.plot_population_obj_preferences(population)

@@ -12,28 +12,30 @@ def get_poisson_spikes(dt, rates):
     :return: List of random spike events (0 = no spike; 1 = spike)
     """
     assert len(rates.shape) == 1
+    # noinspection PyArgumentList
     return np.random.rand(len(rates)) < (dt * rates)
 
 
-def integrate(dt, A, B, C, x, u):
+def integrate(dt, a, b, c, x, u):
     """
     Euler integration of state-space equations.
 
     :param dt: Time step (s; should be ~5ms)
-    :param A: The standard feedback matrix from linear-systems theory
-    :param B: Input matrix
-    :param C: Output marix
+    :param a: The standard feedback matrix from linear-systems theory
+    :param b: Input matrix
+    :param c: Output matrix
     :param x: State vector
     :param u: Input vector
     :return: (x, y), i.e. the state and the output
     """
 
-    dxdt = np.dot(A,x) + np.dot(B,u)
+    dxdt = np.dot(a,x) + np.dot(b,u)
     x = x + dxdt*dt
-    y = np.dot(C,x)
+    y = np.dot(c,x)
     return x, y
 
 
+# noinspection PyArgumentList
 class Dynamics :
     """
     Simple model of IT spike-rate tamura_dynamic_profile.py based on:
@@ -136,16 +138,29 @@ class Dynamics :
         # run a single step of the LTI dynamics for each neuron
         y = np.zeros(self.n)
 
-        for i in range(self.n):
-            early_A = 1/self.early_tau[i] * self.early_A
-            early_B = 1/self.early_tau[i] * self.early_B
-            self.early_x[:,i], early_y = integrate(self.dt, early_A, early_B, self.early_C, self.early_x[:,i], early_u[i])
+        for ii in range(self.n):
+            early_a = 1/self.early_tau[ii] * self.early_A
+            early_b = 1/self.early_tau[ii] * self.early_B
+            self.early_x[:, ii], early_y = integrate(
+                self.dt,
+                early_a,
+                early_b,
+                self.early_C,
+                self.early_x[:, ii],
+                early_u[ii])
 
-            late_A = 1/self.late_tau[i] * self.late_A
-            late_B = 1/self.late_tau[i] * self.late_B
-            self.late_x[i], late_y = integrate(self.dt, late_A, late_B, self.late_C, self.late_x[i], late_u[i])
+            late_a = 1/self.late_tau[ii] * self.late_A
+            late_b = 1/self.late_tau[ii] * self.late_B
 
-            y[i] = np.maximum(0, early_y) + late_y
+            self.late_x[ii], late_y = integrate(
+                self.dt,
+                late_a,
+                late_b,
+                self.late_C,
+                self.late_x[ii],
+                late_u[ii])
+
+            y[ii] = np.maximum(0, early_y) + late_y
 
         return y
 
@@ -156,39 +171,47 @@ class Dynamics :
 
     def _get_latencies(self, static_rates):
         # latency varies with response strength
-        return self.min_latencies + (self.max_latencies-self.min_latencies)*np.exp(-static_rates/self.tau_latencies)
+        return self.min_latencies + \
+               (self.max_latencies - self.min_latencies)*np.exp(-static_rates/self.tau_latencies)
 
 
 if __name__ == '__main__':
-    n = 10
-    dt = .005
-    d = Dynamics(dt, n)
+    plt.ion()
+
+    population_size = 10
+    time_step = .005
+    d = Dynamics(time_step, population_size)
 
     # plot latency vs. static rate for each neuron ...
     rate = np.arange(0, 200, 10)
-    latencies = np.zeros((len(rate), n))
+    fire_start_latencies = np.zeros((len(rate), population_size))
     for i in range(len(rate)):
-        latencies[i,:] = d._get_latencies(rate[i]*np.ones(n))
-    plt.plot(rate, latencies)
+        fire_start_latencies[i, :] = d._get_latencies(rate[i]*np.ones(population_size))
+    plt.figure("Spike rates vs start_latencies")
+    plt.plot(rate, fire_start_latencies)
     plt.xlabel('Early Response Rate (spikes / s)')
     plt.ylabel('Response Latency (s)')
-    plt.show()
 
     # run some neurons with square-pulse input ...
     steps = 200
-    early_rates = np.zeros((n, steps))
-    early_rates[:,20:100] = 50
-    late_rates = early_rates / 2
-    early_rates = early_rates * np.random.rand(n, 1)
-    late_rates = late_rates * np.random.rand(n, 1)
+    early_fire_rates = np.zeros((population_size, steps))
+    early_fire_rates[:,20:100] = 50
+    late_fire_rates = early_fire_rates / 2
+    early_fire_rates = early_fire_rates * np.random.rand(population_size, 1)
+    late_fire_rates = late_fire_rates * np.random.rand(population_size, 1)
 
-    time = dt * np.array(range(steps))
-    dynamic_rates = np.zeros_like(early_rates)
+    time = time_step * np.array(range(steps))
+    dynamic_rates = np.zeros_like(early_fire_rates)
     for i in range(steps):
-        dynamic_rates[:,i] = d.get_dynamic_rates(early_rates[:,i], late_rates[:,i])
+        dynamic_rates[:, i] = d.get_dynamic_rates(early_fire_rates[:, i], late_fire_rates[:, i])
 
+    plt.figure("Dynamic fire rates")
     plt.plot(time, dynamic_rates.T)
     plt.xlabel('Time (s)')
     plt.ylabel('Spike Rate (spikes / s)')
-    plt.show()
+
+    if 1 == population_size:
+        plt.plot(time, early_fire_rates.T, label = 'Early fire rate')
+        plt.plot(time, late_fire_rates.T, label = 'Late fire rate')
+        plt.legend()
 

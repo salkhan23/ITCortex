@@ -53,7 +53,7 @@ class VrepObject:
         self.max_dimension = max_dimension
 
 
-def connect_vrep(sim_stop_time_ms):
+def connect_vrep(sim_stop_time_ms, sim_dt_ms):
     """
     Establish connection to VREP simulation.
 
@@ -81,10 +81,20 @@ def connect_vrep(sim_stop_time_ms):
     if res != vrep.simx_return_ok:
         raise Exception('Failed to set synchronous operation mode for simulation! Err %s' % res)
 
+    # Set the simulation step size
+    res = vrep.simxSetFloatingParameter(
+        c_id,
+        vrep.sim_floatparam_simulation_time_step,
+        sim_dt_ms/1000.0,
+        vrep.simx_opmode_oneshot)
+    if res != vrep.simx_return_ok and \
+       res != vrep.simx_return_novalue_flag:
+        raise Exception('Failed to set VREP simulation time step! Err %s' % res)
+
     # Start the simulation
     res = vrep.simxStartSimulation(c_id, vrep.simx_opmode_oneshot_wait)
     if res != vrep.simx_return_ok:
-        raise Exception('Failed to  start simulation! Err %s' % res)
+        raise Exception('Failed to start simulation! Err %s' % res)
 
     return c_id
 
@@ -471,7 +481,7 @@ def main():
 
     t_step_ms = 5       # 5ms
     t_stop_ms = 5*1000  # 5 seconds
-    client_id = connect_vrep(t_stop_ms)
+    client_id = connect_vrep(t_stop_ms, t_step_ms)
 
     try:
 
@@ -518,7 +528,7 @@ def main():
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")
-        set_robot_velocity(client_id, 0.2)
+        set_robot_velocity(client_id, 2)
 
         rates_vs_time_arr = np.zeros(shape=(t_stop_ms/t_step_ms, population_size))
 

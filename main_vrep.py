@@ -53,7 +53,7 @@ class VrepObject:
         self.max_dimension = max_dimension
 
 
-def connect_vrep(sim_stop_time_s):
+def connect_vrep(sim_stop_time_ms):
     """
     Establish connection to VREP simulation.
 
@@ -67,7 +67,7 @@ def connect_vrep(sim_stop_time_s):
         19997,
         True,
         True,
-        sim_stop_time_s*1000,   # Only closes the remote connection, does not stop simulation.
+        sim_stop_time_ms,   # Only closes the remote connection, does not stop simulation.
         5)                      # Data Communication Rate (ms) (packets transferred every 5ms).
 
     if c_id == -1:
@@ -469,8 +469,9 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
 def main():
 
-    t_stop = 25  # Simulation stop time in seconds
-    client_id = connect_vrep(t_stop)
+    t_step_ms = 5       # 5ms
+    t_stop_ms = 5*1000  # 5 seconds
+    client_id = connect_vrep(t_stop_ms)
 
     try:
 
@@ -519,12 +520,9 @@ def main():
         print("Starting Data collection...")
         set_robot_velocity(client_id, 0.2)
 
-        t_start = time.time()
-        t_stop_ms = np.int(t_stop * 1000)
+        rates_vs_time_arr = np.zeros(shape=(t_stop_ms/t_step_ms, population_size))
+
         t_current_ms = 0
-
-        rates_vs_time_arr = []
-
         while t_current_ms < t_stop_ms:
 
             # Step the simulation
@@ -543,26 +541,23 @@ def main():
 
             if ground_truth:
                 # Print the Ground Truth
-                print("Time=%d ms, Number of objects %d" % (t_current_ms, len(ground_truth)))
+                print("Time=%dms, Number of objects %d" % (t_current_ms, len(ground_truth)))
                 for entry in ground_truth:
                     print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f"
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3],
                               entry[4], entry[5], entry[6]))
 
                 # Get IT cortex firing rates
-                firing_rates = [t_current_ms]
-
                 for n_idx, neuron in enumerate(it_cortex):
-                    firing_rates.append(neuron.firing_rate(ground_truth))
+                    rates_vs_time_arr[t_current_ms/t_step_ms, n_idx] = \
+                        neuron.firing_rate(ground_truth)
 
-                rates_vs_time_arr.append(firing_rates)
-
-            t_current_ms = np.int((time.time() - t_start) * 1000)
+            t_current_ms += t_step_ms
 
         # Plot firing rates ---------------------------------------------------------------------
         population_max_fire_rate = utils.population_max_firing_rate(it_cortex)
 
-        if rates_vs_time_arr:
+        if np.count_nonzero(rates_vs_time_arr):
             print("Plotting Results...")
             rates_vs_time_arr = np.array(rates_vs_time_arr)
 
@@ -581,8 +576,8 @@ def main():
                 subplot_idx = neuron_idx / len(markers)
 
                 ax_array[subplot_idx].plot(
-                    rates_vs_time_arr[:, 0],
-                    rates_vs_time_arr[:, neuron_idx + 1],
+                    np.arange(t_stop_ms, step=t_step_ms),
+                    rates_vs_time_arr[:, neuron_idx],
                     marker=markers[marker_idx],
                     label='N%i' % neuron_idx)
 

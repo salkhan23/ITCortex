@@ -88,7 +88,7 @@ class TamuraDynamics :
         assert self.n == 1
 
 
-        self.type = 'Tamura_dynamic_profile'
+        self.type = 'tamura'
 
         self.early_obj_pref = self._get_early_object_selectivities(obj_dict)
 

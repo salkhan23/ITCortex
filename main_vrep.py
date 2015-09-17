@@ -522,6 +522,7 @@ def main():
                                selectivity_profile='Kurtosis',
                                position_profile='Gaussian',
                                size_profile='Lognormal',
+                               dynamic_profile='Tamura',
                                )
 
             it_cortex.append(neuron)
@@ -557,10 +558,10 @@ def main():
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3],
                               entry[4], entry[5], entry[6]))
 
-                # Get IT cortex firing rates
-                for n_idx, neuron in enumerate(it_cortex):
-                    rates_vs_time_arr[t_current_ms/t_step_ms, n_idx] = \
-                        neuron.firing_rate(ground_truth)
+            # Get IT cortex firing rates
+            for n_idx, neuron in enumerate(it_cortex):
+                rates_vs_time_arr[t_current_ms/t_step_ms, n_idx] = \
+                    neuron.firing_rate(ground_truth)
 
             t_current_ms += t_step_ms
 

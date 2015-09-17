@@ -131,6 +131,9 @@ class Neuron:
         print ("*"*60)
 
     def firing_rate(self, ground_truth_list):
+        return self._get_static_firing_rate(ground_truth_list)
+
+    def _get_static_firing_rate(self, ground_truth_list):
         """
         Get Neurons overall firing rate to specified input.
 

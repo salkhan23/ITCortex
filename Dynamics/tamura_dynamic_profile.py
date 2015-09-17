@@ -84,9 +84,13 @@ class TamuraDynamics :
         """
         self.dt = dt
 
+        self.n = 1 #do not change this. Code will not if not =1
+        assert self.n == 1
+
+
         self.type = 'Tamura_dynamic_profile'
 
-        self.early_obj_pref = self.get_early_object_selectivities(obj_dict)
+        self.early_obj_pref = self._get_early_object_selectivities(obj_dict)
 
         self.early_activity_fraction_measured = \
             calculate_activity_fraction(np.array(self.early_obj_pref.values()))
@@ -95,22 +99,22 @@ class TamuraDynamics :
             calculate_kurtosis(np.array(self.early_obj_pref.values()))
 
         # parameters of exponential functions to map static rate to latency for each neuron
-        self.min_latencies = .09 + .01*np.random.rand(1)
+        self.min_latencies = .09 + .01*np.random.rand(self.n)
         self.max_latencies = np.minimum(max_latency,
-                                        self.min_latencies + np.random.gamma(5, .02, 1))
+                                        self.min_latencies + np.random.gamma(5, .02, self.n))
 
-        self.tau_latencies = np.random.gamma(2, 20, 1)
+        self.tau_latencies = np.random.gamma(2, 20, self.n)
 
         # matrices for storing recent input history, to allow variable-latency responses
         self.late_additional_latency = 10
         latency_steps = max_latency/dt + 1 + self.late_additional_latency
-        self.early_memory = np.zeros((1, latency_steps))
-        self.late_memory = np.zeros((1, latency_steps))
+        self.early_memory = np.zeros((self.n, latency_steps))
+        self.late_memory = np.zeros((self.n, latency_steps))
         self.memory_index = 0
 
         # state-space LTI dynamics (early response is band-pass and late response is low-pass)
-        self.early_tau = np.maximum(.005, .017 + .005*np.random.randn(1))
-        self.late_tau = .05 + .01*np.random.randn(1)
+        self.early_tau = np.maximum(.005, .017 + .005*np.random.randn(self.n))
+        self.late_tau = .05 + .01*np.random.randn(self.n)
         early_gain = 1.5/0.39
         late_gain = 1
 
@@ -124,43 +128,8 @@ class TamuraDynamics :
         self.late_C = late_gain
 
         # state of LTI (linear time-invariant) dynamical systems
-        self.early_x = np.zeros((2, 1))
-        self.late_x = np.zeros(1)
-
-    @staticmethod
-    def get_early_object_selectivities(late_obj_dict):
-        """
-        Given a dictionary of {object: default (late) latency} create a similar dictionary for
-        early response latencies that shows the observed lower selectivities in initial responses.
-
-        The selectivity for each object is doubled and constrained to lie within (0, 1).
-
-        :param late_obj_dict: Dictionary of {object: selectivity} for the neuron. Selectivity
-            ranges between (0, 1) and is the normalized firing rate of the neuron to the
-            specified object.
-        """
-        return { key: np.minimum(value*2, 1) for key, value in late_obj_dict.items()}
-
-
-    def get_dynamic_rates(self, early_rates, late_rates):
-        """
-        :param early_rates: Static rates for versions of the neurons with early selectivity
-        :param late_rates: Static rates for versions of the neurons with late selectivity
-        :return: Spike rates with latency and early and late dynamics
-        """
-
-        self.early_memory[:, self.memory_index] = early_rates
-        self.late_memory[:, self.memory_index] = late_rates
-
-        latencies = self._get_latencies(early_rates)
-
-        early_u, late_u = self._get_lagged_rates(latencies)
-
-        self.memory_index += 1
-        if self.memory_index == self.early_memory.shape[1]:
-            self.memory_index = 0
-
-        return self._step_dynamics(early_u, late_u)
+        self.early_x = np.zeros((2, self.n))
+        self.late_x = np.zeros(self.n)
 
     def _get_lagged_rates(self, latencies):
         # get appropriately lagged rates for input to LTI dynamics
@@ -169,18 +138,18 @@ class TamuraDynamics :
         early_indices = self._get_index(latency_steps)
         late_indices = self._get_index(latency_steps + self.late_additional_latency)
 
-        # early_u = self.early_memory[range(1), early_indices][0]
-        # late_u = self.late_memory[range(1), late_indices][0]
-        early_u = self.early_memory[range(1), early_indices]
-        late_u = self.late_memory[range(1), late_indices]
+        # early_u = self.early_memory[range(self.n), early_indices][0]
+        # late_u = self.late_memory[range(self.n), late_indices][0]
+        early_u = self.early_memory[range(self.n), early_indices]
+        late_u = self.late_memory[range(self.n), late_indices]
 
         return early_u, late_u
 
     def _step_dynamics(self, early_u, late_u):
         # run a single step of the LTI dynamics for each neuron
-        y = np.zeros(1)
+        y = np.zeros(self.n)
 
-        for ii in range(1):
+        for ii in range(self.n):
             early_a = 1/self.early_tau[ii] * self.early_A
             early_b = 1/self.early_tau[ii] * self.early_B
             self.early_x[:, ii], early_y = integrate(
@@ -215,6 +184,40 @@ class TamuraDynamics :
         # latency varies with response strength
         return self.min_latencies + \
                (self.max_latencies - self.min_latencies)*np.exp(-static_rates/self.tau_latencies)
+
+    @staticmethod
+    def _get_early_object_selectivities(late_obj_dict):
+        """
+        Given a dictionary of {object: default (late) latency} create a similar dictionary for
+        early response latencies that shows the observed lower selectivities in initial responses.
+
+        The selectivity for each object is doubled and constrained to lie within (0, 1).
+
+        :param late_obj_dict: Dictionary of {object: selectivity} for the neuron. Selectivity
+            ranges between (0, 1) and is the normalized firing rate of the neuron to the
+            specified object.
+        """
+        return { key: np.minimum(value*2, 1) for key, value in late_obj_dict.items()}
+
+    def get_dynamic_rates(self, early_rates, late_rates):
+        """
+        :param early_rates: Static rates for versions of the neurons with early selectivity
+        :param late_rates: Static rates for versions of the neurons with late selectivity
+        :return: Spike rates with latency and early and late dynamics
+        """
+
+        self.early_memory[:, self.memory_index] = early_rates
+        self.late_memory[:, self.memory_index] = late_rates
+
+        latencies = self._get_latencies(early_rates)
+
+        early_u, late_u = self._get_lagged_rates(latencies)
+
+        self.memory_index += 1
+        if self.memory_index == self.early_memory.shape[1]:
+            self.memory_index = 0
+
+        return self._step_dynamics(early_u, late_u)
 
     def plot_latencies_verses_rate_profile(self,  axis=None):
         """

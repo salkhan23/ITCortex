@@ -2,6 +2,16 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import sys
+
+# Do relative import of the main folder to get files in sibling directories
+top_level_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+if top_level_dir_path not in sys.path:
+    sys.path.append(top_level_dir_path)
+
+from ObjectSelectivity.power_law_selectivity_profile import get_activity_fraction
 
 def get_poisson_spikes(dt, rates):
     """
@@ -76,6 +86,9 @@ class TamuraDynamics :
         self.type = 'Tamura_dynamic_profile'
 
         self.early_obj_pref = self.get_early_object_selectivities(obj_dict)
+
+        self.early_activity_fraction_measured = \
+            get_activity_fraction(np.array(self.early_obj_pref.values()))
 
         # parameters of exponential functions to map static rate to latency for each neuron
         self.min_latencies = .09 + .01*np.random.rand(1)
@@ -226,23 +239,23 @@ class TamuraDynamics :
 
     def print_parameters(self):
         """ Print parameters of the profile """
-        print("Profile                                   = %s" % self.type)
-        print("minimum latency                           = %0.4f" % np.float(self.min_latencies))
-        print("maximum latency                           = %0.4f" % self.max_latencies)
-        print("tau latency                               = %0.4f" % self.tau_latencies)
+        print("Profile                                      = %s" % self.type)
+        print("minimum latency                              = %0.4f" % np.float(self.min_latencies))
+        print("maximum latency                              = %0.4f" % self.max_latencies)
+        print("tau latency                                  = %0.4f" % self.tau_latencies)
 
-        print("Early tau                                 = %0.4f" % self.early_tau)
-        print("Late tau                                  = %0.4f" % self.late_tau)
-        print("Memory size                               = %d" % self.early_memory.shape[1])
+        print("Early tau                                    = %0.4f" % self.early_tau)
+        print("Late tau                                     = %0.4f" % self.late_tau)
+        print("Memory size                                  = %d" % self.early_memory.shape[1])
 
         # TODO: Add these metrics for the early response
         # print("Sparseness(absolute activity fraction)  = %0.4f"
         #       % self.activity_fraction_absolute)
-        # print("Sparseness(measured activity fraction)  = %0.4f"
-        #       % self.activity_fraction_measured)
+        print("Early Sparseness(measured activity fraction) = %0.4f"
+              % self.early_activity_fraction_measured)
         # print("Sparseness (kurtosis)                   = %0.4f" % self.kurtosis)
 
-        print("Early Object Preferences                  = ")
+        print("Early Object Preferences                     = ")
 
         max_name_length = np.max([len(name) for name in self.early_obj_pref.keys()])
 
@@ -264,6 +277,9 @@ if __name__ == '__main__':
                         'person sitting' : 0.18705214386720551,
                         'tram'           : 0.24122725774540257,
                         'van'            : 0.42843038621161039}
+
+    print ("Default Activity Fraction %0.4f"
+           % get_activity_fraction(np.array(default_obj_pref.values())))
 
     d = TamuraDynamics(time_step, default_obj_pref)
 

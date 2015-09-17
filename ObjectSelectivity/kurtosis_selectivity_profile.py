@@ -9,6 +9,33 @@ from power_law_selectivity_profile import calculate_activity_fraction
 __author__ = 'bptripp'
 
 
+def calculate_kurtosis(rates_per_object):
+    """
+    Given an array of firing rates of the neuron to objects, return the sparseness metric
+    Kurtosis (actually excess kurtosis) of the neuron as defined in:
+
+    [1]  Lehky, S. R., Kiani, R., Esteky, H., & Tanaka, K. (2011). Statistics of
+         visual responses in primate inferotemporal cortex to object stimuli.
+         Journal of Neurophysiology, 106(3), 1097–117.
+
+
+    Kurtosis  =  (sum (Ri - Rmean)**4 / (n*sigma**4)) - 3
+
+    :param rates_per_object: array of firing rates of the neuron to multiple objects.
+    :return: kurtosis sparseness.
+
+    This is defined outside the class as it is used by other selectivity profiles.
+    """
+    n = rates_per_object.shape[0]
+
+    rates_mean = np.mean(rates_per_object)
+    rates_sigma = np.std(rates_per_object)
+
+    kurtosis = np.sum((rates_per_object - rates_mean)**4) / (n * rates_sigma**4) - 3
+
+    return kurtosis
+
+
 class KurtosisSparseness:
     def __init__(self, list_of_objects):
         """
@@ -50,14 +77,16 @@ class KurtosisSparseness:
         # To calculate absolute activity fraction, the stimuli set consists of all objects the
         # neuron responds. Model this by getting firing rates distributed over the entire cdf
         #  with a small step
-        rates_distribution_for_cdf = np.linspace(start=0, stop=1, num=100, endpoint=False)
+        rates_distribution_for_cdf = np.linspace(start=0, stop=1, num=1000, endpoint=False)
         rates_all_obj = self.__get_object_preference(rates_distribution_for_cdf)
 
         self.activity_fraction_absolute = \
             calculate_activity_fraction(rates_all_obj)
 
         # Calculate the excess kurtosis of the neuron
-        self.kurtosis = 6.0 / self.a
+        self.kurtosis_absolute = 6.0 / self.a
+        self.kurtosis_measured = calculate_kurtosis(np.array(self.objects.values()))
+
 
     @staticmethod
     def __get_distribution_shape_parameter():
@@ -111,7 +140,8 @@ class KurtosisSparseness:
               % self.activity_fraction_absolute)
         print("Sparseness(measured activity fraction)    = %0.4f"
               % self.activity_fraction_measured)
-        print("Sparseness (kurtosis)                     = %0.4f" % self.kurtosis)
+        print("Sparseness(absolute kurtosis)             = %0.4f" % self.kurtosis_absolute)
+        print("Sparseness(measured kurtosis)             = %0.4f" % self.kurtosis_measured)
         print("Object Preferences                        = ")
 
         max_name_length = np.max([len(name) for name in self.objects.keys()])

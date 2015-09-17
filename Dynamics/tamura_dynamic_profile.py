@@ -12,6 +12,7 @@ if top_level_dir_path not in sys.path:
     sys.path.append(top_level_dir_path)
 
 from ObjectSelectivity.power_law_selectivity_profile import calculate_activity_fraction
+from ObjectSelectivity.kurtosis_selectivity_profile import calculate_kurtosis
 
 def get_poisson_spikes(dt, rates):
     """
@@ -89,6 +90,9 @@ class TamuraDynamics :
 
         self.early_activity_fraction_measured = \
             calculate_activity_fraction(np.array(self.early_obj_pref.values()))
+
+        self.early_kurtosis_measured = \
+            calculate_kurtosis(np.array(self.early_obj_pref.values()))
 
         # parameters of exponential functions to map static rate to latency for each neuron
         self.min_latencies = .09 + .01*np.random.rand(1)
@@ -222,14 +226,14 @@ class TamuraDynamics :
         if axis is None:
             fig, axis = plt.subplots()
 
-        rate = np.arange(0, 200, 10)
-        fire_start_latencies = np.zeros((len(rate)))
+        fire_rate = np.arange(0, 200, 10)
+        fire_start_latencies = np.zeros((len(fire_rate)))
 
-        for ii in range(len(rate)):
-            fire_start_latencies[ii] = self._get_latencies(rate[ii])
+        for ii in range(len(fire_rate)):
+            fire_start_latencies[ii] = self._get_latencies(fire_rate[ii])
 
         axis.set_title("Spike rates vs start_latencies")
-        axis.plot(rate, fire_start_latencies)
+        axis.plot(fire_rate, fire_start_latencies)
         axis.set_xlabel('Early Response Rate (spikes / s)')
         axis.set_ylabel('Response Latency (s)')
 
@@ -239,25 +243,22 @@ class TamuraDynamics :
 
     def print_parameters(self):
         """ Print parameters of the profile """
-        print("Profile                                      = %s" % self.type)
-        print("minimum latency                              = %0.4f" % np.float(self.min_latencies))
-        print("maximum latency                              = %0.4f" % self.max_latencies)
-        print("tau latency                                  = %0.4f" % self.tau_latencies)
+        print("Profile                              = %s" % self.type)
+        print("minimum latency                      = %0.4f" % np.float(self.min_latencies))
+        print("maximum latency                      = %0.4f" % self.max_latencies)
+        print("tau latency                          = %0.4f" % self.tau_latencies)
 
-        print("Early tau                                    = %0.4f" % self.early_tau)
-        print("Late tau                                     = %0.4f" % self.late_tau)
-        print("Memory size                                  = %d" % self.early_memory.shape[1])
+        print("Early tau                            = %0.4f" % self.early_tau)
+        print("Late tau                             = %0.4f" % self.late_tau)
+        print("Memory size                          = %d" % self.early_memory.shape[1])
 
-        # TODO: Add these metrics for the early response
-        # print("Sparseness(absolute activity fraction)  = %0.4f"
-        #       % self.activity_fraction_absolute)
-        print("Early Sparseness(measured activity fraction) = %0.4f"
+        print("Early Sparseness(activity fraction)  = %0.4f"
               % self.early_activity_fraction_measured)
-        # print("Sparseness (kurtosis)                   = %0.4f" % self.kurtosis)
+        print("Early Sparseness (kurtosis)          = %0.4f" % self.early_kurtosis_measured)
 
-        print("Early Object Preferences                     = ")
+        print("Early Object Preferences             = ")
 
-        max_name_length = np.max([len(name) for name in self.early_obj_pref.keys()])
+        max_name_length = np.max([len(label) for label in self.early_obj_pref.keys()])
 
         lst = self.get_ranked_object_list()
         for obj, rate in lst:
@@ -269,6 +270,7 @@ if __name__ == '__main__':
 
     time_step = .005
 
+    # Input Object preferences dictionary
     default_obj_pref = {'Truck'          : 0.0902061634469222,
                         'bus'            : 0.60042052408207613,
                         'car'            : 0.41523454488601136,
@@ -278,8 +280,19 @@ if __name__ == '__main__':
                         'tram'           : 0.24122725774540257,
                         'van'            : 0.42843038621161039}
 
-    print ("Default Activity Fraction %0.4f"
+    print("Default(Late) object preferences:")
+    name_len_max = np.max([len(name) for name in default_obj_pref.keys()])
+
+    for obj_type, obj_pref in default_obj_pref.items():
+        print ("\t%s : %0.4f" % (obj_type.ljust(name_len_max), obj_pref))
+
+    print("Default (Late) Selectivity Measures:")
+    print ("\tActivity Fraction %0.4f"
            % calculate_activity_fraction(np.array(default_obj_pref.values())))
+    print ("\tKurtosis %0.4f"
+           % calculate_kurtosis(np.array(default_obj_pref.values())))
+
+    print ("-"*80)
 
     d = TamuraDynamics(time_step, default_obj_pref)
 

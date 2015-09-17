@@ -11,7 +11,7 @@ top_level_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if top_level_dir_path not in sys.path:
     sys.path.append(top_level_dir_path)
 
-from ObjectSelectivity.power_law_selectivity_profile import get_activity_fraction
+from ObjectSelectivity.power_law_selectivity_profile import calculate_activity_fraction
 
 def get_poisson_spikes(dt, rates):
     """
@@ -88,7 +88,7 @@ class TamuraDynamics :
         self.early_obj_pref = self.get_early_object_selectivities(obj_dict)
 
         self.early_activity_fraction_measured = \
-            get_activity_fraction(np.array(self.early_obj_pref.values()))
+            calculate_activity_fraction(np.array(self.early_obj_pref.values()))
 
         # parameters of exponential functions to map static rate to latency for each neuron
         self.min_latencies = .09 + .01*np.random.rand(1)
@@ -279,7 +279,7 @@ if __name__ == '__main__':
                         'van'            : 0.42843038621161039}
 
     print ("Default Activity Fraction %0.4f"
-           % get_activity_fraction(np.array(default_obj_pref.values())))
+           % calculate_activity_fraction(np.array(default_obj_pref.values())))
 
     d = TamuraDynamics(time_step, default_obj_pref)
 

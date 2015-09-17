@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_activity_fraction(rates_per_object):
+def calculate_activity_fraction(rates_per_object):
     """
     Given an array of firing rates of the neuron to objects, return the sparseness metric
     activity fraction of the neuron as defined in
@@ -73,7 +73,7 @@ class PowerLawSparseness:
         # Activity fraction for the list of included objects. As the number of stimuli increases
         # measured activity fraction should approach the absolute value.
         self.activity_fraction_measured = \
-            get_activity_fraction(np.array(self.objects.values()))
+            calculate_activity_fraction(np.array(self.objects.values()))
 
     def __power_law_selectivity(self, ranked_obj_list):
         """
@@ -129,4 +129,4 @@ if __name__ == "__main__":
 
     firing_rates = np.array(profile1.objects.values())
 
-    print "Sparseness (Activity Fraction) of neuron: %f " % get_activity_fraction(firing_rates)
+    print "Sparseness (Activity Fraction) of neuron: %f " % calculate_activity_fraction(firing_rates)

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gamma
 
-from power_law_selectivity_profile import get_activity_fraction
+from power_law_selectivity_profile import calculate_activity_fraction
 
 __author__ = 'bptripp'
 
@@ -45,7 +45,7 @@ class KurtosisSparseness:
                         for item in list_of_objects}
 
         self.activity_fraction_measured = \
-            get_activity_fraction(np.array(self.objects.values()))
+            calculate_activity_fraction(np.array(self.objects.values()))
 
         # To calculate absolute activity fraction, the stimuli set consists of all objects the
         # neuron responds. Model this by getting firing rates distributed over the entire cdf
@@ -54,7 +54,7 @@ class KurtosisSparseness:
         rates_all_obj = self.__get_object_preference(rates_distribution_for_cdf)
 
         self.activity_fraction_absolute = \
-            get_activity_fraction(rates_all_obj)
+            calculate_activity_fraction(rates_all_obj)
 
         # Calculate the excess kurtosis of the neuron
         self.kurtosis = 6.0 / self.a

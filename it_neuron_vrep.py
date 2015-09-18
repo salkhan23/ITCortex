@@ -39,7 +39,7 @@ class Neuron:
     def __init__(
             self,
             object_list,
-            sim_time_step_s = 0.005,
+            sim_time_step_s=0.005,
             selectivity_profile='power_law',
             max_fire_rate=100,
             position_profile=None,
@@ -176,7 +176,7 @@ class Neuron:
 
         else:
 
-             if ground_truth_list:
+            if ground_truth_list:
                 rate = self._get_static_firing_rate(
                     self.selectivity.objects,
                     ground_truth_list)
@@ -291,21 +291,28 @@ def main(it_cortex):
         time_step = it_cortex[0].dynamics.dt
         steps = 500
         rates_arr = np.zeros(shape=steps)
+        ground_truth_present = np.zeros_like(rates_arr)
 
         ground_truth = [
-        # object,           x,            y,            size,     rot_x, rot_y, rot_z
-        [most_pref_object, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0],
-        ['monkey',         rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0]]
+            # object,           x,            y,            size,     rot_x, rot_y, rot_z
+            [most_pref_object, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0],
+            ['monkey',         rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0]]
 
         for ii in np.arange(steps):
 
             if ii > (steps/2.0):
                 ground_truth = []
 
-            rates_arr[ii]= it_cortex[0].firing_rate(ground_truth)
+            if ground_truth:
+                ground_truth_present[ii] = 1
+
+            rates_arr[ii] = it_cortex[0].firing_rate(ground_truth)
 
         plt.figure("Dynamic Firing Rate of Neuron 0")
         plt.plot(np.arange(steps*time_step, step=time_step), rates_arr)
+        plt.plot(np.arange(steps*time_step, step=time_step), ground_truth_present,
+                 label='Input stimulus', color='k', linewidth=2)
+        plt.legend()
 
     # Population Plots
     # Plot the selectivity distribution of the population

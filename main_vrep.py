@@ -519,7 +519,7 @@ def main():
 
         for _ in np.arange(population_size):
             neuron = it.Neuron(list_of_objects,
-                               sim_time_step_s = t_step_ms/1000,
+                               sim_time_step_s = t_step_ms/1000.0,
                                selectivity_profile='Kurtosis',
                                position_profile='Gaussian',
                                size_profile='Lognormal',

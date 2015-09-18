@@ -57,8 +57,9 @@ def connect_vrep(sim_stop_time_ms, sim_dt_ms):
     """
     Establish connection to VREP simulation.
 
-    NOTE: Add the following command to a child script in the simulation:
-        simExtRemoteApiStart(19999)
+    NOTE: The port 19997 is for synchronous operation mode and is opened by default at startup.
+    To configure it differently, change ports in remoteApiConnections.txt which is located in the
+     external vrep application directory.
     """
     vrep.simxFinish(-1)  # Close any open connections.
 
@@ -519,7 +520,7 @@ def main():
 
         for _ in np.arange(population_size):
             neuron = it.Neuron(list_of_objects,
-                               sim_time_step_s = t_step_ms/1000.0,
+                               sim_time_step_s=t_step_ms/1000.0,
                                selectivity_profile='Kurtosis',
                                position_profile='Gaussian',
                                size_profile='Lognormal',

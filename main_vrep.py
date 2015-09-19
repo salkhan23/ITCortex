@@ -14,6 +14,7 @@ import sys
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
 from vrep.src import vrep
 
@@ -316,7 +317,10 @@ def get_vision_sensor_parameters(c_id):
     return angle, ar, z_n, z_f, vis_sen_handle
 
 
-def get_object_position(c_id, object_handle, reference_frame_handle):
+def get_object_position(c_id,
+                        object_handle,
+                        reference_frame_handle,
+                        op_mode=vrep.simx_opmode_buffer):
     """
      Get position (x,y,z) coordinates of object specified by object_handle with respect to
      the reference frame of object specified by reference_frame_handle.
@@ -324,6 +328,9 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
     :param c_id                     : connected scene id.
     :param object_handle            : vrep handle of object.
     :param reference_frame_handle   : vrep handle of objects whose reference frame to use.
+    :param op_mode                  : operation mode of the command. Default =
+                                      vrep.simx_opmode_buffer. To initialize this function use
+                                      vrep.simx_opmode_streaming at first call.
 
     :rtype: (x,y,z) co-ordinates of target object.
     """
@@ -331,27 +338,24 @@ def get_object_position(c_id, object_handle, reference_frame_handle):
         c_id,
         object_handle,
         reference_frame_handle,
-        vrep.simx_opmode_buffer)
+        op_mode)
 
-    if res != vrep.simx_return_ok:
-        # print('Initializing position acquisition function for object handle %d' % object_handle)
-        _, position = vrep.simxGetObjectPosition(
-            c_id,
-            object_handle,
-            reference_frame_handle,
-            vrep.simx_opmode_streaming)
+    if vrep.simx_opmode_buffer == op_mode:
+        # check the result
+        if res != vrep.simx_return_ok:
+            warnings.warn("Failed to retrieve position of object  handle %d, with err %s"
+                          % (object_handle, res))
 
-        time.sleep(0.1)  # wait 100ms after initializing
-        _, position = vrep.simxGetObjectPosition(
-            c_id,
-            object_handle,
-            reference_frame_handle,
-            vrep.simx_opmode_buffer)
+    # elif vrep.simx_opmode_streaming == op_mode:
+    #     print('Initializing position acquisition function for object handle %d' % object_handle)
 
     return position
 
 
-def get_object_rotations(c_id, object_handle, reference_frame_handle):
+def get_object_rotations(c_id,
+                         object_handle,
+                         reference_frame_handle,
+                         op_mode=vrep.simx_opmode_buffer):
     """
     Get euler rotations (alpha, beta, gamma) of object specified by object_handle with respect to
     the reference frame of object specified by reference_frame_handle.
@@ -359,6 +363,9 @@ def get_object_rotations(c_id, object_handle, reference_frame_handle):
     :param c_id                     : connected scene id.
     :param object_handle            : vrep handle of object.
     :param reference_frame_handle   : vrep handle of objects whose reference frame to use.
+     :param op_mode                  : operation mode of the command. Default =
+                                      vrep.simx_opmode_buffer. To initialize this function use
+                                      vrep.simx_opmode_streaming at first call.
 
     :rtype: (alpha,beta,gamma) co-ordinates of target object.
     """
@@ -366,24 +373,46 @@ def get_object_rotations(c_id, object_handle, reference_frame_handle):
         c_id,
         object_handle,
         reference_frame_handle,
-        vrep.simx_opmode_buffer)
+        op_mode)
 
-    if res != vrep.simx_return_ok:
-        print('Initializing rotation acquisition function for object handle %d' % object_handle)
-        _, rotations = vrep.simxGetObjectOrientation(
-            c_id,
-            object_handle,
-            reference_frame_handle,
-            vrep.simx_opmode_streaming)
+    if vrep.simx_opmode_buffer == op_mode:
+        # check the result
+        if res != vrep.simx_return_ok:
+            warnings.warn("Failed to retrieve rotation angles for object handle %d, with err %s"
+                          % (object_handle, res))
 
-        time.sleep(0.1)  # wait 100ms after initializing
-        _, rotations = vrep.simxGetObjectOrientation(
-            c_id,
-            object_handle,
-            reference_frame_handle,
-            vrep.simx_opmode_buffer)
+    # elif vrep.simx_opmode_streaming == op_mode:
+    #     print('Initializing rotation acquisition function for object handle %d' % object_handle)
 
     return rotations
+
+
+def initialize_vrep_streaming_operations(c_id,
+                                         all_vrep_objs,
+                                         vis_sensor_handle):
+    """
+    Initialize all periodic VREP streaming functions. That require VREP to setup streaming
+    services on the server side.
+
+    :param c_id                 : connected scene id.
+    :param all_vrep_objs        : List of all objects in scene. Each objects is of type VrepObject
+    :param vis_sensor_handle    : vrep handle for vision sensor.
+    """
+    for obj in all_vrep_objs:
+        _ = get_object_position(
+            c_id,
+            obj.handle,
+            vis_sensor_handle,
+            vrep.simx_opmode_streaming)
+
+        _ = get_object_rotations(
+            c_id,
+            obj.handle,
+            vis_sensor_handle,
+            vrep.simx_opmode_streaming)
+
+        # wait some time to allow VREP to setup streaming services.
+        time.sleep(0.1)
 
 
 def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_angle):
@@ -496,6 +525,8 @@ def main():
 
         # Get IT Cortex Robot Vision sensor parameters
         alpha_rad, aspect_ratio, z_near, z_far, vs_handle = get_vision_sensor_parameters(client_id)
+
+        initialize_vrep_streaming_operations(client_id, objects_array, vs_handle)
 
         # Construct vision sensor projection matrix
         # This Projection Matrix, scales x, y, z axis to range (-1, 1) to make it easier to detect

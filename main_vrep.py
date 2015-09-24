@@ -15,6 +15,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+import ctypes
 
 from vrep.src import vrep
 
@@ -411,6 +412,11 @@ def initialize_vrep_streaming_operations(c_id,
             vis_sensor_handle,
             vrep.simx_opmode_streaming)
 
+        _ = vrep.simxReadStringStream(
+            c_id,
+            "occlusionData",
+            vrep.simx_opmode_streaming)
+
         # wait some time to allow VREP to setup streaming services.
         time.sleep(0.1)
 
@@ -510,7 +516,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 5*1000  # 5 seconds
+    t_stop_ms = 5*10  # 5 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
     try:
@@ -574,6 +580,37 @@ def main():
             if res != vrep.simx_return_ok:
                 print ("Failed to step simulation! Err %s" % res)
                 break
+
+            raw_input("Continue with step %d ?" % t_current_ms)
+
+            # Handle occlusion --------------------------------------------------------------------
+            # TODO Add occlusion calculation the child script
+            # TODO Send proper object handles to write stream
+            # TODO Properly send down occlusion calculations from script
+            # TODO Move this to function calculate ground truth function
+            # Inform child script which options we are interested in:
+            occ_obj_handles = vrep.simxPackInts([15, t_current_ms])
+            raw_bytes = (ctypes.c_ubyte * len(occ_obj_handles)).from_buffer_copy(occ_obj_handles)
+            res = vrep.simxWriteStringStream(
+                client_id,
+                "getOcclusionForHandles",
+                raw_bytes,
+                vrep.simx_opmode_oneshot)
+
+            if res != vrep.simx_return_ok:
+                warnings.warn("Failed to send object handles for occlusion. Error %d" % res)
+
+            # Read occlusion data from child script
+            res, occlusion_data = vrep.simxReadStringStream(
+                client_id,
+                "occlusionData",
+                vrep.simx_opmode_buffer)
+            occlusion_data = vrep.simxUnpackInts(occlusion_data)
+
+            if res != vrep.simx_return_ok:
+                warnings.warn("Failed to get occlusion data, Error %d", res)
+            else:
+                print("Occlusion Data ", occlusion_data)
 
             ground_truth = get_ground_truth(
                 client_id,

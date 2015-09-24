@@ -641,11 +641,10 @@ def main():
         print("Stopping Simulation...")
         set_robot_velocity(client_id, 0)
         time.sleep(1)
-        result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot)
-        if result != vrep.simx_return_ok and \
-           result != vrep.simx_return_novalue_flag:
+        result = vrep.simxStopSimulation(client_id, vrep.simx_opmode_oneshot_wait)
+        if result != vrep.simx_return_ok:
             print("Failed to stop simulation.")
-        vrep.simxFinish(-1)
+        vrep.simxFinish(client_id)
 
     return it_cortex, rates_vs_time_arr
 

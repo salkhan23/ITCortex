@@ -438,9 +438,9 @@ def get_occlusion_levels(obj_handles, c_id):
     if obj_handles:
 
         # Inform vision_sensor child script which objects to calculate occlusion for
-        obj_handles = vrep.simxPackInts(obj_handles)
+        obj_handles_string = vrep.simxPackInts(obj_handles)
 
-        raw_bytes = (ctypes.c_ubyte * len(obj_handles)).from_buffer_copy(obj_handles)
+        raw_bytes = (ctypes.c_ubyte * len(obj_handles_string)).from_buffer_copy(obj_handles_string)
         res = vrep.simxWriteStringStream(
             c_id,
             "getOcclusionForHandles",
@@ -456,14 +456,15 @@ def get_occlusion_levels(obj_handles, c_id):
             "occlusionData",
             vrep.simx_opmode_buffer)
 
-        occlusion_data = vrep.simxUnpackInts(occlusion_data)
+        occlusion_data = vrep.simxUnpackFloats(occlusion_data)
 
         if res != vrep.simx_return_ok:
             warnings.warn("Failed to get occlusion data, Error %d" % res)
         else:
-            print("Occlusion Data ", occlusion_data)
+            for idx, item in enumerate(occlusion_data):
+                print("Obj handle %s, visibility level=%s" % (obj_handles[idx], item))
 
-    return 0
+    return
 
 
 def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_angle):

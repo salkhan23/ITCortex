@@ -421,20 +421,18 @@ def initialize_vrep_streaming_operations(c_id,
         time.sleep(0.1)
 
 
-def get_occlusion_levels(obj_handles, c_id):
+def get_object_visibility_levels(obj_handles, c_id):
     """
     Inform the vision sensor child script which  object handles to calculate occlusion levels
     for. Retrieve occlusion levels for all object handles in obj_handles list.
 
-    # TODO Add occlusion calculation the child script
-    # TODO Send proper object handles to write stream
-    # TODO Properly send down occlusion calculations from script
-
     :param obj_handles: List of object handles to calculate occlusion levels for.
     :param c_id: connected scene id.
 
-    :rtype : List of tuples ( object_handle, occlusion level)
+    :rtype : List of visibility levels for each specified object
     """
+    visibility_levels = np.zeros(shape=len(obj_handles))
+
     if obj_handles:
 
         # Inform vision_sensor child script which objects to calculate occlusion for
@@ -463,8 +461,9 @@ def get_occlusion_levels(obj_handles, c_id):
         else:
             for idx, item in enumerate(occlusion_data):
                 print("Obj handle %s, visibility level=%s" % (obj_handles[idx], item))
+                visibility_levels[idx] = item
 
-    return
+    return visibility_levels
 
 
 def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_angle):
@@ -561,7 +560,11 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
     # After identifying all objects that lie within the field of vision of the vision sensor,
     # get occlusion levels from child script.
-    get_occlusion_levels(object_handles_in_frame, c_id,)
+    vis_array = get_object_visibility_levels(object_handles_in_frame, c_id)
+    print vis_array
+
+    for idx, entry in enumerate(objects_in_frame):
+        entry.append(vis_array[idx])
 
     return objects_in_frame
 
@@ -648,9 +651,9 @@ def main():
                 # Print the Ground Truth
                 print("Time=%dms, Number of objects %d" % (t_current_ms, len(ground_truth)))
                 for entry in ground_truth:
-                    print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f"
+                    print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f"
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3],
-                              entry[4], entry[5], entry[6]))
+                              entry[4], entry[5], entry[6], entry[7]))
 
             # Get IT cortex firing rates
             for n_idx, neuron in enumerate(it_cortex):

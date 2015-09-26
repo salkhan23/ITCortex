@@ -191,7 +191,7 @@ class Neuron:
         Get Neurons static overall firing rate to specified input.
 
         :param ground_truth_list: list of:
-        [object_name, x, y, size, rot_x, rot_y, rot_z] entries for all objects in the
+        [object_name, x, y, size, rot_x, rot_y, rot_z, vis_nondiag] entries for all objects in the
         screen. Add more elements to this list and update the zip function.
 
         :rtype : Return the net average (multi object response) firing rate of the neuron
@@ -207,7 +207,7 @@ class Neuron:
         # The IT cortex rotation tuning profile is around the vertical axis which is defined
         # as the y-axis of the vision sensor. Rotating the object (in real world coordinates)
         # around the x-axis results in rotations around the y axis of the vision sensor.
-        objects, x_arr, y_arr, size_arr, _, _, _ = zip(*ground_truth_list)
+        objects, x_arr, y_arr, size_arr, _, _, _, _ = zip(*ground_truth_list)
 
         objects = list(objects)
         x_arr = np.array(x_arr)

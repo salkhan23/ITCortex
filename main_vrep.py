@@ -459,9 +459,20 @@ def get_object_visibility_levels(obj_handles, c_id):
         if res != vrep.simx_return_ok:
             warnings.warn("Failed to get occlusion data, Error %d" % res)
         else:
-            for idx, item in enumerate(occlusion_data):
-                print("Obj handle %s, visibility level=%s" % (obj_handles[idx], item))
-                visibility_levels[idx] = item
+
+            # The occlusion data sent down is actually for the previous time step, to the child
+            # script we specify which objects we are interested in and it returns values from its
+            # previous request. We therefore need to match the object handle identities.
+
+            # For each requested handle, the child script sends down the value of the requested
+            # handle followed by its visibility level.
+            for idx in np.arange(len(occlusion_data)/2):
+                identity = np.int(occlusion_data[2*idx])
+                value = occlusion_data[2*idx + 1]
+
+                for idx2, obj_handle in enumerate(obj_handles):
+                    if identity == obj_handle:
+                        visibility_levels[idx2] = value
 
     return visibility_levels
 
@@ -483,8 +494,12 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
         obj_name,           : vrep name of object.
         x,                  : object vision frame x coordinate in degree of eccentricity (radians).
         y,                  : object vision frame y coordinate in degree of eccentricity (radians).
-        size)               : size of object (span of objects maximum dimension) in degree of
+        size,               : size of object (span of objects maximum dimension) in degree of
                               eccentricity (radians).
+        rot_x,              : rotations about the x-axis  in degree of eccentricity (radians).
+        rot_y,              : rotations about the x-axis  in degree of eccentricity (radians).
+        rot_z,              : rotations about the x-axis  in degree of eccentricity (radians).
+        vis_non_diag        : Visibility percentage of total object (non-diagnostic). Range (0,1)
     """
     objects_in_frame = []
     object_handles_in_frame = []
@@ -561,7 +576,6 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
     # After identifying all objects that lie within the field of vision of the vision sensor,
     # get occlusion levels from child script.
     vis_array = get_object_visibility_levels(object_handles_in_frame, c_id)
-    print vis_array
 
     for idx, entry in enumerate(objects_in_frame):
         entry.append(vis_array[idx])
@@ -637,7 +651,7 @@ def main():
                 print ("Failed to step simulation! Err %s" % res)
                 break
 
-            raw_input("Continue with step %d ?" % t_current_ms)
+            # raw_input("Continue with step %d ?" % t_current_ms)
 
             ground_truth = get_ground_truth(
                 client_id,

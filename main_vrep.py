@@ -528,7 +528,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
         camera_cartesian = np.dot(p_mat2, camera_homogeneous)
 
         # Check if object lies within projection frame
-        epsilon = 1*10**-3
+        epsilon = 1*10**-2.75
 
         if ((-1 - epsilon <= camera_cartesian[0] <= 1 + epsilon) and
                 (-1 - epsilon <= camera_cartesian[1] <= 1 + epsilon) and

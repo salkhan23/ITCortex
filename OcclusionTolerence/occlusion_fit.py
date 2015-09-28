@@ -33,16 +33,16 @@ def sigmoid(x, a, b):
 # Code start ----------------------------------------------------------------------------
 plt.ion()
 
-# Fit Diagnosticity data ----------------------------------------------------------------
-# Diagnosticity is defined as the ratio of the trail by trail variance of in the diagnostic images
+# 1. Fit Diagnosticity data -------------------------------------------------------------
+# Diagnosticity is defined as the ratio of the trail by trail variance of diagnostic parts
 # (at all stimulus sizes) and the total trail by trail variance. If a neuron responded only to the
 # diagnostic part, its ratio = 1. While if an image  did not preferentially respond to the
 # diagnostic parts its ratio = 0.
 #
 # The total firing rate of the neuron is computed as a weighted average of the diagnostic tuning
-# curve and the non diagnostic tuning curve and use the diagnostic variance as the weight.
+# curve and the non-diagnostic tuning curve weighted by the diagnosticity.
 #
-# In supplementary material Diagnosticity metric was compared to the difference between the net
+# In supplementary material diagnosticity metric was compared to the difference between the net
 # firing rates to the diagnostic and non-diagnostic parts. For all cases there was a positive
 # correlation. Indicating neurons with higher diagnostic variances fired for more diagnostic
 # parts than to non-diagnostic parts.
@@ -51,9 +51,9 @@ with open('Neilson2006.pkl', 'rb') as fid:
     data = pickle.load(fid)
 
 ''' PDF of Diagnostic variance '''
-diagVar = data['diagVariance']
+diagnosticity = data['diagVariance']
 
-hist, bins = np.histogram(diagVar, bins=np.arange(100, step=1), density=True)
+hist, bins = np.histogram(diagnosticity, bins=np.arange(100, step=1), density=True)
 
 # Clean up zeros
 idxs = np.nonzero(hist)
@@ -72,8 +72,8 @@ plt.plot(bins, exponential(bins, *pOptExp), label='Exponential a*exp(-ax): a=%f'
 # plt.plot(bins, exponential(bins, pOptExp[0] + sigma), 'k--')
 # plt.plot(bins, exponential(bins, pOptExp[0] - sigma), 'k--')
 
-#  Generate Data ------------------------------------------------------------------------
-# Given the pdf generate random variables that follow the distribution - inverse CDF
+# 2. Generate Diagnosticity Distribution ------------------------------------------------
+# Given the diagnosticity pdf generate random variables that follow the distribution - inverse CDF
 #
 # Ref:
 # [1] http://www.ece.virginia.edu/mv/edu/prob/stat/random-number-generation.pdf
@@ -99,15 +99,18 @@ plt.xlabel('Diagnosticity (%)')
 plt.ylabel('Probability Density')
 plt.legend()
 
-# Diagnostic and Non Diagnostic Tuning Curves ------------------------------------------
+# 3. Diagnostic and Non-Diagnostic Tuning Curves Fits ------------------------------------------
 #
 # Data Problems:
-# Neilson 2006 - too few points
-# Kovacs 1995  - a little better 4 points, but multiple objects
-# Oreilly 2013 - lots more points but not recorded data.
+# Neilson 2006 - 3 points per object. Figure 1b & 2b.
+# Kovacs 1995  - 4 points per object. Figure 8.
+# Oreilly 2013 - Many points, but generated data. Also not firing rates, mean recognition
+#                performance of Leabra model for trained objects, Figure 5(a). Only checking if a
+#                sigmoid provides a good fit for this model as well.
+#
 #
 # Neilson 2006:
-# [1] For the same percentage of area, diagnostic firing rates are always higher than
+# [1] For each occlusion level, diagnostic firing rates are always higher than
 #     non-diagnostic rates.
 # [2] Even though there are variations between the firing rates of individual neurons, not enough
 #     statistical information is presented to model these variations. Results for only an exemplar
@@ -118,38 +121,28 @@ plt.legend()
 #     identity of the object from it. Also it be be a result of the small stimulus set that they
 #     used only 4 natural scene stimuli which the monkey may be  storing in working memory and
 #     influencing the results of the IT neuron.
-# [4] However for each occlusion level, higher firing rates were seen for diagnostic parts than
-#     for non-diagnostic parts.
 #
-# Kovacs 1995:
-# [5] Occlusion results at 3 different levels were presented, but for multiple objects.
-#
-# Oreilly 2013:
-# [6] We also use results from Oreilly although we note that these are not actual recorded from
-#     a monkey but simulated results.
-#
-# [7] We choose to optimize parameters of a sigmoid function to model occlusion responses.
+# [5] We choose to optimize parameters of a sigmoid function to model occlusion responses.
 #     At high occlusion levels, responses should be low as object identity is yet to be determined.
 #     As more of the object is revealed stronger responses are anticipated and during the mid
 #     level occlusion responses should rise sharply. At low occlusion rate of increase of
 #     responses should plateau as the IT neuron will have some tolerance to small variations.
 
-# load tuning curves
 with open('Oreilly2013.pkl', 'rb') as fid:
     oreillyData = pickle.load(fid)
 
 with open('Kovacs1995.pkl', 'rb') as fid:
     kovacsData = pickle.load(fid)
 
+# Curve Fits to non-diagnostic tuning profiles ------------------------------------------
 f, axArr = plt.subplots(3, 3, sharex='col', sharey='row')
 f.subplots_adjust(hspace=0.05, wspace=0.05)
 plt.suptitle('Sigmoid Fits to Non-diagnostic tuning curves 1/(1+exp(a*(x-b))) ', size=16)
 
-x_arr = np.arange(start=1, stop=100, step=1)
+x_arr = np.arange(start=0, stop=100, step=1)
 pOptArray = np.array([])
 pCovArray = np.array([])
 
-# Curve Fits to non-diagnostic tuning profiles ------------------------------------------
 # Fit Kovacs Data
 for obj, perObjRates in enumerate(kovacsData['rates']):
     row = obj / 3
@@ -157,8 +150,7 @@ for obj, perObjRates in enumerate(kovacsData['rates']):
 
     rMax = np.max(perObjRates)
     axArr[row][col].scatter(kovacsData['occlusion'], perObjRates / rMax)
-    pOpt, pCov = curve_fit(sigmoid, kovacsData['occlusion'],
-                           perObjRates / rMax)
+    pOpt, pCov = curve_fit(sigmoid, kovacsData['occlusion'], perObjRates / rMax)
     pOptArray = np.append(pOptArray, pOpt)
     pCovArray = np.append(pCovArray, pCov)
 
@@ -166,8 +158,8 @@ for obj, perObjRates in enumerate(kovacsData['rates']):
     axArr[row][col].plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
 
     axArr[row][col].legend(fontsize='small')
-    axArr[row][col].set_xlim(0, 100)
-    axArr[row][col].set_ylim(0, 1)
+    axArr[row][col].set_xlim(0 - 5, 100 + 5)
+    axArr[row][col].set_ylim(0 - 0.05, 1 + 0.05)
 
 # Fit Oreilly Data
 rMax = np.max(oreillyData['Rates'])
@@ -182,8 +174,8 @@ axArr[1][2].scatter(oreillyData['Occ'], oreillyData['Rates'] / rMax)
 legLabel = 'Oreilly 2013 a=%0.4f, b=%0.4f' % (pOpt[0], pOpt[1])
 axArr[1][2].plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
 axArr[1][2].legend(fontsize='small')
-axArr[1][2].set_xlim(0, 100)
-axArr[1][2].set_ylim(0, 1)
+axArr[1][2].set_xlim(0 - 5, 100 + 5)
+axArr[1][2].set_ylim(0 - 0.05, 1 + 0.05)
 
 axArr[2][0].set_xlabel('Occlusion Level')
 axArr[2][1].set_xlabel('Occlusion Level')
@@ -192,14 +184,15 @@ axArr[0][0].set_ylabel('Normalized Firing Rate')
 axArr[1][0].set_ylabel('Normalized Firing Rate')
 axArr[2][0].set_ylabel('Normalized Firing Rate')
 
-# Fit Neilson Data
+# Fit Neilson Data - Non Diagnostic Single Figure 1b & Non-Diagnostic Population Figure 2b
 rMax = np.max(data['singleNonDiagRate'])
 pOpt, pCov = curve_fit(sigmoid, data['singleOcc'],
-                       data['singleNonDiagRate'] / rMax, p0=[0.05, 30])
+                       data['singleNonDiagRate'] / rMax,
+                       p0=[0.05, 30])
 
 axArr[2][0].scatter(data['singleOcc'], data['singleNonDiagRate'] / rMax)
-axArr[2][0].set_xlim(0, 100)
-axArr[2][0].set_ylim(0, 1)
+axArr[2][0].set_xlim(0 - 5, 100 + 5)
+axArr[2][0].set_ylim(0 - 0.05, 1 + 0.05)
 
 legLabel = 'Neilson 2006 Single Neuron a=%0.4f, b=%0.4f' % (pOpt[0], pOpt[1])
 axArr[2][0].plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
@@ -213,16 +206,17 @@ pOpt, pCov = curve_fit(sigmoid, data['popOcc'],
                        data['popNonDiagRate'] / rMax, p0=[0.05, 30])
 
 axArr[2][1].scatter(data['popOcc'], data['popNonDiagRate'] / rMax)
-axArr[2][1].set_xlim(0, 100)
-axArr[2][1].set_ylim(0, 1)
+axArr[2][1].set_xlim(0 - 5, 100 + 5)
+axArr[2][1].set_ylim(0 - 0.05, 1 + 0.05)
 
 legLabel = 'Neilson 2006 Population a=%0.4f, b=%0.4f' % (pOpt[0], pOpt[1])
 axArr[2][1].plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
 axArr[2][1].legend(fontsize='small')
 
 # Curve fits for diagnostic profiles ----------------------------------------------------
-# Single Neuron Data Fit to exemplar Neron in Neilson 2006.
-plt.figure('Kovacs Data Fits')
+# Single Neuron Data Fit to exemplar Neron in Neilson 2006. Figure 1b.
+plt.figure('Diagnostic Tuning Curves')
+plt.suptitle('Sigmoid Fits to Diagnostic tuning curves 1/(1+exp(a*(x-b))) ', size=16)
 rMax = np.max(data['singleDiagRate'])
 pOpt, _ = curve_fit(sigmoid, data['singleOcc'],
                     data['singleDiagRate'] / rMax,
@@ -232,53 +226,62 @@ plt.scatter(data['singleOcc'], data['singleDiagRate'] / rMax)
 legLabel = 'Neilson Single Neuron Diagnostic a=%0.4f, b=%0.4f' % (pOpt[0], pOpt[1])
 plt.plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
 
-rMax = np.max(data['singleNonDiagRate'])
-pOpt, _1 = curve_fit(sigmoid, data['singleOcc'],
-                     data['singleNonDiagRate'] / rMax,
-                     p0=[0.05, 30])
+# # PLot Single Non-Diagnostic Fit as well
+# rMax = np.max(data['singleNonDiagRate'])
+# pOpt, _1 = curve_fit(sigmoid, data['singleOcc'],
+#                      data['singleNonDiagRate'] / rMax,
+#                      p0=[0.05, 30])
+#
+# plt.scatter(data['singleOcc'], data['singleNonDiagRate'] / rMax)
+# legLabel = 'Neilson Exemplar Neuron NonDiagnostic a=%0.4f, b=%0.4f' % (pOpt[0], pOpt[1])
+# plt.plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
 
-plt.scatter(data['singleOcc'], data['singleNonDiagRate'] / rMax)
-legLabel = 'Neilson Exemplar Neuron NonDiagnostic a=%0.4f, b=%0.4f' % (pOpt[0], pOpt[1])
-plt.plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
-plt.legend()
-
-# Population Data
+# Single Neuron Data Fit to population average in Neilson 2006. Figure 2b.
 rMax = np.max(data['popDiagRate'])
 pOpt, _2 = curve_fit(sigmoid, data['popOcc'],
                      data['popDiagRate'] / rMax,
                      p0=[2, 100])
 
-plt.scatter(data['popOcc'], data['popDiagRate'] / rMax)
+plt.scatter(data['popOcc'], data['popDiagRate'] / rMax, marker='+', color='green')
 legLabel = 'Neilson Pop Neuron Diagnostic a=%0.4f, b=%0.4f' % (pOpt[0], pOpt[1])
 plt.plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
 
-rMax = np.max(data['popNonDiagRate'])
-pOpt, _3 = curve_fit(sigmoid, data['popOcc'],
-                     data['popNonDiagRate'] / rMax,
-                     p0=[0.05, 30])
-
-plt.scatter(data['popOcc'], data['popNonDiagRate'] / rMax)
-legLabel = 'Neilson Pop Neuron NonDiagnostic a=%0.4f, b=%0.4f' \
-   % (pOpt[0], pOpt[1])
-plt.plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
+# # PLot population Non-Diagnostic Fit as well
+# rMax = np.max(data['popNonDiagRate'])
+# pOpt, _3 = curve_fit(sigmoid, data['popOcc'],
+#                      data['popNonDiagRate'] / rMax,
+#                      p0=[0.05, 30])
+#
+# plt.scatter(data['popOcc'], data['popNonDiagRate'] / rMax)
+# legLabel = 'Neilson Pop Neuron NonDiagnostic a=%0.4f, b=%0.4f' \
+#    % (pOpt[0], pOpt[1])
+# plt.plot(x_arr, sigmoid(x_arr, *pOpt), label=legLabel)
 plt.legend()
 
-# Average Parameters
+# 4. Weighted Average single tuning curve ------------------------------------------------
+
+# Find average of all sigmoid parameters of non-diagnostic & diagnostic tuning curve fits
 pOptArray = np.reshape(pOptArray, (7, 2))
 
 nonDiagAvgParams = np.mean(pOptArray, axis=0)
-# nonDiagAvgParams = pOpt #Use Neilson population data
-nonDiagAvgVar = np.mean(pOptArray, axis=0)
+print ("Average Parameters for all non-diagnostic tuning curves. a= %0.4f, b= %0.4f"
+       % (nonDiagAvgParams[0], nonDiagAvgParams[1]))
 
-# Weighted Average Tuning Curve ---------------------------------------------------------
+# TODO: Salman where do these values come from?
+diagAvgParams = np.array([0.32, 70])
+print ("Average Parameters for all non-diagnostic tuning curves. a= %0.4f, b= %0.4f"
+       % (nonDiagAvgParams[0], nonDiagAvgParams[1]))
+
+# Choose an arbitrary Diagnosticity level
+diagnosticity = 0.60
+
+# Plot both average tuning curve
 occ = np.arange(start=0, stop=100, step=1)
-
-diagParams = np.array([0.32, 70])
 
 plt.figure('Mean Tuning Curves')
 plt.plot(occ,
-         sigmoid(occ, diagParams[0], diagParams[1]),
-         label='Diagnostic: a=%0.4f, b=%0.4f' % (diagParams[0], diagParams[1]))
+         sigmoid(occ, diagAvgParams[0], diagAvgParams[1]),
+         label='Diagnostic: a=%0.4f, b=%0.4f' % (diagAvgParams[0], diagAvgParams[1]))
 plt.plot(occ,
          sigmoid(occ, nonDiagAvgParams[0], nonDiagAvgParams[1]),
          label='Non-Diagnostic: a=%0.4f, b=%0.4f' % (nonDiagAvgParams[0], nonDiagAvgParams[1]))
@@ -288,8 +291,7 @@ plt.xlabel('Occlusion')
 plt.ylabel('Normalized Firing Rate')
 plt.title('Mean Model Neuron Occlusion Tuning Profiles, F(s) = 1/(1 + exp(a*(x-b)))')
 
-diagVar = 60.0 / 100.0
-
+# 3D complete occlusion tuning profile
 occ1, occ2 = np.meshgrid(occ, occ)
 
 fig = plt.figure()
@@ -298,11 +300,11 @@ ax = fig.gca(projection='3d')
 Z = np.ones(shape=(100, 100))
 for ii in np.arange(100):
     for jj in np.arange(100):
-        Z[ii][jj] = diagVar * sigmoid(ii, *diagParams) + \
-                    (1 - diagVar)*sigmoid(jj, *nonDiagAvgParams)
+        Z[ii][jj] = diagnosticity * sigmoid(ii, diagAvgParams[0], diagAvgParams[1]) + \
+                    (1 - diagnosticity) * sigmoid(jj, nonDiagAvgParams[0], nonDiagAvgParams[1])
 
 surf = ax.plot_surface(occ1, occ2, Z)
 ax.set_xlabel('Occlusion - Diagnostic')
 ax.set_ylabel('Occlusion - Non Diagnostic')
 ax.set_zlabel('Normalized Firing Rate')
-ax.set_title('Occlusion Tuning Profile of Sample Neuron with Diagnosticity of %f' % diagVar)
+ax.set_title('Occlusion Tuning Profile of Sample Neuron with Diagnosticity of %f' % diagnosticity)

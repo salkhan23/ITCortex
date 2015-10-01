@@ -183,29 +183,24 @@ def get_scene_objects(c_id, objects):
 
     if res != vrep.simx_return_ok:
         raise Exception('get_scene_objects: Failed to get object names. Error Code %d' % res)
-    else:
-        for count in np.arange(len(handles)):
 
-            if not any([word in s_data[count].lower() for word in objects_to_ignore]):
+    for count in np.arange(len(handles)):
+
+        if not any([word in s_data[count].lower() for word in objects_to_ignore]):
+
+            res,  parent_handle = vrep.simxGetObjectParent(
+                c_id,
+                handles[count],
+                vrep.simx_opmode_oneshot_wait)
+
+            if res != vrep.simx_return_ok:
+                raise Exception("get_scene_objects: Failed to get %s parent handle" % res)
+
+            # If object is a parent or is a diagnostic part
+            if (-1 == parent_handle) or ('diagnostic' in s_data[count].lower()):
                 size = get_object_dimensions(c_id, handles[count])
                 obj = VrepObject(s_data[count], handles[count], max(size))
                 objects.append(obj)
-
-    # Filter only unique (parent) objects
-    unique_objects = set()
-    for obj in objects:
-        res,  parent_handle = vrep.simxGetObjectParent(
-            c_id,
-            obj.handle,
-            vrep.simx_opmode_oneshot_wait)
-
-        if res != vrep.simx_return_ok:
-            raise Exception("get_scene_objects: Failed to get %s parent handle" % obj.name)
-        elif parent_handle == -1:  # no parent and therefore unique
-            unique_objects.add(obj)
-
-    print ("Number of unique objects in scene %d" % len(unique_objects))
-    print_objects(unique_objects)
 
 
 def print_objects(objects):
@@ -416,6 +411,12 @@ def initialize_vrep_streaming_operations(c_id,
             c_id,
             "occlusionData",
             vrep.simx_opmode_streaming)
+
+        _ = vrep.simxWriteStringStream(
+            c_id,
+            "getOcclusionForHandles",
+            (ctypes.c_ubyte * len('0')).from_buffer_copy('0'),
+            vrep.simx_opmode_oneshot)
 
         # wait some time to allow VREP to setup streaming services.
         time.sleep(0.1)

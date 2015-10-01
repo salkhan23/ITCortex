@@ -195,6 +195,12 @@ def get_scene_objects(c_id, objects):
     if res != vrep.simx_return_ok:
         raise Exception('get_scene_objects: Failed to get object names. Error Code %d' % res)
 
+    # print all objects and their handles returned by VREP
+    print("All objects returned by Vrep:")
+    longest_name = max([len(name) for name in s_data])
+    for count in np.arange(len(handles)):
+        print("Obj: %s, handle %d" % (s_data[count].ljust(longest_name), handles[count]))
+
     for count in np.arange(len(handles)):
 
         if not any([word in s_data[count].lower() for word in objects_to_ignore]):

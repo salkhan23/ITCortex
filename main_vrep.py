@@ -49,10 +49,21 @@ OBJ_BOUND_BOX_MAX_Z = 20
 
 
 class VrepObject:
-    def __init__(self, name, handle, max_dimension):
+    def __init__(self, name, handle, max_dimension, parent_handle=-1):
+        """
+        Initialize a Vrep object type.
+
+        :param name             : name
+        :param handle           : vrep object handle.
+        :param max_dimension    : maximum length in any dimension.
+        :param parent_handle    : vrep parent handle. If -1 not parent. (Default=-1)
+
+        :rtype                  : Instance of vrep object.
+        """
         self.name = name
         self.handle = handle
         self.max_dimension = max_dimension
+        self.parent = parent_handle
 
 
 def connect_vrep(sim_stop_time_ms, sim_dt_ms):
@@ -196,21 +207,23 @@ def get_scene_objects(c_id, objects):
             if res != vrep.simx_return_ok:
                 raise Exception("get_scene_objects: Failed to get %s parent handle" % res)
 
-            # If object is a parent or is a diagnostic part
+            # If object is a parent or is a diagnostic part append object.
             if (-1 == parent_handle) or ('diagnostic' in s_data[count].lower()):
                 size = get_object_dimensions(c_id, handles[count])
-                obj = VrepObject(s_data[count], handles[count], max(size))
+                obj = VrepObject(s_data[count], handles[count], max(size), parent_handle)
                 objects.append(obj)
 
 
 def print_objects(objects):
-    """ Print all objects stored in objects. """
+    """ Print all objects stored in objects.
 
+    :param objects: list of VrepObjects.
+    """
     longest_name = max([len(obj.name) for obj in objects])
 
     for obj in objects:
-        print("\t%s: handle=%d, max_dimension=%0.1f"
-              % (obj.name.ljust(longest_name), obj.handle, obj.max_dimension))
+        print("\t%s: handle=%d, max_dimension=%0.1f, parent_handle=%d"
+              % (obj.name.ljust(longest_name), obj.handle, obj.max_dimension, obj.parent))
 
 
 def set_robot_velocity(c_id, target_velocity):
@@ -626,7 +639,11 @@ def main():
         print("Initializing IT Population...")
 
         population_size = 100
-        list_of_objects = [obj.name for obj in objects_array]
+
+        # Initialize the population with parent objects only
+        list_of_objects = [obj.name for obj in objects_array
+                           if 'diagnostic' not in obj.name.lower()]
+
         it_cortex = []
 
         for _ in np.arange(population_size):

@@ -455,6 +455,8 @@ def get_object_visibility_levels(obj_handles, c_id):
             vrep.simx_opmode_buffer)
 
         occlusion_data = vrep.simxUnpackFloats(occlusion_data)
+        if not occlusion_data:
+            raw_input("Empty occlusion data")
 
         if res != vrep.simx_return_ok:
             warnings.warn("Failed to get occlusion data, Error %d" % res)
@@ -528,6 +530,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
         camera_cartesian = np.dot(p_mat2, camera_homogeneous)
 
         # Check if object lies within projection frame
+        # The position is for the center of the object.
         epsilon = 1*10**-2.75
 
         if ((-1 - epsilon <= camera_cartesian[0] <= 1 + epsilon) and

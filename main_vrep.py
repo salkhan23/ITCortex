@@ -54,14 +54,14 @@ class VrepObject:
         Initialize a Vrep object type.
 
         :param name             : name
-        :param handle           : vrep object handle.
+        :param handle           : vrep handles for parent object and all its children.
         :param max_dimension    : maximum length in any dimension.
         :param parent_handle    : vrep parent handle. If -1 not parent. (Default=-1)
 
         :rtype                  : Instance of vrep object.
         """
         self.name = name
-        self.handle = handle
+        self.handle = [handle]
         self.max_dimension = max_dimension
         self.parent = parent_handle
 
@@ -173,14 +173,18 @@ def get_object_dimensions(c_id, object_handle):
 
 def get_scene_objects(c_id, objects):
     """
-    Get all objects in the VREP scene, find their names, handles and size (length of the side
-    with the largest dimension.
+    Get all objects in the VREP scene. Parse the list to find all parent objects and diagnostic
+    parts. For each object of interest find the handles of all its children (component parts).
+    Find the size(length of the side with the largest dimension) for each object. This may be the
+    size of any of its children as well.
 
-    Find the number of unique objects in the list.Currently this is only displayed locally and
-    not passed on to the calling function.
+    A parent object in VREP can have an unlimited number of children. If a diagnostic part is
+    composed of multiple parts it should be grouped into a single object (single handle). A parent
+    object can have multiple diagnostic parts. When counting pixels for objects in the VREP vision
+    sensors child script. Diagnostic parts are treated as separate objects.
 
-    :param c_id: connected scene id.
-    :param objects: Empty list to which found objects are appended to.
+    :param c_id     : Connected scene id.
+    :param objects  : Empty list to which found Vrep objects (class) are appended to.
     """
 
     # Ignore all object with default, it_cortex, proxy and floor in name
@@ -195,29 +199,66 @@ def get_scene_objects(c_id, objects):
     if res != vrep.simx_return_ok:
         raise Exception('get_scene_objects: Failed to get object names. Error Code %d' % res)
 
-    # print all objects and their handles returned by VREP
-    print("All objects returned by Vrep:")
+    # Print all objects and their handles
+    print("All objects in VREP scene:")
     longest_name = max([len(name) for name in s_data])
+
     for count in np.arange(len(handles)):
-        print("Obj: %s, handle %d" % (s_data[count].ljust(longest_name), handles[count]))
+        print("Obj: %s, handle: %d" % (s_data[count].ljust(longest_name), handles[count]))
+
+    # Build the list of all vrep objects of interest parents and diagnostic parts
+    children_non_diagnostic = []  # list of non-diagnostic child handles.
 
     for count in np.arange(len(handles)):
 
         if not any([word in s_data[count].lower() for word in objects_to_ignore]):
 
-            res,  parent_handle = vrep.simxGetObjectParent(
+            res, parent_handle = vrep.simxGetObjectParent(
                 c_id,
                 handles[count],
                 vrep.simx_opmode_oneshot_wait)
 
             if res != vrep.simx_return_ok:
-                raise Exception("get_scene_objects: Failed to get %s parent handle" % res)
+                raise Exception("get_scene_objects: "
+                                "Failed to get %s parent handle. Error %d" % (s_data[count], res))
 
-            # If object is a parent or is a diagnostic part append object.
             if (-1 == parent_handle) or ('diagnostic' in s_data[count].lower()):
                 size = get_object_dimensions(c_id, handles[count])
                 obj = VrepObject(s_data[count], handles[count], max(size), parent_handle)
                 objects.append(obj)
+            else:
+                children_non_diagnostic.append(handles[count])
+
+    # Add handles of all non-diagnostic children to their parent handles
+    for child_handle in children_non_diagnostic:
+
+        parent_found = False
+        current_handle = child_handle
+
+        while not parent_found:
+            res, parent_handle = vrep.simxGetObjectParent(
+                c_id,
+                current_handle,
+                vrep.simx_opmode_oneshot_wait)
+
+            if res != vrep.simx_return_ok:
+                raise Exception("get_scene_objects: Failed to retrieve parent "
+                                "of non-diagnostic child %d,. Err %d" % (child_handle, res))
+            elif parent_handle == -1:
+                raise Exception("get_scene_objects: Failed to find parent "
+                                "of non-diagnostic child %d. Err %d" % (child_handle, res))
+
+            current_handle = parent_handle
+
+            for obj in objects:
+                if parent_handle == obj.handle[0]:
+                    parent_found = True
+
+                    obj.handle.append(child_handle)
+
+                    max_size = max(get_object_dimensions(c_id, child_handle))
+                    if max_size > obj.max_dimension:
+                        obj.max_dimension = max_size
 
 
 def print_objects(objects):
@@ -228,7 +269,7 @@ def print_objects(objects):
     longest_name = max([len(obj.name) for obj in objects])
 
     for obj in objects:
-        print("\t%s: handle=%d, max_dimension=%0.1f, parent_handle=%d"
+        print("\t%s: handles=%s, max_dimension=%0.1f, parent_handle=%d"
               % (obj.name.ljust(longest_name), obj.handle, obj.max_dimension, obj.parent))
 
 
@@ -619,7 +660,7 @@ def main():
         print("Initializing VREP simulation...")
         objects_array = []
         get_scene_objects(client_id, objects_array)
-        print ("Number of objects in scene %d" % len(objects_array))
+        print ("%d objects of interest (parent + diagnostic parts) in scene." % len(objects_array))
         print_objects(objects_array)
 
         # Get IT Cortex Robot Vision sensor parameters
@@ -678,7 +719,7 @@ def main():
                 print ("Failed to step simulation! Err %s" % res)
                 break
 
-            # raw_input("Continue with step %d ?" % t_current_ms)
+            raw_input("Continue with step %d ?" % t_current_ms)
 
             ground_truth = get_ground_truth(
                 client_id,

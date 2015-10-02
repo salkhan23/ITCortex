@@ -92,7 +92,7 @@ nObjArray = [2, 3]
 
 f, axArr = plt.subplots(1, len(nObjArray), sharey=True)
 f.subplots_adjust(hspace=0.05, wspace=0.05)
-f.suptitle('Simulated Neuron Population Responses to Multiple Objects', size=16)
+f.suptitle('Simulated Neuron Population Responses to Multiple Objects', size=40)
 
 for idx, nObj in enumerate(nObjArray):
     # Random Firing Rate modifiers for individual objects objects
@@ -106,15 +106,18 @@ for idx, nObj in enumerate(nObjArray):
 
     RespJoint[RespJoint < 0] = 0
 
-    axArr[idx].set_title('%i Objects' % nObj)
+    axArr[idx].set_title('%i Objects' % nObj, fontsize=34)
     axArr[idx].scatter(sumIsolatedResp, RespJoint, label='Generated Responses')
     axArr[idx].plot(sumIsolatedResp, 1.0 / nObj * sumIsolatedResp,
                     label='Average Model Prediction', color='r')
     axArr[idx].plot(sumIsolatedResp, 1.0 * sumIsolatedResp,
                     label='Linear sum', color='g')
-    axArr[idx].legend(loc='best')
+    axArr[idx].legend(loc='best', fontsize=34)
     axArr[idx].set_xlim(0, 2)
     axArr[idx].set_ylim(0, 2)
-    axArr[idx].set_xlabel('Normalized Sum of Isolated Responses')
+    axArr[idx].tick_params(axis='x', labelsize=30)
+    axArr[idx].tick_params(axis='y', labelsize=30)
+    axArr[idx].set_xlabel('Normalized Sum of Isolated Responses', fontsize=34)
+    
 
-axArr[0].set_ylabel('Normalized Response to multiple Objects')
+axArr[0].set_ylabel('Normalized Response to Multiple Objects', fontsize=34)

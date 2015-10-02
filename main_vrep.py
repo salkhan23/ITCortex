@@ -480,31 +480,44 @@ def initialize_vrep_streaming_operations(c_id,
         _ = vrep.simxWriteStringStream(
             c_id,
             "getOcclusionForHandles",
-            (ctypes.c_ubyte * len('0')).from_buffer_copy('0'),
+            (ctypes.c_ubyte * len('-1')).from_buffer_copy('-1'),
             vrep.simx_opmode_oneshot)
 
         # wait some time to allow VREP to setup streaming services.
         time.sleep(0.1)
 
 
-def get_object_visibility_levels(obj_handles, c_id):
+def get_object_visibility_levels(objects_list, c_id):
     """
     Inform the vision sensor child script which  object handles to calculate occlusion levels
     for. Retrieve occlusion levels for all object handles in obj_handles list.
 
-    :param obj_handles: List of object handles to calculate occlusion levels for.
+    :param objects_list: List of Vrep objects to calculate occlusion levels for.
     :param c_id: connected scene id.
 
     :rtype : List of visibility levels for each specified object
     """
-    visibility_levels = np.zeros(shape=len(obj_handles))
+    visibility_levels = np.zeros(shape=len(objects_list))
 
-    if obj_handles:
+    if objects_list:
 
         # Inform vision_sensor child script which objects to calculate occlusion for
-        obj_handles_string = vrep.simxPackInts(obj_handles)
+        # - send parent handles & their children.
+        handles_to_send = []
 
+        for obj in objects_list:
+
+            handles_to_send.append(obj.handle)
+
+            if obj.children:
+                handles_to_send.extend(obj.children)
+
+            handles_to_send.append(-1)  # separator
+        # print ("Sending:", handles_to_send)
+
+        obj_handles_string = vrep.simxPackInts(handles_to_send)
         raw_bytes = (ctypes.c_ubyte * len(obj_handles_string)).from_buffer_copy(obj_handles_string)
+
         res = vrep.simxWriteStringStream(
             c_id,
             "getOcclusionForHandles",
@@ -520,13 +533,15 @@ def get_object_visibility_levels(obj_handles, c_id):
             "occlusionData",
             vrep.simx_opmode_buffer)
 
-        occlusion_data = vrep.simxUnpackFloats(occlusion_data)
-        if not occlusion_data:
-            raw_input("Empty occlusion data")
-
         if res != vrep.simx_return_ok:
             warnings.warn("Failed to get occlusion data, Error %d" % res)
         else:
+
+            occlusion_data = vrep.simxUnpackFloats(occlusion_data)
+            if not occlusion_data:
+                raw_input("Empty occlusion data")
+
+            # print("Received:", occlusion_data)
 
             # The occlusion data sent down is actually for the previous time step, to the child
             # script we specify which objects we are interested in and it returns values from its
@@ -538,9 +553,10 @@ def get_object_visibility_levels(obj_handles, c_id):
                 identity = np.int(occlusion_data[2*idx])
                 value = occlusion_data[2*idx + 1]
 
-                for idx2, obj_handle in enumerate(obj_handles):
-                    if identity == obj_handle:
+                for idx2, obj in enumerate(objects_list):
+                    if identity == obj.handle:
                         visibility_levels[idx2] = value
+                        break
 
     return visibility_levels
 
@@ -569,8 +585,8 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
         rot_z,              : rotations about the x-axis  in degree of eccentricity (radians).
         vis_non_diag        : Visibility percentage of total object (non-diagnostic). Range (0,1)
     """
-    objects_in_frame = []
-    object_handles_in_frame = []
+    ground_truth_list = []
+    objects_in_frame = []   # list of all Vrep Objects found in the frame
 
     for vrep_obj in objects:
         # Get real world coordinates of object in vision sensor reference frame
@@ -630,7 +646,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
                 vis_sen_handle)
 
             # Add Ground Truth
-            objects_in_frame.append([
+            ground_truth_list.append([
                 vrep_obj.name,
                 x,                  # x image coordinate in Radians
                 y,                  # y coordinates in Radians
@@ -640,16 +656,16 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
                 rot_gamma           # Rotation around the z-axis in Radians.
             ])
 
-            object_handles_in_frame.append(vrep_obj.handle)
+            objects_in_frame.append(vrep_obj)
 
     # After identifying all objects that lie within the field of vision of the vision sensor,
     # get occlusion levels from child script.
-    vis_array = get_object_visibility_levels(object_handles_in_frame, c_id)
+    vis_array = get_object_visibility_levels(objects_in_frame, c_id)
 
-    for idx, entry in enumerate(objects_in_frame):
+    for idx, entry in enumerate(ground_truth_list):
         entry.append(vis_array[idx])
 
-    return objects_in_frame
+    return ground_truth_list
 
 
 def main():
@@ -724,7 +740,7 @@ def main():
                 print ("Failed to step simulation! Err %s" % res)
                 break
 
-            raw_input("Continue with step %d ?" % t_current_ms)
+            #raw_input("Continue with step %d ?" % t_current_ms)
 
             ground_truth = get_ground_truth(
                 client_id,

@@ -54,14 +54,15 @@ class VrepObject:
         Initialize a Vrep object type.
 
         :param name             : name
-        :param handle           : vrep handles for parent object and all its children.
+        :param handle           : vrep handles of object.
         :param max_dimension    : maximum length in any dimension.
         :param parent_handle    : vrep parent handle. If -1 not parent. (Default=-1)
 
         :rtype                  : Instance of vrep object.
         """
         self.name = name
-        self.handle = [handle]
+        self.handle = handle
+        self.children = []      # Create an empty list to store all child handles
         self.max_dimension = max_dimension
         self.parent = parent_handle
 
@@ -173,14 +174,14 @@ def get_object_dimensions(c_id, object_handle):
 
 def get_scene_objects(c_id, objects):
     """
-    Get all objects in the VREP scene. Parse the list to find all parent objects and diagnostic
-    parts. For each object of interest find the handles of all its children (component parts).
-    Find the size(length of the side with the largest dimension) for each object. This may be the
-    size of any of its children as well.
+    Create/Append a list of objects of interest (parent objects + diagnostic parts) in the VREP
+    scene. Elements of the list are VrepObject class instances. For each element fill in the
+    parameters as well. This includes Vrep handles for: the target object, its parent if any, all
+    of its component non-diagnostic parts and the its maximum size (length of the side with the
+    largest magnitude for the object or any of its children.
 
-    A parent object in VREP can have an unlimited number of children. If a diagnostic part is
-    composed of multiple parts it should be grouped into a single object (single handle). A parent
-    object can have multiple diagnostic parts. When counting pixels for objects in the VREP vision
+    A parent object in VREP can have an unlimited number of children (non-diagnostic parts) as well
+    as unlimited diagnostic parts. When counting pixels for objects in the VREP vision
     sensors child script. Diagnostic parts are treated as separate objects.
 
     :param c_id     : Connected scene id.
@@ -251,10 +252,10 @@ def get_scene_objects(c_id, objects):
             current_handle = parent_handle
 
             for obj in objects:
-                if parent_handle == obj.handle[0]:
+                if parent_handle == obj.handle:
                     parent_found = True
 
-                    obj.handle.append(child_handle)
+                    obj.children.append(child_handle)
 
                     max_size = max(get_object_dimensions(c_id, child_handle))
                     if max_size > obj.max_dimension:
@@ -269,8 +270,12 @@ def print_objects(objects):
     longest_name = max([len(obj.name) for obj in objects])
 
     for obj in objects:
-        print("\t%s: handles=%s, max_dimension=%0.1f, parent_handle=%d"
-              % (obj.name.ljust(longest_name), obj.handle, obj.max_dimension, obj.parent))
+        print("\t%s: handle=%s, size=%0.1f, parent_handle=%d, children=%s"
+              % (obj.name.ljust(longest_name),
+                 obj.handle,
+                 obj.max_dimension,
+                 obj.parent,
+                 ",".join(str(x) for x in obj.children)))
 
 
 def set_robot_velocity(c_id, target_velocity):

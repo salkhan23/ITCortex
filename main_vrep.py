@@ -62,7 +62,8 @@ class VrepObject:
         """
         self.name = name
         self.handle = handle
-        self.children = []      # Create an empty list to store all child handles
+        self.non_diag_children = []      # Empty list to store all non-diagnostic child handles
+        self.diag_children = []          # Empty list to store diagnostic children
         self.max_dimension = max_dimension
         self.parent = parent_handle
 
@@ -174,20 +175,18 @@ def get_object_dimensions(c_id, object_handle):
 
 def get_scene_objects(c_id, objects):
     """
-    Create/Append a list of objects of interest (parent objects + diagnostic parts) in the VREP
-    scene. Elements of the list are VrepObject class instances. For each element fill in the
-    parameters as well. This includes Vrep handles for: the target object, its parent if any, all
-    of its component non-diagnostic parts and the its maximum size (length of the side with the
-    largest magnitude for the object or any of its children.
-
-    A parent object in VREP can have an unlimited number of children (non-diagnostic parts) as well
-    as unlimited diagnostic parts. When counting pixels for objects in the VREP vision
-    sensors child script. Diagnostic parts are treated as separate objects.
+    Create/Append a list of objects of interest (parent objects) in the VREP scene. Elements of the
+    list are VrepObject class instances. For each element fill in the parameters as well. This
+    includes Vrep handles for: the target object, its parent if any, its diagnostic and
+    non-diagnostic children separately and the its maximum size (length of the side with the
+    largest magnitude for the object or any of its children. Diagnostic children are sent to the
+    Vrep scene to calculate their visibility levels separately.
 
     :param c_id     : Connected scene id.
     :param objects  : Empty list to which found Vrep objects (class) are appended to.
     """
 
+    print("Analyzing VREP Scene...")
     # Ignore all object with default, it_cortex, proxy and floor in name
     objects_to_ignore = ['default', 'floor', 'it_cortex', 'proxy']
 
@@ -207,7 +206,7 @@ def get_scene_objects(c_id, objects):
     # for count in np.arange(len(handles)):
     #     print("Obj: %s, handle: %d" % (s_data[count].ljust(longest_name), handles[count]))
 
-    # Build the list of all vrep objects of interest parents and diagnostic parts
+    # Build the list of all vrep parent objects and fill in parameters
     children = []  # list of non-diagnostic child handles.
 
     for count in np.arange(len(handles)):
@@ -223,51 +222,41 @@ def get_scene_objects(c_id, objects):
                 raise Exception("get_scene_objects: "
                                 "Failed to get %s parent handle. Error %d" % (s_data[count], res))
 
-            if (-1 == parent_handle) or ('diagnostic' in s_data[count].lower()):
-                # Add to list of interested objects
+            if -1 == parent_handle:
                 size = get_object_dimensions(c_id, handles[count])
                 obj = VrepObject(s_data[count], handles[count], max(size), parent_handle)
                 objects.append(obj)
-
-                if 'diagnostic' in s_data[count].lower():
-                    children.append(handles[count])
-
             else:
-                children.append(handles[count])
+                # child (part) of a parent object
+                children.append((handles[count], s_data[count], parent_handle))
 
-    # Add handles of all children to all their parent handles
-    for child_handle in children:
+    # Add handles of all children to all their parent.
+    for c_handle, name, p_handle in children:
 
-        parent_found = False
-        current_handle = child_handle
+        top_parent_handle = p_handle
+        while top_parent_handle != -1:
 
-        while not parent_found:
-            res, parent_handle = vrep.simxGetObjectParent(
+            p_handle = top_parent_handle
+            res, top_parent_handle = vrep.simxGetObjectParent(
                 c_id,
-                current_handle,
+                p_handle,
                 vrep.simx_opmode_oneshot_wait)
 
             if res != vrep.simx_return_ok:
                 raise Exception("get_scene_objects: Failed to retrieve parent "
-                                "of non-diagnostic child %d,. Err %d" % (child_handle, res))
-            elif parent_handle == -1:
-                raise Exception("get_scene_objects: Failed to find parent "
-                                "of non-diagnostic child %d. Err %d" % (child_handle, res))
+                                "of child %s. Err %d" % (c_handle, res))
 
-            current_handle = parent_handle
+        for obj in objects:
+            if obj.handle == p_handle:
 
-            for obj in objects:
-                if parent_handle == obj.handle:
-                    # If this is part of a diagnostic object, don't stop parent search. Add this
-                    # part to both the diagnostic parent and its top parent.
-                    if obj.parent == -1:
-                        parent_found = True
+                max_size = max(get_object_dimensions(c_id, c_handle))
+                if max_size > obj.max_dimension:
+                    obj.max_dimension = max_size
 
-                    obj.children.append(child_handle)
-
-                    max_size = max(get_object_dimensions(c_id, child_handle))
-                    if max_size > obj.max_dimension:
-                        obj.max_dimension = max_size
+                if 'diagnostic' in name.lower():
+                    obj.diag_children.append(c_handle)
+                else:
+                    obj.non_diag_children.append(c_handle)
 
 
 def print_objects(objects):
@@ -278,12 +267,12 @@ def print_objects(objects):
     longest_name = max([len(obj.name) for obj in objects])
 
     for obj in objects:
-        print("\t%s: handle=%s, size=%0.1f, parent_handle=%d, children=%s"
+        print("\t%s: handle=%s, size=%0.1f, non-diag children=%s, diag children=%s"
               % (obj.name.ljust(longest_name),
                  obj.handle,
                  obj.max_dimension,
-                 obj.parent,
-                 ",".join(str(x) for x in obj.children)))
+                 ",".join(str(x) for x in obj.non_diag_children),
+                 ",".join(str(x) for x in obj.diag_children)))
 
 
 def set_robot_velocity(c_id, target_velocity):
@@ -503,9 +492,11 @@ def get_object_visibility_levels(objects_list, c_id):
     :param objects_list: List of Vrep objects to calculate occlusion levels for.
     :param c_id: connected scene id.
 
-    :rtype : List of visibility levels for each specified object
+    :rtype : List of (non-diagnostic, diagnostic) visibility levels for each specified object
     """
-    visibility_levels = np.zeros(shape=len(objects_list))
+    visibility_levels = np.zeros(shape=(len(objects_list), 2))
+    # For diagnostic visibility, -1 = no data as no parts are labeled diagnostic
+    visibility_levels[:, 1] = -1
 
     if objects_list:
 
@@ -516,11 +507,15 @@ def get_object_visibility_levels(objects_list, c_id):
         for obj in objects_list:
 
             handles_to_send.append(obj.handle)
-
-            if obj.children:
-                handles_to_send.extend(obj.children)
-
+            handles_to_send.extend(obj.non_diag_children)
+            handles_to_send.extend(obj.diag_children)
             handles_to_send.append(-1)  # separator
+
+            # Also sent diag children as a separate object of interest
+            if obj.diag_children:
+                handles_to_send.extend(obj.diag_children)
+                handles_to_send.append(-1)  # separator
+
         # print ("Sending:", handles_to_send)
 
         obj_handles_string = vrep.simxPackInts(handles_to_send)
@@ -556,15 +551,28 @@ def get_object_visibility_levels(objects_list, c_id):
             # previous request. We therefore need to match the object handle identities.
 
             # For each requested handle, the child script sends down the value of the requested
-            # handle followed by its visibility level.
+            # handle followed by its visibility level. objects of interest sent down from VRep
+            # can either be a parent object or diagnostic part of an object.
             for idx in np.arange(len(occlusion_data)/2):
+
                 identity = np.int(occlusion_data[2*idx])
                 value = occlusion_data[2*idx + 1]
+                id_located = False
 
                 for idx2, obj in enumerate(objects_list):
                     if identity == obj.handle:
-                        visibility_levels[idx2] = value
+                        visibility_levels[idx2][0] = value
+                        id_located = True
                         break
+
+                    elif identity in obj.diag_children:
+                        visibility_levels[idx2][1] = value
+                        id_located = True
+                        break
+
+                if not id_located:
+                    warnings.warn("Failed to find vrepObject for object %s returned from VREP" %
+                                  identity)
 
     return visibility_levels
 
@@ -671,7 +679,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
     vis_array = get_object_visibility_levels(objects_in_frame, c_id)
 
     for idx, entry in enumerate(ground_truth_list):
-        entry.append(vis_array[idx])
+        entry.extend(vis_array[idx])
 
     return ground_truth_list
 
@@ -689,7 +697,7 @@ def main():
         print("Initializing VREP simulation...")
         objects_array = []
         get_scene_objects(client_id, objects_array)
-        print ("%d objects of interest (parent + diagnostic parts) in scene." % len(objects_array))
+        print ("%d objects of in scene." % len(objects_array))
         print_objects(objects_array)
 
         # Get IT Cortex Robot Vision sensor parameters
@@ -762,9 +770,9 @@ def main():
                 # Print the Ground Truth
                 print("Time=%dms, Number of objects %d" % (t_current_ms, len(ground_truth)))
                 for entry in ground_truth:
-                    print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f"
+                    print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f"
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3],
-                              entry[4], entry[5], entry[6], entry[7]))
+                              entry[4], entry[5], entry[6], entry[7], entry[8]))
 
             # Get IT cortex firing rates
             for n_idx, neuron in enumerate(it_cortex):

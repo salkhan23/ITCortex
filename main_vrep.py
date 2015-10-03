@@ -200,12 +200,12 @@ def get_scene_objects(c_id, objects):
     if res != vrep.simx_return_ok:
         raise Exception('get_scene_objects: Failed to get object names. Error Code %d' % res)
 
-    # Print all objects and their handles
-    print("All objects in VREP scene:")
-    longest_name = max([len(name) for name in s_data])
-
-    for count in np.arange(len(handles)):
-        print("Obj: %s, handle: %d" % (s_data[count].ljust(longest_name), handles[count]))
+    # # Print all objects and their handles
+    # print("All objects in VREP scene:")
+    # longest_name = max([len(name) for name in s_data])
+    #
+    # for count in np.arange(len(handles)):
+    #     print("Obj: %s, handle: %d" % (s_data[count].ljust(longest_name), handles[count]))
 
     # Build the list of all vrep objects of interest parents and diagnostic parts
     children = []  # list of non-diagnostic child handles.

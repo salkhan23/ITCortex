@@ -208,7 +208,7 @@ def get_scene_objects(c_id, objects):
         print("Obj: %s, handle: %d" % (s_data[count].ljust(longest_name), handles[count]))
 
     # Build the list of all vrep objects of interest parents and diagnostic parts
-    children_non_diagnostic = []  # list of non-diagnostic child handles.
+    children = []  # list of non-diagnostic child handles.
 
     for count in np.arange(len(handles)):
 
@@ -224,14 +224,19 @@ def get_scene_objects(c_id, objects):
                                 "Failed to get %s parent handle. Error %d" % (s_data[count], res))
 
             if (-1 == parent_handle) or ('diagnostic' in s_data[count].lower()):
+                # Add to list of interested objects
                 size = get_object_dimensions(c_id, handles[count])
                 obj = VrepObject(s_data[count], handles[count], max(size), parent_handle)
                 objects.append(obj)
-            else:
-                children_non_diagnostic.append(handles[count])
 
-    # Add handles of all non-diagnostic children to their parent handles
-    for child_handle in children_non_diagnostic:
+                if 'diagnostic' in s_data[count].lower():
+                    children.append(handles[count])
+
+            else:
+                children.append(handles[count])
+
+    # Add handles of all children to all their parent handles
+    for child_handle in children:
 
         parent_found = False
         current_handle = child_handle
@@ -253,7 +258,10 @@ def get_scene_objects(c_id, objects):
 
             for obj in objects:
                 if parent_handle == obj.handle:
-                    parent_found = True
+                    # If this is part of a diagnostic object, don't stop parent search. Add this
+                    # part to both the diagnostic parent and its top parent.
+                    if obj.parent == -1:
+                        parent_found = True
 
                     obj.children.append(child_handle)
 
@@ -740,7 +748,7 @@ def main():
                 print ("Failed to step simulation! Err %s" % res)
                 break
 
-            #raw_input("Continue with step %d ?" % t_current_ms)
+            # raw_input("Continue with step %d ?" % t_current_ms)
 
             ground_truth = get_ground_truth(
                 client_id,

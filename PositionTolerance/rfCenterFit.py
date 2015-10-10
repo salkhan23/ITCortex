@@ -55,7 +55,7 @@ def Main():
 
     plt.figure("RF Centers Distribution")
     plt.title('Population Receptive Field Center Distributions', fontsize=40)
-    plt.scatter(x, y, label='Extracted Data', s=50)
+    plt.scatter(x*np.pi/180, y*np.pi/180, label='Extracted Data', s=50)
     plt.grid()
 
     f, axArr = plt.subplots(2, sharex=True)
@@ -134,14 +134,19 @@ def Main():
 
     plt.figure("RF Centers Distribution")
     plt.scatter(0, 0, color='red', marker='+', linewidth=10, label='Gaze Center')
-    plt.scatter(rfCenters[:, 0], rfCenters[:, 1], color='green', marker='o', s=50,
+    plt.scatter(rfCenters[:, 0]*np.pi/180, rfCenters[:, 1]*np.pi/180, color='green', marker='o', s=50,
                 label='Generated Data')
-    plt.xlabel('Horizontal position (deg)', fontsize=30)
-    plt.ylabel('Vertical position (deg)',  fontsize=30)
+    plt.xlabel('Horizontal position (Radians)', fontsize=30)
+    plt.ylabel('Vertical position (Radians)',  fontsize=30)
     plt.text(-3, -5, 'IPSI', fontsize=30)
     plt.text(6, -5, 'CONTRA', fontsize=30)
     plt.axvline(linewidth=1, color='k')
     plt.axhline(linewidth=1, color='k')
+
+    plt.tick_params(axis='x', labelsize=34)
+    plt.tick_params(axis='y', labelsize=34)
+
+    plt.legend(loc='best', fontsize=34)
 
 if __name__ == "__main__":
     plt.ion()

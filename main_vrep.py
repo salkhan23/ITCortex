@@ -828,6 +828,7 @@ def main():
         if result != vrep.simx_return_ok:
             print("Failed to stop simulation.")
         vrep.simxFinish(client_id)
+        return it_cortex, []
 
     return it_cortex, rates_vs_time_arr
 

@@ -87,7 +87,6 @@ class KurtosisSparseness:
         self.kurtosis_absolute = 6.0 / self.a
         self.kurtosis_measured = calculate_kurtosis(np.array(self.objects.values()))
 
-
     @staticmethod
     def __get_distribution_shape_parameter():
         """

@@ -101,7 +101,7 @@ def connect_vrep(sim_stop_time_ms, sim_dt_ms):
     res = vrep.simxSetFloatingParameter(
         c_id,
         vrep.sim_floatparam_simulation_time_step,
-        sim_dt_ms/1000.0,
+        sim_dt_ms / 1000.0,
         vrep.simx_opmode_oneshot)
     if res != vrep.simx_return_ok and \
        res != vrep.simx_return_novalue_flag:
@@ -553,10 +553,10 @@ def get_object_visibility_levels(objects_list, c_id):
             # For each requested handle, the child script sends down the value of the requested
             # handle followed by its visibility level. objects of interest sent down from VRep
             # can either be a parent object or diagnostic part of an object.
-            for idx in np.arange(len(occlusion_data)/2):
+            for idx in np.arange(len(occlusion_data) / 2):
 
-                identity = np.int(occlusion_data[2*idx])
-                value = occlusion_data[2*idx + 1]
+                identity = np.int(occlusion_data[2 * idx])
+                value = occlusion_data[2 * idx + 1]
                 id_located = False
 
                 for idx2, obj in enumerate(objects_list):
@@ -619,7 +619,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
         camera_homogeneous = np.dot(proj_mat, pos_world)
 
         # Part 2. Divide by Chw (actual z coordinate) to get vision sensor homogeneous coordinates
-        e = 1.0/camera_homogeneous[-1]
+        e = 1.0 / camera_homogeneous[-1]
         p_mat2 = np.array([[e, 0, 0, 0],
                            [0, e, 0, 0],
                            [0, 0, e, 0],
@@ -629,7 +629,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
         # Check if object lies within projection frame
         # The position is for the center of the object.
-        epsilon = 1*10**-2.75
+        epsilon = 1 * 10**-2.75
 
         if ((-1 - epsilon <= camera_cartesian[0] <= 1 + epsilon) and
                 (-1 - epsilon <= camera_cartesian[1] <= 1 + epsilon) and
@@ -687,8 +687,12 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 5*1000  # 5 seconds
+    t_stop_ms = 5 * 1000  # 5 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
+
+    population_size = 100
+    it_cortex = []
+    rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
     try:
 
@@ -709,10 +713,10 @@ def main():
         # This Projection Matrix, scales x, y, z axis to range (-1, 1) to make it easier to detect
         # whether the object falls within the projection frame of the vision sensor.
         # Ref: http://ogldev.atspace.co.uk/www/tutorial12/tutorial12.html
-        a = 1.0/(aspect_ratio*np.tan(alpha_rad/2.0))
-        b = 1.0/np.tan(alpha_rad/2.0)
-        c = -(z_near + z_far) / (z_near - z_far)
-        d = (2*z_near*z_far) / (z_near - z_far)
+        a = 1.0 / (aspect_ratio * np.tan(alpha_rad / 2.0))
+        b = 1.0 / np.tan(alpha_rad / 2.0)
+        c = - (z_near + z_far) / (z_near - z_far)
+        d = (2 * z_near * z_far) / (z_near - z_far)
 
         p_mat = np.array([[a, 0, 0, 0],
                           [0, b, 0, 0],
@@ -722,17 +726,13 @@ def main():
         # Generate IT Population ----------------------------------------------------------------
         print("Initializing IT Population...")
 
-        population_size = 100
-
         # Initialize the population with parent objects only
         list_of_objects = [obj.name for obj in objects_array
                            if 'diagnostic' not in obj.name.lower()]
 
-        it_cortex = []
-
         for _ in np.arange(population_size):
             neuron = it.Neuron(list_of_objects,
-                               sim_time_step_s=t_step_ms/1000.0,
+                               sim_time_step_s=t_step_ms / 1000.0,
                                selectivity_profile='Kurtosis',
                                position_profile='Gaussian',
                                size_profile='Lognormal',
@@ -745,7 +745,7 @@ def main():
         print("Starting Data collection...")
         set_robot_velocity(client_id, 2)
 
-        rates_vs_time_arr = np.zeros(shape=(t_stop_ms/t_step_ms, population_size))
+        rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
         t_current_ms = 0
         while t_current_ms < t_stop_ms:
@@ -776,7 +776,7 @@ def main():
 
             # Get IT cortex firing rates
             for n_idx, neuron in enumerate(it_cortex):
-                rates_vs_time_arr[t_current_ms/t_step_ms, n_idx] = \
+                rates_vs_time_arr[t_current_ms / t_step_ms, n_idx] = \
                     neuron.firing_rate(ground_truth)
 
             t_current_ms += t_step_ms
@@ -828,9 +828,8 @@ def main():
         if result != vrep.simx_return_ok:
             print("Failed to stop simulation.")
         vrep.simxFinish(client_id)
-        return it_cortex, []
 
-    return it_cortex, rates_vs_time_arr
+        return it_cortex, rates_vs_time_arr
 
 
 if __name__ == "__main__":

@@ -137,15 +137,30 @@ def plot_population_obj_preferences(it_population, axis=None):
     if axis is None:
         f, axis = plt.subplots()
 
+    font_size = 34
+
     for n in it_population:
         lst = n.selectivity.get_ranked_object_list()
         objs, rate = zip(*lst)
         x = np.arange(len(rate))
         axis.plot(x, rate)
 
-    axis.set_ylabel('Normalized Firing Rate')
-    axis.set_xlabel('Ranked Object Preferences')
-    axis.set_title('Population Object Preferences')
+    axis.set_ylabel('Normalized Firing Rate (spikes/s)', fontsize=font_size)
+    axis.set_xlabel('Ranked Objects', fontsize=font_size)
+    axis.set_title('Population Object Preferences', fontsize=font_size + 10)
+
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+
+    axis.set_ylim([0, 1])
+    axis.grid()
+
+    axis.annotate('N=%d' % len(it_population),
+                  xy=(0.95, 0.9),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
 
 
 def plot_selectivity_vs_position_tolerance(it_population, axis=None):

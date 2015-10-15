@@ -783,6 +783,7 @@ def main():
 
         # Plot firing rates ---------------------------------------------------------------------
         population_max_fire_rate = utils.population_max_firing_rate(it_cortex)
+        font_size = 34
 
         if np.count_nonzero(rates_vs_time_arr):
             print("Plotting Results...")
@@ -814,10 +815,15 @@ def main():
                 ax.set_yticks([])
 
             ax_array[-1].set_yticks(
-                np.arange(0, population_max_fire_rate + 1, step=20))
-            ax_array[-1].set_xlabel("Time (ms)")
-            ax_array[-1].set_ylabel("Firing Rate")
-            fig_rates_vs_time.suptitle("Population Firing Rates ", fontsize=16)
+                np.arange(0, population_max_fire_rate + 1, step=10))
+            ax_array[-1].set_xlabel("Time (ms)", fontsize=font_size)
+            ax_array[-1].set_ylabel("Firing Rate", fontsize=font_size)
+
+            ax_array[-1].tick_params(axis='x', labelsize=font_size)
+            ax_array[-1].tick_params(axis='y', labelsize=font_size - 7)
+
+            fig_rates_vs_time.suptitle("Population (N=%d) Firing Rates " % len(it_cortex),
+                                       fontsize=font_size + 10)
 
     finally:
         # Stop Simulation -----------------------------------------------------------------------

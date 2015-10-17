@@ -89,11 +89,23 @@ def plot_single_neuron_selectivities(it_population, axis=None):
                   horizontalalignment='right',
                   verticalalignment='top')
 
-    axis.set_title('Single Neuron Selectivity', fontsize=font_size)
+    axis.annotate('Single Neuron Selectivity',
+                  xy=(0.5, 0.95),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+
+    # axis.set_title('Single Neuron Selectivity', fontsize=font_size)
+
+    axis.set_xlim([0, 80])
 
 
 def plot_population_sparseness(it_population, axis=None):
     """ Plot histogram of population sparseness (kurtosis) of each object in the population """
+
+    if axis is None:
+        f, axis = plt.subplots()
 
     objects = it_population[0].selectivity.objects.keys()
 
@@ -129,7 +141,15 @@ def plot_population_sparseness(it_population, axis=None):
                   horizontalalignment='right',
                   verticalalignment='top')
 
-    axis.set_title('Population Sparseness Distribution', fontsize=font_size)
+    axis.annotate('Population Sparseness',
+                  xy=(0.5, 0.95),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+    # axis.set_title('Population Sparseness', fontsize=font_size)
+
+    axis.set_xlim([0, 80])
 
 
 def plot_population_obj_preferences(it_population, axis=None):
@@ -175,7 +195,7 @@ def plot_selectivity_vs_position_tolerance(it_population, axis=None):
     selectivity = [neuron.selectivity.activity_fraction_measured for neuron in it_population]
     selectivity = np.array(selectivity)
 
-    axis.scatter(selectivity, position_tolerance, marker='+', s=60, color='green',
+    axis.scatter(selectivity, position_tolerance, marker='o', s=60, color='green',
                  label='Generated Data')
 
     # Plot the linear regression fit as well.

@@ -130,16 +130,31 @@ def Main():
     ''' -----------------------------------------------------------------------------------'''
     ''' Generate Sample Data '''
     n = 100
+    font_size = 34
     rfCenters = GenerateRfCenters(n)
 
     plt.figure("RF Centers Distribution")
     plt.scatter(0, 0, color='red', marker='+', linewidth=10, label='Gaze Center')
     plt.scatter(rfCenters[:, 0]*np.pi/180, rfCenters[:, 1]*np.pi/180, color='green', marker='o', s=50,
                 label='Generated Data')
-    plt.xlabel('Horizontal position (Radians)', fontsize=30)
-    plt.ylabel('Vertical position (Radians)',  fontsize=30)
-    plt.text(-3, -5, 'IPSI', fontsize=30)
-    plt.text(6, -5, 'CONTRA', fontsize=30)
+    plt.xlabel('Horizontal position (Radians)', fontsize=font_size)
+    plt.ylabel('Vertical position (Radians)',  fontsize=font_size)
+
+    plt.annotate("Ipsilateral",
+                  xy=(0.15, 0.1),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+
+    plt.annotate("Contralateral",
+                  xy=(0.95, 0.1),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+
+
     plt.axvline(linewidth=1, color='k')
     plt.axhline(linewidth=1, color='k')
 

@@ -134,6 +134,8 @@ class GaussianPositionProfile:
         :rtype              : None.
         """
         n_points = 180
+        font_size = 34
+
         x = np.linspace(start=x_start, stop=x_stop, num=n_points)
         y = np.linspace(start=y_start, stop=y_stop, num=n_points)
 
@@ -143,22 +145,34 @@ class GaussianPositionProfile:
         if axis is None:
             fig, axis = plt.subplots()
 
-        axis.contour(xx, yy, zz, n_contours, colors='k')
+        if n_contours == 1:
+            # Plot a single contour for  cell, there will likely be contours for other cells on
+            # the same figure
+            axis.contour(xx, yy, zz, 1, colors='blue')
+        else:
+             # Plot a filled contour plot.
+            axis.contourf(xx, yy, zz, n_contours)
+
         axis.set_xlim([x_start, x_stop])
         axis.set_ylim([y_start, y_stop])
 
-        axis.scatter(0, 0, 1, color='red', marker='+', linewidth=4, label='Gaze Center')
+        axis.scatter(0, 0, 1, color='red', marker='+', linewidth=12, label='Gaze Center')
 
-        axis.set_ylabel('Y')
-        axis.set_xlabel('X')
+        axis.set_ylabel('Y (Radians)', fontsize=font_size)
+        axis.set_xlabel('X(Radians)', fontsize=font_size)
+
+        axis.tick_params(axis='x', labelsize=font_size)
+        axis.tick_params(axis='y', labelsize=font_size)
 
         # If more details are required use a higher contour value.
         if 1 != n_contours:
-            axis.scatter(self.rf_center[0], self.rf_center[1], color='blue', marker='o',
+            axis.scatter(self.rf_center[0], self.rf_center[1], color='green', marker='o',
                          linewidth=4,
-                         label='Rf Center (%i, %i)' % (self.rf_center[0], self.rf_center[1]))
-            axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance)
+                         label='Rf Center (%0.2f, %0.2f)' % (self.rf_center[0], self.rf_center[1]))
+            axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance,
+                           fontsize=font_size)
             axis.grid()
+            axis.legend( fontsize=font_size)
 
 if __name__ == "__main__":
     plt.ion()

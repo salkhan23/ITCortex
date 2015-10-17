@@ -149,6 +149,46 @@ class KurtosisSparseness:
         for obj, rate in lst:
             print ("\t%s : %0.4f" % (obj.ljust(max_name_length), rate))
 
+    def plot_object_preferences(self, axis=None):
+        """ Plot Neurons Object Preferences """
+        lst = self.get_ranked_object_list()
+        objects, rate = zip(*lst)
+        x = np.arange(len(rate))
+
+        font_size = 34
+
+        if axis is None:
+            fig_obj_pref, axis = plt.subplots()
+
+        axis.plot(x, rate, marker='o', markersize=15, linewidth=2)
+
+        axis.set_title("Object Selectivity", fontsize=font_size)
+        axis.set_xticklabels(objects, size='small')
+        axis.set_xlabel('Ranked Objects', fontsize=font_size)
+        axis.set_ylabel('Normalized Rate (Spikes/s)', fontsize=font_size)
+        axis.grid()
+
+        axis.set_ylim([0, 1])
+
+        max_fire = self.get_max_firing_rate()
+        print type(max_fire)
+        axis.annotate('Kurtosis=%0.2f' % (self.kurtosis_measured * max_fire),
+                      xy=(0.95, 0.95),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
+
+        axis.annotate('Activity Fraction=%0.2f' % self.activity_fraction_measured,
+                      xy=(0.95, 0.82),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
+
+        axis.tick_params(axis='x', labelsize=font_size)
+        axis.tick_params(axis='y', labelsize=font_size)
+
 
 if __name__ == '__main__':
     plt.ion()

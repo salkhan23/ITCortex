@@ -125,21 +125,41 @@ class LogNormalSizeProfile:
         print("RF Size (area extent of RF)  = %0.4f" % self.rf_size)
 
     def plot_size_tolerance(self, axis=None):
-        x = np.linspace(0, self.max_stim_size*1.2, num=100)
+
+        x = np.linspace(0, self.max_stim_size * 1.2, num=100)
 
         if axis is None:
             f, axis = plt.subplots()
 
-        axis.plot(x, self.firing_rate_modifier(x))
-        axis.set_xlabel('Stimulus Size (Radians)')
-        axis.set_ylabel('Normalized Firing Rate')
-        axis.set_title("Size Tolerance: bandwidth %0.2f octaves, preferred size %0.2f Radians"
-                       % (self.size_bw, self.pref_size))
+        font_size = 34
+
+        axis.plot(x, self.firing_rate_modifier(x), linewidth=2)
+        axis.set_xlabel('Stimulus Size (Radians)', fontsize=font_size)
+        axis.set_ylabel('Normalized Firing Rate', fontsize=font_size)
+        axis.set_title("Size Tolerance", fontsize=font_size + 10)
+
+        axis.annotate('Size Bandwidth=%0.2f' % self.size_bw,
+                      xy=(0.95, 0.9),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
+
+        axis.annotate('Preferred Size =%0.2f' % self.pref_size,
+                      xy=(0.95, 0.82),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
+
+        axis.tick_params(axis='x', labelsize=font_size)
+        axis.tick_params(axis='y', labelsize=font_size)
+
         axis.grid()
 
 if __name__ == "__main__":
     plt.ion()
-    n1 = LogNormalSizeProfile(pol_tol=15/180.0*np.pi)
+    n1 = LogNormalSizeProfile(pol_tol=15 / 180.0 * np.pi)
     n1.print_parameters()
 
     n1.plot_size_tolerance()

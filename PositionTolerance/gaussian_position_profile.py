@@ -31,7 +31,8 @@ class GaussianPositionProfile:
 
         self.position_tolerance = self.__get_position_tolerance(selectivity)
 
-    def __get_receptive_field_center(self):
+    @staticmethod
+    def __get_receptive_field_center():
         """ Generate RF centers based on data from Op de Beeck & Vogels - 2000 -
         Spatial Sensitivities of Macaque Inferior Temporal Neurons - Fig 6.
 
@@ -53,7 +54,8 @@ class GaussianPositionProfile:
 
         return np.hstack((x, y))
 
-    def __get_position_tolerance(self, s_idx):
+    @staticmethod
+    def __get_position_tolerance(s_idx):
         """
         Method determines the position tolerance of the Neuron. Position Tolerance is
         defined as 2*standard deviation of the Gaussian function.
@@ -80,8 +82,8 @@ class GaussianPositionProfile:
         :rtype : Position tolerance of the neuron in degree of eccentricity (Radians).
         """
         alpha = 4.04
-        mean_position_tolerance = -9.820*s_idx + 13.9730
-        pos_tol = ss.gamma.rvs(a=alpha, scale=mean_position_tolerance/alpha) * np.pi / 180
+        mean_position_tolerance = -9.820 * s_idx + 13.9730
+        pos_tol = ss.gamma.rvs(a=alpha, scale=mean_position_tolerance / alpha) * np.pi / 180
 
         return pos_tol
 
@@ -112,10 +114,10 @@ class GaussianPositionProfile:
               % (self.rf_center[0], self.rf_center[1]))
 
     def plot_position_tolerance_contours(self,
-                                         x_start=-np.pi/2,
-                                         x_stop=np.pi/2,
-                                         y_start=-np.pi/2,
-                                         y_stop=np.pi/2,
+                                         x_start=-np.pi / 2,
+                                         x_stop=np.pi / 2,
+                                         y_start=-np.pi / 2,
+                                         y_stop=np.pi / 2,
                                          axis=None,
                                          n_contours=6):
         """
@@ -150,7 +152,7 @@ class GaussianPositionProfile:
             # the same figure
             axis.contour(xx, yy, zz, 1, colors='blue')
         else:
-             # Plot a filled contour plot.
+            # Plot a filled contour plot.
             axis.contourf(xx, yy, zz, n_contours)
 
         axis.set_xlim([x_start, x_stop])
@@ -172,7 +174,7 @@ class GaussianPositionProfile:
             axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance,
                            fontsize=font_size)
             axis.grid()
-            axis.legend( fontsize=font_size)
+            axis.legend(fontsize=font_size)
 
 if __name__ == "__main__":
     plt.ion()

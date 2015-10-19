@@ -14,6 +14,7 @@ if top_level_dir_path not in sys.path:
 from ObjectSelectivity.power_law_selectivity_profile import calculate_activity_fraction
 from ObjectSelectivity.kurtosis_selectivity_profile import calculate_kurtosis
 
+
 def get_poisson_spikes(dt, rates):
     """
     Poisson approximation via Bernoulli process.
@@ -40,13 +41,14 @@ def integrate(dt, a, b, c, x, u):
     :return: (x, y), i.e. the state and the output
     """
 
-    dxdt = np.dot(a,x) + np.dot(b,u)
-    x = x + dxdt*dt
-    y = np.dot(c,x)
+    dxdt = np.dot(a, x) + np.dot(b, u)
+    x = x + dxdt * dt
+    y = np.dot(c, x)
     return x, y
 
+
 # noinspection PyArgumentList
-class TamuraDynamics :
+class TamuraDynamics:
     """
     Simple model of IT spike-rate tamura_dynamic_profile.py based on:
 
@@ -84,9 +86,8 @@ class TamuraDynamics :
         """
         self.dt = dt
 
-        self.n = 1 #do not change this. Code will not if not =1
+        self.n = 1  # do not change this. Code will not if not =1
         assert self.n == 1
-
 
         self.type = 'tamura'
 
@@ -99,7 +100,7 @@ class TamuraDynamics :
             calculate_kurtosis(np.array(self.early_obj_pref.values()))
 
         # parameters of exponential functions to map static rate to latency for each neuron
-        self.min_latencies = .09 + .01*np.random.rand(self.n)
+        self.min_latencies = .09 + .01 * np.random.rand(self.n)
         self.max_latencies = np.minimum(max_latency,
                                         self.min_latencies + np.random.gamma(5, .02, self.n))
 
@@ -107,15 +108,15 @@ class TamuraDynamics :
 
         # matrices for storing recent input history, to allow variable-latency responses
         self.late_additional_latency = 10
-        latency_steps = max_latency/dt + 1 + self.late_additional_latency
+        latency_steps = max_latency / dt + 1 + self.late_additional_latency
         self.early_memory = np.zeros((self.n, latency_steps))
         self.late_memory = np.zeros((self.n, latency_steps))
         self.memory_index = 0
 
         # state-space LTI dynamics (early response is band-pass and late response is low-pass)
-        self.early_tau = np.maximum(.005, .017 + .005*np.random.randn(self.n))
-        self.late_tau = .05 + .01*np.random.randn(self.n)
-        early_gain = 1.5/0.39
+        self.early_tau = np.maximum(.005, .017 + .005 * np.random.randn(self.n))
+        self.late_tau = .05 + .01 * np.random.randn(self.n)
+        early_gain = 1.5 / 0.39
         late_gain = 1
 
         # these are templates that must be multiplied by 1/tau for each neuron ...
@@ -150,8 +151,8 @@ class TamuraDynamics :
         y = np.zeros(self.n)
 
         for ii in range(self.n):
-            early_a = 1/self.early_tau[ii] * self.early_A
-            early_b = 1/self.early_tau[ii] * self.early_B
+            early_a = 1 / self.early_tau[ii] * self.early_A
+            early_b = 1 / self.early_tau[ii] * self.early_B
             self.early_x[:, ii], early_y = integrate(
                 self.dt,
                 early_a,
@@ -183,7 +184,7 @@ class TamuraDynamics :
     def _get_latencies(self, static_rates):
         # latency varies with response strength
         return self.min_latencies + \
-               (self.max_latencies - self.min_latencies)*np.exp(-static_rates/self.tau_latencies)
+            (self.max_latencies - self.min_latencies) * np.exp(-static_rates / self.tau_latencies)
 
     @staticmethod
     def _get_early_object_selectivities(late_obj_dict):
@@ -197,7 +198,7 @@ class TamuraDynamics :
             ranges between (0, 1) and is the normalized firing rate of the neuron to the
             specified object.
         """
-        return { key: np.minimum(value*2, 1) for key, value in late_obj_dict.items()}
+        return {key: np.minimum(value * 2, 1) for key, value in late_obj_dict.items()}
 
     def get_dynamic_rates(self, early_rates, late_rates):
         """
@@ -219,7 +220,7 @@ class TamuraDynamics :
 
         return self._step_dynamics(early_u, late_u)
 
-    def plot_latencies_verses_rate_profile(self,  axis=None):
+    def plot_latencies_verses_rate_profile(self, axis=None):
         """
         Plot fire latency as a function of static fire rate.
 
@@ -295,7 +296,7 @@ if __name__ == '__main__':
     print ("\tKurtosis %0.4f"
            % calculate_kurtosis(np.array(default_obj_pref.values())))
 
-    print ("-"*80)
+    print ("-" * 80)
 
     d = TamuraDynamics(time_step, default_obj_pref)
 
@@ -307,7 +308,7 @@ if __name__ == '__main__':
     # run some neurons with square-pulse input ...
     steps = 200
     early_fire_rates = np.zeros((1, steps))
-    early_fire_rates[:,20:100] = 50
+    early_fire_rates[:, 20:100] = 50
     late_fire_rates = early_fire_rates / 2
     early_fire_rates = early_fire_rates * np.random.rand(1, 1)
     late_fire_rates = late_fire_rates * np.random.rand(1, 1)
@@ -317,12 +318,16 @@ if __name__ == '__main__':
     for i in range(steps):
         dynamic_rates[:, i] = d.get_dynamic_rates(early_fire_rates[:, i], late_fire_rates[:, i])
 
+    font_size = 34
+
     plt.figure("Dynamic fire rates")
-    plt.plot(time, dynamic_rates.T)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Spike Rate (spikes / s)')
+    plt.plot(time, dynamic_rates.T, linewidth=2)
+    plt.xlabel('Time (s)', fontsize=font_size)
+    plt.ylabel('Spike Rate (spikes / s)', fontsize=font_size)
 
-    plt.plot(time, early_fire_rates.T, label = 'Early fire rate')
-    plt.plot(time, late_fire_rates.T, label = 'Late fire rate')
+    plt.plot(time, early_fire_rates.T, label='Early fire rate', linewidth=2)
+    plt.plot(time, late_fire_rates.T, label='Late fire rate', linewidth=2)
+
+    plt.tick_params(axis='x', labelsize=font_size)
+    plt.tick_params(axis='y', labelsize=font_size)
     plt.legend()
-

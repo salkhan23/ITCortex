@@ -301,10 +301,23 @@ Z = np.ones(shape=(100, 100))
 for ii in np.arange(100):
     for jj in np.arange(100):
         Z[ii][jj] = diagnosticity * sigmoid(ii, diagAvgParams[0], diagAvgParams[1]) + \
-                    (1 - diagnosticity) * sigmoid(jj, nonDiagAvgParams[0], nonDiagAvgParams[1])
+            (1 - diagnosticity) * sigmoid(jj, nonDiagAvgParams[0], nonDiagAvgParams[1])
 
 surf = ax.plot_surface(occ1, occ2, Z)
-ax.set_xlabel('Occlusion - Diagnostic')
-ax.set_ylabel('Occlusion - Non Diagnostic')
-ax.set_zlabel('Normalized Firing Rate')
-ax.set_title('Occlusion Tuning Profile of Sample Neuron with Diagnosticity of %f' % diagnosticity)
+
+font_size = 34
+ax.set_xlabel('Non-Diagnostic occlusion', fontsize=font_size)
+ax.set_ylabel('Diagnostic occlusion', fontsize=font_size)
+ax.set_zlabel('Normalized Firing Rate', fontsize=font_size)
+ax.set_title('Occlusion Tolerance', fontsize=font_size + 10)
+
+ax.tick_params(axis='x', labelsize=font_size)
+ax.tick_params(axis='y', labelsize=font_size)
+ax.tick_params(axis='z', labelsize=font_size)
+
+ax.annotate('Diagnosticity=%0.2f' % diagnosticity,
+            xy=(0.80, 0.8),
+            xycoords='axes fraction',
+            fontsize=font_size,
+            horizontalalignment='right',
+            verticalalignment='top')

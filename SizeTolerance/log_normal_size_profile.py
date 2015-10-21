@@ -42,6 +42,21 @@ class LogNormalSizeProfile:
         self.__log2_mu = np.log2(self.pref_size)
         self.__log2_sigma = (self.size_bw / 2) / np.sqrt(2 * np.log(2))
 
+    def set_params(self, pref_size, size_bw):
+        """
+        Updated the neuron to have specified preferred size and bandwidth. Because some internal
+        parameters are derived from this parameters, do not change preferred size and bandwidth
+        directly.
+
+        :param pref_size:  new preferred size in radians.
+        :param size_bw  :  new size bandwidth in octaves.
+        """
+        self.pref_size = pref_size
+        self.size_bw = size_bw
+
+        self.__log2_mu = np.log2(self.pref_size)
+        self.__log2_sigma = (self.size_bw / 2) / np.sqrt(2 * np.log(2))
+
     def __get_preferred_size(self):
         """
         Generate a preferred (optimum) stimulus size for the neuron based on figure 6+7 of Ito 95.
@@ -103,8 +118,8 @@ class LogNormalSizeProfile:
         zero_safe_guard = 0.0000001
         stimulus_size = np.maximum(stimulus_size, zero_safe_guard)
 
-        fire_rate = np.exp(-(np.log2(stimulus_size) - self.__log2_mu) ** 2
-                           / (2 * self.__log2_sigma ** 2))
+        fire_rate = np.exp(
+            -(np.log2(stimulus_size) - self.__log2_mu)**2 / (2 * self.__log2_sigma ** 2))
 
         # Do not respond to stimuli outside max. supported size. This allows the 3 different
         # types of tuning profiles as described in the paper.
@@ -139,14 +154,14 @@ class LogNormalSizeProfile:
         axis.set_title("Size Tolerance", fontsize=font_size + 10)
 
         axis.annotate('Size Bandwidth=%0.2f' % self.size_bw,
-                      xy=(0.95, 0.9),
+                      xy=(0.95, 0.85),
                       xycoords='axes fraction',
                       fontsize=font_size,
                       horizontalalignment='right',
                       verticalalignment='top')
 
         axis.annotate('Preferred Size =%0.2f' % self.pref_size,
-                      xy=(0.95, 0.82),
+                      xy=(0.95, 0.80),
                       xycoords='axes fraction',
                       fontsize=font_size,
                       horizontalalignment='right',
@@ -158,16 +173,23 @@ class LogNormalSizeProfile:
         axis.grid()
 
 if __name__ == "__main__":
+    import pickle
+
     plt.ion()
-    n1 = LogNormalSizeProfile(pol_tol=15 / 180.0 * np.pi)
-    n1.print_parameters()
 
-    n1.plot_size_tolerance()
+    with open("Ito95Data.pkl", 'rb') as fid:
+        data = pickle.load(fid)
 
-    stimSize = 3 / 180.0 * np.pi
-    print ("N1 Firing Rate to stimulus of size %0.4f=%0.2f"
-           % (stimSize, n1.firing_rate_modifier(stimSize)))
+    # Fit the neuron in Figure 3 of Ito et. al. -1995 - Size and Position Invariances of Neuronal
+    # Responses in Monkey Inferotemporal Cortex. For chosen parameters see LogNormalFit.py
+    n1 = LogNormalSizeProfile(pol_tol=22 / 180.0 * np.pi)
+    n1.set_params(pref_size=5.2 * np.pi / 180, size_bw=1.35)
 
-    stimSize = n1.pref_size
-    print ("N1 Firing Rate to stimulus of size %0.4f=%0.2f"
-           % (stimSize, n1.firing_rate_modifier(stimSize)))
+    fig, ax = plt.subplots(1, 1)
+    n1.plot_size_tolerance(axis=ax)
+
+    ax.scatter(data['n1Size'] * np.pi / 180,
+               data['n1FiringRate'],
+               marker='o', s=60, color='green', label='Original Data')
+
+    ax.legend(fontsize=34)

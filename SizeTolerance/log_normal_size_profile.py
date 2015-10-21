@@ -14,9 +14,8 @@ class LogNormalSizeProfile:
         """
         self.type = 'lognormal'
 
-        # TODO: Check required parameters
         # pol_tol is defined as 2x the standard deviation of the RF spatial extent of the
-        # neuron. it comes from the position profile. Specifically from gaussianPositionProfile
+        # neuron. it comes from the position profile. Specifically from gaussianPositionProfile.
 
         # Convert from pol_tol to rf_size as defined in Ito 95 paper: Square root of the area
         # extent of the neuron.
@@ -28,7 +27,7 @@ class LogNormalSizeProfile:
         #   rf_size       = area extent of RF, if assume circular = np.sqrt(np.pi) * r
         #   stim_size     = distance between the the outer edges along the longest axis
         #                   of the stimulus. If we assume a circular stimulus = 2r
-        self.max_stim_size = np.sqrt(self.rf_size / np.sqrt(np.pi)) * 2
+        self.max_stim_size = self.rf_size / np.sqrt(np.pi) * 2
 
         # Minimum stimulus size = 0.08 degrees, from Ito-95. Below this size, the object is
         # too small to allow proper recognition. Converted to radians.

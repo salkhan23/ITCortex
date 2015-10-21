@@ -137,22 +137,22 @@ class Neuron:
 
     def print_properties(self):
         """ Print all parameters of neuron """
-        print ("*"*20 + " Neuron Properties " + "*"*20)
+        print (("*" * 20) + " Neuron Properties " + ("*" * 20))
 
-        print("SELECTIVITY TOLERANCE %s" % ('-'*27))
+        print("SELECTIVITY TOLERANCE %s" % ('-' * 27))
         self.selectivity.print_parameters()
 
         if self.dynamics is not None:
-            print("DYNAMIC FIRING RATE PROFILE: %s" % ('-'*33))
+            print("DYNAMIC FIRING RATE PROFILE: %s" % ('-' * 33))
             self.dynamics.print_parameters()
 
-        print("POSITION TOLERANCE %s" % ('-'*30))
+        print("POSITION TOLERANCE %s" % ('-' * 30))
         self.position.print_parameters()
 
-        print("SIZE TOLERANCE: %s" % ('-'*33))
+        print("SIZE TOLERANCE: %s" % ('-' * 33))
         self.size.print_parameters()
 
-        print ("*"*60)
+        print ("*" * 60)
 
     def firing_rate(self, ground_truth_list):
         """
@@ -384,7 +384,7 @@ def main(it_cortex):
 
         for ii in np.arange(steps):
 
-            if ii > (steps/2.0):
+            if ii > (steps / 2.0):
                 ground_truth = []
 
             if ground_truth:
@@ -393,8 +393,8 @@ def main(it_cortex):
             rates_arr[ii] = it_cortex[0].firing_rate(ground_truth)
 
         plt.figure("Dynamic Firing Rate of Neuron 0")
-        plt.plot(np.arange(steps*time_step, step=time_step), rates_arr)
-        plt.plot(np.arange(steps*time_step, step=time_step), ground_truth_present,
+        plt.plot(np.arange(steps * time_step, step=time_step), rates_arr)
+        plt.plot(np.arange(steps * time_step, step=time_step), ground_truth_present,
                  label='Input stimulus', color='k', linewidth=2)
         plt.legend()
 

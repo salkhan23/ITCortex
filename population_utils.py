@@ -96,8 +96,6 @@ def plot_single_neuron_selectivities(it_population, axis=None):
                   horizontalalignment='right',
                   verticalalignment='top')
 
-    # axis.set_title('Single Neuron Selectivity', fontsize=font_size)
-
     axis.set_xlim([0, 80])
 
 
@@ -147,7 +145,6 @@ def plot_population_sparseness(it_population, axis=None):
                   fontsize=font_size,
                   horizontalalignment='right',
                   verticalalignment='top')
-    # axis.set_title('Population Sparseness', fontsize=font_size)
 
     axis.set_xlim([0, 80])
 
@@ -199,9 +196,9 @@ def plot_selectivity_vs_position_tolerance(it_population, axis=None):
                  label='Generated Data')
 
     # Plot the linear regression fit as well.
-    m, b = np.polyfit(selectivity, position_tolerance, 1)
+    fit = np.polyfit(selectivity, position_tolerance, 1)
 
-    plt.plot(selectivity, m * selectivity + b, ':', color='green')
+    plt.plot(selectivity, fit[0] * selectivity + fit[1], ':', color='green')
 
     f_size = 34
     axis.set_ylabel('Position Tolerance (Radians)', fontsize=f_size)

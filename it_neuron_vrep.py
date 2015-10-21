@@ -253,6 +253,81 @@ class Neuron:
         return np.sum(rate2, axis=0)
 
 
+def plot_neuron_dynamic_profile(it_neuron, t_stop_ms=1000, time_step_ms=5, axis=None):
+    """
+    Plot the dynamic firing rate of the neuron, if it was seeing its ideal stimulus for half the
+    specified interval.
+    """
+
+    # Get optimum stimulus for neuron
+    pref_obj = it_neuron.selectivity.get_ranked_object_list()[0][0]
+    pref_pos = it_neuron.position.rf_center
+    pref_size = it_neuron.size.pref_size
+
+    # Create ideal stimulus
+    # TODO: Add optimum values for other ground truths when enabled in the larger model.
+    ground_truth = [pref_obj, pref_pos[0], pref_pos[1], pref_size, 0, 0, 0, 0, 0]
+
+    time_arr = np.arange(t_stop_ms, step=time_step_ms)
+    rates = np.zeros(shape=time_arr.shape[0])
+    stimulus = np.zeros(shape=time_arr.shape[0])
+
+    for ii, time in enumerate(time_arr):
+
+        if ii < time_arr.shape[0] / 2:
+            rates[ii] = it_neuron.firing_rate([ground_truth])
+            stimulus[ii] = 1
+        else:
+            rates[ii] = it_neuron.firing_rate([])
+            stimulus[ii] = 0
+
+    font_size = 34
+
+    if axis is None:
+        f, axis = plt.subplots()
+
+    axis.plot(time_arr, rates, linewidth=2)
+    axis.plot(time_arr, stimulus, linewidth=2, color='black', label="Input")
+
+    axis.set_title("Dynamic Firing Rate Profile", fontsize=font_size)
+    axis.set_ylabel('Spikes/s', fontsize=font_size)
+    axis.set_xlabel('Time (ms)', fontsize=font_size)
+
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+
+    axis.grid()
+    axis.legend(fontsize=font_size)
+
+    axis.annotate('Early Kurtosis=%0.2f' % it_neuron.dynamics.early_kurtosis_measured,
+                  xy=(0.95, 0.80),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+
+    axis.annotate('Late Kurtosis=%0.2f' % it_neuron.selectivity.kurtosis_measured,
+                  xy=(0.95, 0.75),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+
+    axis.annotate('Early Latency=%0.2f' % (it_neuron.dynamics.early_tau * 1000 * time_step_ms),
+                  xy=(0.95, 0.70),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+
+    axis.annotate('Late Latency=%0.2f' % (it_neuron.dynamics.late_tau * 1000 * time_step_ms),
+                  xy=(0.95, 0.65),
+                  xycoords='axes fraction',
+                  fontsize=font_size,
+                  horizontalalignment='right',
+                  verticalalignment='top')
+
+
 def main(it_cortex):
     # Print RFs of all Neurons
     # TODO: Move/Use function into population.py

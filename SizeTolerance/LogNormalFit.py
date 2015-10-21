@@ -98,7 +98,7 @@ optimum_size_rf_size = optimum_size_rf_size[valid_idx]
 # Plot (A) scatter plot or original data  and (B) histogram + ML Fit
 font_size = 34
 f_opt_size, ax_arr = plt.subplots(1, 2)
-f_opt_size.suptitle("Size Tuning: Preferred Size Distribution", fontsize=font_size+10)
+f_opt_size.suptitle("Size Tuning: Preferred Size Distribution", fontsize=font_size + 10)
 
 # Scatter plot or original data. Similar to figure 7B but with the added constraint to ignore
 # optimum size >= 27 degrees
@@ -179,7 +179,7 @@ size_bw_rf_size = size_bw_rf_size[valid_idx]
 # Plot (A) scatter plot or original data  and (B) histogram + ML Fit
 font_size = 34
 f_size_dist, ax_arr = plt.subplots(1, 2)
-f_size_dist.suptitle("Size Tuning: Size BW Distribution", fontsize=font_size+10)
+f_size_dist.suptitle("Size Tuning: Size BW Distribution", fontsize=font_size + 10)
 
 # Scatter plot or original data. Similar to figure 7A but with the added constraint to ignore
 # bandwidths greater than 4 octaves.
@@ -196,7 +196,7 @@ ax_arr[0].yaxis.set_minor_formatter(FormatStrFormatter("%d"))
 ax_arr[0].xaxis.set_major_formatter(FormatStrFormatter("%d"))
 ax_arr[0].yaxis.set_major_formatter(FormatStrFormatter("%d"))
 ax_arr[0].grid(which='both')
-ax_arr[0].tick_params(axis='x', which='both', labelsize=font_size-10)
+ax_arr[0].tick_params(axis='x', which='both', labelsize=font_size - 10)
 ax_arr[0].tick_params(axis='y', which='both', labelsize=font_size)
 
 ax_arr[0].set_xlim([4, 60])
@@ -370,7 +370,7 @@ fig_n3.suptitle("Neuron 3 - Figure 5 - Response only to largest Stimulus size")
 
 
 # -------------------------------------------------------------------------------------------------
-# Plot All 3 Log scale Tuning Curvers in a single figure
+# Plot All 3 Log scale Tuning curves in a single figure
 f_size = 34
 fig_n4, ax_arr = plt.subplots(1, 3, sharey=True)
 fig_n4.subplots_adjust(wspace=.1)
@@ -408,4 +408,4 @@ ax_arr[2].set_title("Largest Size Only", fontsize=f_size)
 
 ax_arr[2].legend(loc='best', fontsize=f_size)
 
-fig_n4.suptitle("Sample Size Tuning Curves", fontsize=f_size+10)
+fig_n4.suptitle("Sample Size Tuning Curves", fontsize=f_size + 10)

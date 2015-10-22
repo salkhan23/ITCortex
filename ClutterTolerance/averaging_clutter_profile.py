@@ -65,7 +65,6 @@ class AveragingClutterProfile:
 
         return np.max([0, clutter_rate + self._deviation_from_average()])
 
-
 if __name__ == "__main__":
     plt.ion()
 
@@ -76,6 +75,7 @@ if __name__ == "__main__":
     num_samples = 100
 
     f, ax_arr = plt.subplots(1, len(num_obj_array))
+    font_size = 34
 
     for idx, num_obj in enumerate(num_obj_array):
 
@@ -92,9 +92,20 @@ if __name__ == "__main__":
 
         sum_isolated_responses = np.sum(isolated_responses, axis=1)
 
-        ax_arr[idx].scatter(sum_isolated_responses, clutter_rates)
+        ax_arr[idx].scatter(sum_isolated_responses, clutter_rates, s=60)
 
         x = np.linspace(0, np.max(sum_isolated_responses), 100)
-        ax_arr[idx].plot(x, x / num_obj, label="Average")
-        ax_arr[idx].plot(x, x, label="Sum")
-        ax_arr[idx].legend()
+        ax_arr[idx].plot(x, x / num_obj, label="Average", linewidth=2)
+        ax_arr[idx].plot(x, x, label="Sum", linewidth=2)
+        ax_arr[idx].legend(fontsize=font_size)
+
+        ax_arr[idx].set_xlabel('Sum Isolated Responses (spikes/s)', fontsize=font_size)
+        ax_arr[idx].set_ylabel('Joint Response (spikes/s)', fontsize=font_size)
+        ax_arr[idx].tick_params(axis='x', labelsize=font_size)
+        ax_arr[idx].tick_params(axis='y', labelsize=font_size)
+        ax_arr[idx].set_title("%d Objects" %num_obj, fontsize=font_size)
+        ax_arr[idx].grid()
+        ax_arr[idx].set_xlim([0, 3])
+        ax_arr[idx].set_ylim([0, 3])
+
+

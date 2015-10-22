@@ -57,7 +57,7 @@ axArr[1].set_xlabel("Sum Isolated Responses")
 axArr[1].set_ylabel("Response to objects Trips R(A + B + C)")
 axArr[1].set_title('3 Objects')
 
-f.suptitle('Scatter Plots of Orginal Data', fontsize=16)
+f.suptitle('Scatter Plots of Original Data', fontsize=16)
 
 # Collect Deviations from Average model for all points --------------------------------------------
 DevArray = np.array([])

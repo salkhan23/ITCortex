@@ -44,7 +44,8 @@ class Neuron:
             max_fire_rate=100,
             position_profile=None,
             dynamic_profile=None,
-            size_profile=None):
+            size_profile=None,
+            clutter_profile='average'):
         """
         Create an Inferior Temporal Cortex  neuron instance.
 
@@ -135,6 +136,14 @@ class Neuron:
         else:
             raise Exception("Invalid size profile: %s" % size_profile)
 
+        # Clutter Profile
+        if clutter_profile.lower() == 'average':
+            import ClutterTolerance.averaging_clutter_profile as act
+            reload(act)
+            self.clutter = act.AveragingClutterProfile()
+        else:
+            raise Exception("Invalid Clutter Profile %s" % clutter_profile)
+
     def print_properties(self):
         """ Print all parameters of neuron """
         print (("*" * 20) + " Neuron Properties " + ("*" * 20))
@@ -151,6 +160,9 @@ class Neuron:
 
         print("SIZE TOLERANCE: %s" % ('-' * 33))
         self.size.print_parameters()
+
+        print("CLUTTER TOLERANCE: %s" % ('-' * 33))
+        self.clutter.print_parameters()
 
         print ("*" * 60)
 
@@ -228,21 +240,15 @@ class Neuron:
         # Get position rate modifiers they will by used to weight isolated responses to get a
         # single clutter response.
         position_weights = self.position.firing_rate_modifier(x_arr, y_arr)
-        sum_position_weights = np.sum(position_weights, axis=0)
 
-        rate = self.max_fire_rate * \
+        isolated_rates = self.max_fire_rate * \
             obj_pref_list * \
             position_weights * \
             self.size.firing_rate_modifier(size_arr)
 
-        # Clutter Response
-        # TODO: Add noise to the averaged response based on Zoccolan-2005
-        if 0 != sum_position_weights:
-            rate2 = rate * position_weights / sum_position_weights
-        else:
-            rate2 = 0
+        joint_rate = self.clutter.firing_rate_modifier(isolated_rates, position_weights)
 
-        # # Debug Code
+        # # Debug Code - print all Isolated fire rates
         # for ii in np.arrange(len(objects)):
         #     print("Object %s, pref %0.2f,pos_weight %0.2f, isolated FR %0.2f, weighted FR %0.2f"
         #           % (objects[ii], obj_pref_list[ii], position_weights[ii], rate[ii], rate2[ii]))
@@ -250,8 +256,8 @@ class Neuron:
         # print ("firing rate sum %0.2f" % np.sum(rate2, axis=0))
         # raw_input('Continue?')
 
-        return np.sum(rate2, axis=0)
-
+        return joint_rate
+    
 
 def plot_neuron_dynamic_profile(it_neuron, t_stop_ms=1000, time_step_ms=5, axis=None):
     """

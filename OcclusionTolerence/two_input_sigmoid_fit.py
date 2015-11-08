@@ -38,7 +38,8 @@ def sigmoid(x, w, b):
     return 1 / (1 + np.exp(-(np.dot(x, w) + b)))
 
 
-def get_diagnostic_group_to_total_variance_ratio(w_d, w_c, b):
+# noinspection PyTypeChecker
+def get_diagnostic_group_to_total_variance_ratio_from_diagnostic_weight(w_d, w_c, b):
     w_n = (np.sqrt(2) * w_c) - w_d
 
     vis_arr = np.arange(1, step=0.05)
@@ -60,7 +61,8 @@ def get_diagnostic_group_to_total_variance_ratio(w_d, w_c, b):
     return ratio
 
 
-def get_diagnostic_group_to_total_variance_ratio_2(w_c, w_d, b):
+# noinspection PyTypeChecker
+def get_diagnostic_group_to_total_variance_ratio_from_combined_weight(w_c, w_d, b):
     w_n = (np.sqrt(2) * w_c) - w_d
 
     vis_arr = np.arange(1, step=0.05)
@@ -83,11 +85,13 @@ def get_diagnostic_group_to_total_variance_ratio_2(w_c, w_d, b):
 
 
 def diff_between_meas_and_tgt_d_to_total_var_ratio(wd, wc, b, d_to_t_var_ratio):
-    return get_diagnostic_group_to_total_variance_ratio(wd, wc, b) - d_to_t_var_ratio
+    return get_diagnostic_group_to_total_variance_ratio_from_diagnostic_weight(wd, wc, b)\
+        - d_to_t_var_ratio
 
 
 def diff_between_meas_and_tgt_d_to_total_var_ratio_2(wc, wd, b, d_to_t_var_ratio):
-    return get_diagnostic_group_to_total_variance_ratio_2(wc, wd, b) - d_to_t_var_ratio
+    return get_diagnostic_group_to_total_variance_ratio_from_combined_weight(wc, wd, b)\
+        - d_to_t_var_ratio
 
 
 def plot_tuning_curve_along_combined_axis(w_c, b, axis=None, font_size=20):
@@ -107,7 +111,7 @@ def plot_tuning_curve_along_combined_axis(w_c, b, axis=None, font_size=20):
 
     axis.set_xlabel("Visibility Combined", fontsize=font_size)
     axis.set_ylabel("Normalized fire rate (spikes/s)", fontsize=font_size)
-    axis.set_title("Tuning curve along axis\n diagnostic visibility=nondiagnostic visibility",
+    axis.set_title("Tuning along equal visibilities axis",
                    fontsize=font_size + 10)
 
     axis.legend(fontsize=font_size, loc=4)
@@ -143,7 +147,7 @@ def plot_full_tuning_curve(w_n, w_d, b, axis=None, font_size=20):
 
     axis.set_xlabel("Nondiagnostic visibility", fontsize=font_size)
     axis.set_ylabel("Diagnostic Visibility", fontsize=font_size)
-    axis.set_zlabel("Normalized Firing Rate (spikes/s)", fontsize=font_size)
+    axis.set_zlabel("Normalize fire rate (spikes/s)", fontsize=font_size)
 
     axis.set_xlim([1, 0])
     axis.set_ylim([0, 1])
@@ -165,9 +169,9 @@ def plot_full_tuning_curve(w_n, w_d, b, axis=None, font_size=20):
     axis.plot(x, x, z, label="Combined visibility axis", color='red', linewidth=2)
 
 
-def main(visibilities, fire_rates, d_to_t_var_ratio):
+def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
     # Scale up the visibilities to range from [0, np.sqrt(2)]. We assume on the combined scale
-    # equal parts diagnostic and nondiagnostic. Along this axis
+    # equal parts diagnostic and nondiagnostic visibilities. Along this axis
     #           visibility = np.sqrt(vis_d + vis_nd) = np.sqrt(2)*vis_c.
     # In measured data, visibility ranges between [0, 1]. Hence we scale up to get the correct
     # combined weight and bias.
@@ -175,21 +179,24 @@ def main(visibilities, fire_rates, d_to_t_var_ratio):
 
     # Find optimal w_c and bias that fit the data -------------------------------------------
     p_opt, p_cov = so.curve_fit(sigmoid, visibilities, fire_rates)
-    w_combined = p_opt[0]  # combined weight
-    bias = p_opt[1]  # bias
-
+    w_combined = p_opt[0]
+    bias = p_opt[1]
     # print("Data fit parameters: w_c=%0.2f, b=%0.2f: standard error of parameter fits %s"
     #       % (w_combined, bias, np.sqrt(np.diag(p_cov))))
 
     # Plot the data and the fitted sigmoid
     fig = plt.figure()
+    font_size = 20
+
+    if title:
+        fig.suptitle(title, fontsize=font_size + 10)
 
     ax = fig.add_subplot(121)
 
     ax.scatter(visibilities, fire_rates,
                marker='+', linewidth=2, s=60, color='red', label="Original data")
 
-    plot_tuning_curve_along_combined_axis(w_combined, bias, ax)
+    plot_tuning_curve_along_combined_axis(w_combined, bias, ax, font_size)
 
     # Find the highest possible diagnostic group variances to total variance ratio that is
     # possible for the fitted  w_combined and bias.
@@ -202,9 +209,13 @@ def main(visibilities, fire_rates, d_to_t_var_ratio):
     # one weight accounts for all the variance.
     w_diagnostic = np.sqrt(2) * w_combined
     max_diagnostic_group_to_total_var_ratio = \
-        get_diagnostic_group_to_total_variance_ratio(w_diagnostic, w_combined, bias)
+        get_diagnostic_group_to_total_variance_ratio_from_diagnostic_weight(
+            w_diagnostic,
+            w_combined,
+            bias)
 
     if d_to_t_var_ratio > max_diagnostic_group_to_total_var_ratio:
+        # noinspection PyStringFormat
         raise Exception("Specified diagnostic group variance to total variance Ratio" +
                         " greater than maximum possible (Max=%0.2f, specified=%0.2f)"
                         % (max_diagnostic_group_to_total_var_ratio, d_to_t_var_ratio))
@@ -215,9 +226,9 @@ def main(visibilities, fire_rates, d_to_t_var_ratio):
     # ----------------------------------------------------------------------------------------
     w_diagnostic = so.fsolve(
         diff_between_meas_and_tgt_d_to_total_var_ratio,
-        (np.sqrt(2) * w_combined / 2),
+        (np.sqrt(2) * w_combined / 2),  # Initial guess half the combined weight
         args=(w_combined, bias, d_to_t_var_ratio),
-        factor=0.5)
+        factor=0.5)  # Reduce the step size for the non-linear optimization.
     # TODO: Add some error checks on the return parameters
 
     # w_diagnostic ranges between np.sqrt(2) * w_c and 0, and is always > weight_nondiagnostic.
@@ -314,51 +325,51 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio):
 if __name__ == "__main__":
     plt.ion()
 
-    # # Fit Kovacs 1995 Tuning Curves  -------------------------------------------------------
-    # with open('Kovacs1995.pkl', 'rb') as fid:
-    #     kovacsData = pickle.load(fid)
+    # Fit Kovacs 1995 Tuning Curves  -------------------------------------------------------
+    with open('Kovacs1995.pkl', 'rb') as fid:
+        kovacsData = pickle.load(fid)
+
+    # Convert occlusion to visibility
+    visibility_arr = np.array([(1 - (occlusion / 100.0))
+                               for occlusion in kovacsData['occlusion']])
+
+    for obj, perObjRates in enumerate(kovacsData['rates']):
+        rates = perObjRates
+        rates /= np.max(rates)
+
+        main(visibility_arr, rates, d_to_t_var_ratio=0.3, title='Kovacs 1995 - Object %d' % obj)
+
+    # # Fit Neilson Tuning Curve  -------------------------------------------------------
+    # with open('Neilson2006.pkl', 'rb') as fid:
+    #     NeilsonData = pickle.load(fid)
     #
-    # # Convert occlusion to visibility
-    # visibility_arr = np.array([(1 - (occlusion / 100.0))
-    #                            for occlusion in kovacsData['occlusion']])
+    # # With Neilson Data, we have the diagnostic and non-diagnostic tuning curves,
+    # # we fit these and calculate the combined tuning curve
+    # visibility = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
     #
-    # for obj, perObjRates in enumerate(kovacsData['rates']):
-    #     rates = perObjRates
-    #     rates /= np.max(rates)
+    # nondiag_rates = NeilsonData['singleNonDiagRate']
+    # diag_rates = NeilsonData['singleDiagRate']
     #
-    #     main(visibility_arr, rates, d_to_t_var_ratio=0.3)
-
-    # Fit Neilson Tuning Curve  -------------------------------------------------------
-    with open('Neilson2006.pkl', 'rb') as fid:
-        NeilsonData = pickle.load(fid)
-
-    # With Neilson Data, we have the diagnostic and non-diagnostic tuning curves,
-    # we fit these and calculate the combined tuning curve
-    visibility = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
-
-    nondiag_rates = NeilsonData['singleNonDiagRate']
-    diag_rates = NeilsonData['singleDiagRate']
-
-    # first element of both the non_diag and diag rates is the full rate, so remove them
-    r_max = nondiag_rates[0]
-
-    nondiagnostic_rates = np.array(nondiag_rates[1:]) / r_max
-    diagnostic_rates = np.array(diag_rates[1:]) / r_max
-    visibility = np.array(visibility[1:])
-
-    # Remove all negative rates
-    nondiag_rates[nondiag_rates < 0] = 0
-    diag_rates[diag_rates < 0] = 0
-    print nondiag_rates
-
-    ratio_diag_var_to_total_var = 0.437
-
-    main2(visibility, nondiagnostic_rates, diagnostic_rates, ratio_diag_var_to_total_var)
-
-    # PHD Thesis - Neilson Figure 3.21
-    # TODO Cleaup!
-    visibility = np.array([0.1, 0.3, 0.5])
-    diagnostic_rates = np.array([1.9, 5.95, 9]) / 9
-    nondiagnostic_rates = np.array([0.07, 1.035, 5.022]) / 9
-
-    main2(visibility, nondiagnostic_rates, diagnostic_rates, 0.05)
+    # # first element of both the non_diag and diag rates is the full rate, so remove them
+    # r_max = nondiag_rates[0]
+    #
+    # nondiagnostic_rates = np.array(nondiag_rates[1:]) / r_max
+    # diagnostic_rates = np.array(diag_rates[1:]) / r_max
+    # visibility = np.array(visibility[1:])
+    #
+    # # Remove all negative rates
+    # nondiag_rates[nondiag_rates < 0] = 0
+    # diag_rates[diag_rates < 0] = 0
+    # print nondiag_rates
+    #
+    # ratio_diag_var_to_total_var = 0.437
+    #
+    # main2(visibility, nondiagnostic_rates, diagnostic_rates, ratio_diag_var_to_total_var)
+    #
+    # # PHD Thesis - Neilson Figure 3.21
+    # # TODO Cleaup!
+    # visibility = np.array([0.1, 0.3, 0.5])
+    # diagnostic_rates = np.array([1.9, 5.95, 9]) / 9
+    # nondiagnostic_rates = np.array([0.07, 1.035, 5.022]) / 9
+    #
+    # main2(visibility, nondiagnostic_rates, diagnostic_rates, 0.05)

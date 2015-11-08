@@ -189,7 +189,8 @@ def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
     font_size = 20
 
     if title:
-        fig.suptitle(title, fontsize=font_size + 10)
+        fig.suptitle(title + ". [Diagnostic Group to Total Var Ratio=%0.2f]" % d_to_t_var_ratio ,
+                     fontsize=font_size + 10)
 
     ax = fig.add_subplot(121)
 
@@ -325,7 +326,7 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio):
 if __name__ == "__main__":
     plt.ion()
 
-    # Fit Kovacs 1995 Tuning Curves  -------------------------------------------------------
+    # Fit Kovacs 1995 Tuning Curves  -----------------------------------------------------
     with open('Kovacs1995.pkl', 'rb') as fid:
         kovacsData = pickle.load(fid)
 
@@ -338,6 +339,19 @@ if __name__ == "__main__":
         rates /= np.max(rates)
 
         main(visibility_arr, rates, d_to_t_var_ratio=0.3, title='Kovacs 1995 - Object %d' % obj)
+
+    # Fit Oreilly 2013 Data -------------------------------------------------------------
+    with open('Oreilly2013.pkl', 'rb') as fid:
+        oreillyData = pickle.load(fid)
+
+     # Convert occlusion to visibility
+    visibility_arr = np.array([(1 - (occlusion / 100.0))
+                               for occlusion in oreillyData['Occ']])
+
+    rates = oreillyData['Rates']
+    rates /= np.max(rates)
+
+    main(visibility_arr, rates, d_to_t_var_ratio=0.1, title='Oreilly 2013')
 
     # # Fit Neilson Tuning Curve  -------------------------------------------------------
     # with open('Neilson2006.pkl', 'rb') as fid:

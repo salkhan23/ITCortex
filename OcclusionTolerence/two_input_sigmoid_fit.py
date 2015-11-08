@@ -151,6 +151,7 @@ def plot_full_tuning_curve(w_n, w_d, b, axis=None, font_size=20):
 
     axis.set_xlim([1, 0])
     axis.set_ylim([0, 1])
+    axis.set_zlim([0, 1])
 
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
@@ -189,7 +190,8 @@ def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
     font_size = 20
 
     if title:
-        fig.suptitle(title + ". [Diagnostic Group to Total Var Ratio=%0.2f]" % d_to_t_var_ratio ,
+        fig.suptitle(title + ". [Diagnostic group to total variance ratio=%0.2f]"
+                     % d_to_t_var_ratio,
                      fontsize=font_size + 10)
 
     ax = fig.add_subplot(121)
@@ -244,7 +246,12 @@ def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
 
     # Plot the 3D Tuning Curve
     ax2 = fig.add_subplot(122, projection='3d')
-    plot_full_tuning_curve(np.float(w_nondiagnostic), np.float(w_diagnostic), bias, ax2)
+    plot_full_tuning_curve(
+        np.float(w_nondiagnostic),
+        np.float(w_diagnostic),
+        bias,
+        ax2,
+        font_size)
 
     # # Plot the diagnostic and nondiagnostic sigmoid separately
     # plt.figure()
@@ -256,16 +263,16 @@ def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
     # plt.legend()
 
 
-def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio):
+def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title=''):
 
     # Fit the original diagnostic and nondiagnostic data -----------------------------------
     # fit the diagnostic tuning curve
     p_opt, p_cov = so.curve_fit(sigmoid, visibilities, r_diagnostic)
     w_diagnostic = p_opt[0]
     bias = p_opt[1]
-    print("weight diagnostic %0.2f, bias diagnostic %0.2f" % (w_diagnostic, bias))
+    # print("weight diagnostic %0.2f, bias diagnostic %0.2f" % (w_diagnostic, bias))
 
-    # NOTE: too few points to do a meaningful fit
+    # NOTE: too few points to do a meaningful fit (only one above 0)
     # p_opt, p_cov = so.curve_fit(sigmoid, visibilities, r_nondiagnostic)
     # w_nondiagnostic = p_opt[0]
     # b_nondiagnostic = p_opt[1]
@@ -275,6 +282,10 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio):
     # Plot the original data
     font_size = 20
     fig = plt.figure()
+    if title:
+        fig.suptitle(title + ". [Diagnostic group to total variance ratio=%0.2f]"
+                     % d_to_t_var_ratio,
+                     fontsize=font_size + 10)
 
     ax = fig.add_subplot(122, projection='3d')
 
@@ -283,16 +294,6 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio):
 
     ax.scatter(np.zeros_like(r_diagnostic), visibilities, r_diagnostic,
                marker='+', linewidth=2, s=60, color='blue', label="Original Diagnostic Data")
-
-    ax.legend()
-
-    ax.set_xlabel("Nondiagnostic visibility", fontsize=font_size)
-    ax.set_ylabel("Diagnostic Visibility", fontsize=font_size)
-    ax.set_zlabel("Normalized Firing Rate (spikes/s)", fontsize=font_size)
-
-    ax.set_xlim([1, 0])
-    ax.set_ylim([0, 1])
-    ax.set_zlim([0, 1])
 
     # Given the diagnostic weight, bias and the diagnostic group to total variance ratio,
     # determine wn, and w_c
@@ -313,14 +314,23 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio):
         w_diagnostic = temp
 
     print("w_diagnostic = %0.2f, w_nondiagnostic = %0.2f" % (w_diagnostic, w_nondiagnostic))
-    print ("w_combined=%0.2f" % w_combined)
+    print ("w_combined=%0.2f, bias=%0.2f" % (w_combined, bias))
 
-    plot_full_tuning_curve(np.float(w_nondiagnostic), np.float(w_diagnostic), bias, axis=ax)
+    plot_full_tuning_curve(
+        np.float(w_nondiagnostic),
+        np.float(w_diagnostic),
+        bias,
+        axis=ax,
+        font_size=font_size)
 
     # Plot the tuning curve along the combined axis
     ax2 = fig.add_subplot(121)
 
-    plot_tuning_curve_along_combined_axis(np.float(w_combined), bias, ax2)
+    plot_tuning_curve_along_combined_axis(
+        np.float(w_combined),
+        bias,
+        ax2,
+        font_size=font_size)
 
 
 if __name__ == "__main__":
@@ -344,7 +354,7 @@ if __name__ == "__main__":
     with open('Oreilly2013.pkl', 'rb') as fid:
         oreillyData = pickle.load(fid)
 
-     # Convert occlusion to visibility
+    # Convert occlusion to visibility
     visibility_arr = np.array([(1 - (occlusion / 100.0))
                                for occlusion in oreillyData['Occ']])
 
@@ -353,37 +363,35 @@ if __name__ == "__main__":
 
     main(visibility_arr, rates, d_to_t_var_ratio=0.1, title='Oreilly 2013')
 
-    # # Fit Neilson Tuning Curve  -------------------------------------------------------
-    # with open('Neilson2006.pkl', 'rb') as fid:
-    #     NeilsonData = pickle.load(fid)
-    #
-    # # With Neilson Data, we have the diagnostic and non-diagnostic tuning curves,
-    # # we fit these and calculate the combined tuning curve
-    # visibility = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
-    #
-    # nondiag_rates = NeilsonData['singleNonDiagRate']
-    # diag_rates = NeilsonData['singleDiagRate']
-    #
-    # # first element of both the non_diag and diag rates is the full rate, so remove them
-    # r_max = nondiag_rates[0]
-    #
-    # nondiagnostic_rates = np.array(nondiag_rates[1:]) / r_max
-    # diagnostic_rates = np.array(diag_rates[1:]) / r_max
-    # visibility = np.array(visibility[1:])
-    #
-    # # Remove all negative rates
-    # nondiag_rates[nondiag_rates < 0] = 0
-    # diag_rates[diag_rates < 0] = 0
-    # print nondiag_rates
-    #
-    # ratio_diag_var_to_total_var = 0.437
-    #
-    # main2(visibility, nondiagnostic_rates, diagnostic_rates, ratio_diag_var_to_total_var)
-    #
-    # # PHD Thesis - Neilson Figure 3.21
-    # # TODO Cleaup!
-    # visibility = np.array([0.1, 0.3, 0.5])
-    # diagnostic_rates = np.array([1.9, 5.95, 9]) / 9
-    # nondiagnostic_rates = np.array([0.07, 1.035, 5.022]) / 9
-    #
-    # main2(visibility, nondiagnostic_rates, diagnostic_rates, 0.05)
+    # Fit Neilson Tuning Curve  -------------------------------------------------------
+    with open('Neilson2006.pkl', 'rb') as fid:
+        NeilsonData = pickle.load(fid)
+
+    # With Neilson Data, we have the diagnostic and non-diagnostic tuning curves,
+    # we fit these and calculate the combined tuning curve
+    visibility = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
+
+    nondiag_rates = NeilsonData['singleNonDiagRate']
+    diag_rates = NeilsonData['singleDiagRate']
+
+    # First element of both the non_diag and diag rates is the full rate, so remove them
+    r_max = nondiag_rates[0]
+
+    nondiagnostic_rates = np.array(nondiag_rates[1:]) / r_max
+    diagnostic_rates = np.array(diag_rates[1:]) / r_max
+    visibility = np.array(visibility[1:])
+
+    # Remove all negative rates
+    nondiag_rates[nondiag_rates < 0] = 0
+    diag_rates[diag_rates < 0] = 0
+
+    ratio_diag_var_to_total_var = 0.437
+
+    main2(visibility,
+          nondiagnostic_rates,
+          diagnostic_rates,
+          ratio_diag_var_to_total_var,
+          title='Neilson 2006 - Single Neuron')
+
+    # TODO: Add tuning curves from Neilson 2005 PhD Thesis.
+

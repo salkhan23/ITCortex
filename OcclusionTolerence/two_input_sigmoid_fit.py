@@ -243,6 +243,7 @@ def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
         w_diagnostic = temp
 
     print("w_diagnostic = %0.2f, w_nondiagnostic = %0.2f" % (w_diagnostic, w_nondiagnostic))
+    print ("w_combined=%0.2f, bias=%0.2f" % (w_combined, bias))
 
     # Plot the 3D Tuning Curve
     ax2 = fig.add_subplot(122, projection='3d')
@@ -261,6 +262,8 @@ def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
     # plt.plot(vis_levels, sigmoid(vis_levels, w_nondiagnostic, bias), label='nondiag')
     # plt.plot(vis_levels, sigmoid(vis_levels, w_diagnostic, bias), label='diag')
     # plt.legend()
+
+    return w_combined, bias
 
 
 def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title=''):
@@ -332,9 +335,17 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title='
         ax2,
         font_size=font_size)
 
+    return w_combined, bias
+
 
 if __name__ == "__main__":
     plt.ion()
+
+    # Store the w_combined and bias parameters seen across the fitted  data. Mean and
+    # standard deviation will be used to generate sample w_combined and bias in the tuning
+    # profile file
+    w_combined_arr = []
+    bias_arr = []
 
     # Fit Kovacs 1995 Tuning Curves  -----------------------------------------------------
     with open('Kovacs1995.pkl', 'rb') as fid:
@@ -348,7 +359,13 @@ if __name__ == "__main__":
         rates = perObjRates
         rates /= np.max(rates)
 
-        main(visibility_arr, rates, d_to_t_var_ratio=0.3, title='Kovacs 1995 - Object %d' % obj)
+        weight_c, bias_c = main(visibility_arr,
+                                rates,
+                                d_to_t_var_ratio=0.3,
+                                title='Kovacs 1995 - Object %d' % obj)
+
+        w_combined_arr.append(weight_c)
+        bias_arr.append(bias_c)
 
     # Fit Oreilly 2013 Data -------------------------------------------------------------
     with open('Oreilly2013.pkl', 'rb') as fid:
@@ -361,7 +378,12 @@ if __name__ == "__main__":
     rates = oreillyData['Rates']
     rates /= np.max(rates)
 
-    main(visibility_arr, rates, d_to_t_var_ratio=0.1, title='Oreilly 2013')
+    weight_c, bias_c = main(visibility_arr,
+                            rates,
+                            d_to_t_var_ratio=0.1,
+                            title='Oreilly 2013')
+    w_combined_arr.append(weight_c)
+    bias_arr.append(bias_c)
 
     # Fit Neilson Tuning Curve  -------------------------------------------------------
     with open('Neilson2006.pkl', 'rb') as fid:
@@ -369,7 +391,7 @@ if __name__ == "__main__":
 
     # With Neilson Data, we have the diagnostic and non-diagnostic tuning curves,
     # we fit these and calculate the combined tuning curve
-    visibility = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
+    visibility_arr = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
 
     nondiag_rates = NeilsonData['singleNonDiagRate']
     diag_rates = NeilsonData['singleDiagRate']
@@ -379,7 +401,7 @@ if __name__ == "__main__":
 
     nondiagnostic_rates = np.array(nondiag_rates[1:]) / r_max
     diagnostic_rates = np.array(diag_rates[1:]) / r_max
-    visibility = np.array(visibility[1:])
+    visibility_arr = np.array(visibility_arr[1:])
 
     # Remove all negative rates
     nondiag_rates[nondiag_rates < 0] = 0
@@ -387,11 +409,28 @@ if __name__ == "__main__":
 
     ratio_diag_var_to_total_var = 0.437
 
-    main2(visibility,
-          nondiagnostic_rates,
-          diagnostic_rates,
-          ratio_diag_var_to_total_var,
-          title='Neilson 2006 - Single Neuron')
+    weight_c, bias_c = main2(visibility_arr,
+                             nondiagnostic_rates,
+                             diagnostic_rates,
+                             ratio_diag_var_to_total_var,
+                             title='Neilson 2006 - Single Neuron')
+
+    w_combined_arr.append(weight_c)
+    bias_arr.append(bias_c)
 
     # TODO: Add tuning curves from Neilson 2005 PhD Thesis.
 
+    # Find the average and variances in the collected weight_combined and bias terms
+    w_combined_arr = np.array(w_combined_arr)
+    bias_c = np.array(bias_arr)
+
+    w_c_mean = np.mean(w_combined_arr)
+    w_c_std = np.std(w_combined_arr)
+
+    b_mean = np.mean(bias_arr)
+    b_std = np.std(bias_arr)
+
+    # noinspection PyStringFormat
+    print("Combined Weight. Mean= %0.4f, sigma=%0.4f" % (w_c_mean, w_c_std))
+    # noinspection PyStringFormat
+    print("Bias. Mean=%0.4f, sigma=%0.4f" % (b_mean, b_std))

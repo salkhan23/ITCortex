@@ -41,21 +41,27 @@ class TwoInputSigmoidOcclusionProfile:
 
         # use nonlinear numerical optimization to solve for diagnostic weight that can generate
         # the desired d_to_t ratio
-        self.w_diagnostic = so.fsolve(
+        w_diagnostic = so.fsolve(
             self._diff_between_desired_and_generated_d_to_t_ratio,
             (np.sqrt(2) * self.w_combine / 2),  # Initial guess half the combined weight
             args=(self.w_combine, self.bias, self.d_to_t_ratio),
             factor=0.5,  # w_d increases to rapidly without this factor adjustment
         )
-        self.w_diagnostic = np.float(self.w_diagnostic)
+        w_diagnostic = np.float(w_diagnostic)
 
-        # w_diagnostic ranges between np.sqrt(2) * w_c and 0, and is always > weight_nondiagnostic.
-        self.w_nondiagnostic = (np.sqrt(2) * self.w_combine) - self.w_diagnostic
+        # w_diagnostic, w_nondiagnostic and w_combined are related by wc = np.sqrt(2)*w_d - w_n
+        # TODO: where is this relationship from.
+        # w_diagnostic is always greater w_nondiagnostic
+        w_nondiagnostic = (np.sqrt(2) * self.w_combine) - w_diagnostic
 
-        if self.w_nondiagnostic > self.w_diagnostic:
-            temp = self.w_nondiagnostic
-            self.w_nondiagnostic = self.w_diagnostic
-            self.w_diagnostic = temp
+        if w_nondiagnostic > w_diagnostic:
+            temp = w_nondiagnostic
+            w_nondiagnostic = w_diagnostic
+            w_diagnostic = temp
+
+        # Store the diagnostic and non-diagnostic weights as a vector for easier computation
+        # of fire rates.
+        self.w_vector = np.array([[w_nondiagnostic], [w_diagnostic]])
 
     @staticmethod
     def _get_diagnostic_group_to_total_variance_ratio():
@@ -193,8 +199,8 @@ class TwoInputSigmoidOcclusionProfile:
         print("Profile                                      = %s" % self.type)
         print("diagnostic group to total variance ratio     = %0.4f" % self.d_to_t_ratio)
         print("weight combined                              = %0.4f" % self.w_combine)
-        print("weight diagnostic                            = %0.4f" % self.w_diagnostic)
-        print("weight diagnostic                            = %0.4f" % self.w_nondiagnostic)
+        print("weight nondiagnostic                         = %0.4f" % self.w_vector[0])
+        print("weight diagnostic                            = %0.4f" % self.w_vector[1])
         print("bias                                         = %0.4f" % self.bias)
 
     def firing_rate_modifier(self, stimulus_size):
@@ -216,9 +222,8 @@ class TwoInputSigmoidOcclusionProfile:
             for c_idx in np.arange(vis_arr.shape[0]):
 
                 x = np.array([vis_arr[r_idx], vis_arr[c_idx]])
-                w = np.array([[self.w_nondiagnostic], [self.w_diagnostic]])
 
-                fire_rates[r_idx][c_idx] = sigmoid(x.T, w, self.bias)
+                fire_rates[r_idx][c_idx] = sigmoid(x.T, self.w_vector, self.bias)
 
         yy, xx = np.meshgrid(vis_arr, vis_arr)
         axis.plot_wireframe(xx, yy, fire_rates)
@@ -237,7 +242,7 @@ class TwoInputSigmoidOcclusionProfile:
         axis.set_title("Complete Tuning Curve", fontsize=font_size + 10)
 
         x2, y2, _ = proj3d.proj_transform(1.25, 0.15, 1.0, axis.get_proj())
-        axis.annotate("w_n=%0.2f, w_d=%0.2f" % (self.w_nondiagnostic, self.w_diagnostic),
+        axis.annotate("w_n=%0.2f, w_d=%0.2f" % (self.w_vector[0], self.w_vector[1]),
                       xy=(x2, y2),
                       xytext=(-20, 20),
                       fontsize=font_size,

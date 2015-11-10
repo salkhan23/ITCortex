@@ -271,19 +271,19 @@ class Neuron:
 
         joint_rate = self.clutter.firing_rate_modifier(isolated_rates, position_weights)
 
-        # Debug Code - print all Isolated fire rates
-        print("Static Isolated Fire Rates:")
-        for ii in np.arange(len(objects)):
-            print ("%s: FR=%0.2f: pref=%0.2f, pos=%0.2f, size=%0.2f, occ=%0.2f"
-                   %(objects[ii],
-                     isolated_rates[ii],
-                     obj_pref_list[ii],
-                     position_weights[ii],
-                     size_fr[ii],
-                     occ_fr[ii]))
-
-        print ("static clutter rate %0.2f" % np.sum(joint_rate, axis=0))
-        raw_input('Continue?')
+        # # Debug Code - print all Isolated fire rates
+        # print("Static Isolated Fire Rates:")
+        # for ii in np.arange(len(objects)):
+        #     print ("%s: FR=%0.2f: pref=%0.2f, pos=%0.2f, size=%0.2f, occ=%0.2f"
+        #            %(objects[ii],
+        #              isolated_rates[ii],
+        #              obj_pref_list[ii],
+        #              position_weights[ii],
+        #              size_fr[ii],
+        #              occ_fr[ii]))
+        #
+        # print ("static clutter rate %0.2f" % np.sum(joint_rate, axis=0))
+        # raw_input('Continue?')
 
         return joint_rate
     

@@ -218,6 +218,8 @@ class TwoInputSigmoidOcclusionProfile:
         if use_combined:
             # separate diagnostic and non diagnostic visibilities are not available, use
             # the combined visibilities axis to get the firing rates.
+
+            vis_nd = np.sqrt(2) * vis_nd  # On compressed scale, scale up to get true rate
             fire_rates = sigmoid(vis_nd, self.w_combine, self.bias)
         else:
             x = np.array([vis_nd, vis_d])
@@ -241,9 +243,8 @@ class TwoInputSigmoidOcclusionProfile:
         for r_idx in np.arange(vis_arr.shape[0]):
             for c_idx in np.arange(vis_arr.shape[0]):
 
-                x = np.array([vis_arr[r_idx], vis_arr[c_idx]])
-
-                fire_rates[r_idx][c_idx] = sigmoid(x.T, self.w_vector, self.bias)
+                fire_rates[r_idx][c_idx] = \
+                    self.firing_rate_modifier(vis_arr[r_idx], vis_arr[c_idx])
 
         yy, xx = np.meshgrid(vis_arr, vis_arr)
         axis.plot_wireframe(xx, yy, fire_rates)
@@ -278,9 +279,9 @@ class TwoInputSigmoidOcclusionProfile:
         if axis is None:
             f, axis = plt.subplots()
 
-        vis_levels = np.linspace(0, 1 * np.sqrt(2), num=100)
+        vis_levels = np.linspace(0, 1, num=100)
         axis.plot(vis_levels,
-                  sigmoid(vis_levels, self.w_combine, self.bias),
+                  self.firing_rate_modifier(vis_levels, np.ones_like(vis_levels)*-1),
                   linewidth=2, label='Best fit sigmoid')
 
         axis.set_xlim([0, 1.5])

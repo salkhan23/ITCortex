@@ -344,17 +344,17 @@ def main(it_cortex):
     # TODO: Temporary. Validation code.
     it_cortex[0].print_properties()
 
-    most_pref_object = it_cortex[0].selectivity.get_ranked_object_list()[0][0]
+    most_pref_obj = it_cortex[0].selectivity.get_ranked_object_list()[0][0]
     rf_center = it_cortex[0].position.rf_center
     pref_size = it_cortex[0].size.pref_size
-    # print("Most preferred object %s " % most_pref_object)
+    # print("Most preferred object %s " % most_pref_obj)
     # print("RF center %s" % rf_center)
     # print("Preferred Size %0.4f Radians" % pref_size)
 
     # Example 1
     title = "Test 1 - Response to single Item"
     print title
-    ground_truth = (most_pref_object, rf_center[0], rf_center[1], 0.0, 0.0, 0.0, 0.0)
+    ground_truth = (most_pref_obj, rf_center[0], rf_center[1], 0.0, 0.0, 0.0, 0.0, 1.0, 1.0)
     print ("Ground Truth: ", ground_truth)
 
     print ("Neurons response %0.4f" % it_cortex[0].firing_rate(ground_truth))
@@ -363,9 +363,9 @@ def main(it_cortex):
     title = "Test 2 -  Response to multiple items"
     print title
     ground_truth = [
-        # object,           x,            y,            size,     rot_x, rot_y, rot_z
-        [most_pref_object, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0],
-        ['monkey',         rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0]]
+        # object,       x,            y,            size,     rot_x, rot_y, rot_z, vis_nd, vis_d
+        [most_pref_obj, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,   1.0,    1.0],
+        ['monkey',      rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,   1.0,    1.0]]
 
     print ("Ground Truth:")
     for entry in ground_truth:
@@ -384,9 +384,9 @@ def main(it_cortex):
         ground_truth_present = np.zeros_like(rates_arr)
 
         ground_truth = [
-            # object,           x,            y,            size,     rot_x, rot_y, rot_z
-            [most_pref_object, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0],
-            ['monkey',         rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0]]
+            # object,       x,            y,            size,      rot_x, rot_y, rot_z v_nd, v_d
+            [most_pref_obj, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,  1.0,  1.0],
+            ['monkey',      rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,  1.0,  1.0]]
 
         for ii in np.arange(steps):
 

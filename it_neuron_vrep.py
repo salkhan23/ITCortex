@@ -27,9 +27,7 @@ class CompleteTolerance:
     @staticmethod
     def firing_rate_modifier(*args, **kwargs):
         """Return 1 no matter what inputs are provided"""
-        del args
-        del kwargs
-        return 1
+        return np.ones_like(args[0])
 
     def print_parameters(self):
         print("Profile: %s" % self.type)
@@ -262,22 +260,30 @@ class Neuron:
         # Get position rate modifiers they will by used to weight isolated responses to get a
         # single clutter response.
         position_weights = self.position.firing_rate_modifier(x_arr, y_arr)
+        size_fr = self.size.firing_rate_modifier(size_arr)
+        occ_fr = self.occlusion.firing_rate_modifier(np.array(vis_nd), np.array(vis_d))
 
         isolated_rates = self.max_fire_rate * \
             obj_pref_list * \
             position_weights * \
-            self.size.firing_rate_modifier(size_arr) *\
-            self.occlusion.firing_rate_modifier(vis_nd, vis_d)
+            size_fr * \
+            occ_fr
 
         joint_rate = self.clutter.firing_rate_modifier(isolated_rates, position_weights)
 
-        # # Debug Code - print all Isolated fire rates
-        # for ii in np.arrange(len(objects)):
-        #     print("Object %s, pref %0.2f,pos_weight %0.2f, isolated FR %0.2f, weighted FR %0.2f"
-        #           % (objects[ii], obj_pref_list[ii], position_weights[ii], rate[ii], rate2[ii]))
-        #
-        # print ("firing rate sum %0.2f" % np.sum(rate2, axis=0))
-        # raw_input('Continue?')
+        # Debug Code - print all Isolated fire rates
+        print("Static Isolated Fire Rates:")
+        for ii in np.arange(len(objects)):
+            print ("%s: FR=%0.2f: pref=%0.2f, pos=%0.2f, size=%0.2f, occ=%0.2f"
+                   %(objects[ii],
+                     isolated_rates[ii],
+                     obj_pref_list[ii],
+                     position_weights[ii],
+                     size_fr[ii],
+                     occ_fr[ii]))
+
+        print ("static clutter rate %0.2f" % np.sum(joint_rate, axis=0))
+        raw_input('Continue?')
 
         return joint_rate
     

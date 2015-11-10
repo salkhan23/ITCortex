@@ -281,10 +281,10 @@ class TwoInputSigmoidOcclusionProfile:
 
         vis_levels = np.linspace(0, 1, num=100)
         axis.plot(vis_levels,
-                  self.firing_rate_modifier(vis_levels, np.ones_like(vis_levels)*-1),
+                  self.firing_rate_modifier(vis_levels, np.ones_like(vis_levels) * -1),
                   linewidth=2, label='Best fit sigmoid')
 
-        axis.set_xlim([0, 1.5])
+        axis.set_xlim([0, 1.1])
         axis.set_ylim([0, 1.1])
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)

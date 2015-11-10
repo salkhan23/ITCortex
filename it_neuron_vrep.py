@@ -147,7 +147,7 @@ class Neuron:
             self.occlusion = CompleteTolerance()
 
         elif occlusion_profile.lower() == 'twoinputsigmoid':
-            import OcclusionTolerence.two_input_sigmoid_occlusion_profile as sot
+            import OcclusionTolerance.two_input_sigmoid_occlusion_profile as sot
             reload(sot)
 
             self.occlusion = sot.TwoInputSigmoidOcclusionProfile()

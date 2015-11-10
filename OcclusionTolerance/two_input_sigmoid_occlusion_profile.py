@@ -90,7 +90,7 @@ class TwoInputSigmoidOcclusionProfile:
         # ln(y-1) = -a*x, and y in uniformly distributed over 0, 1
         x = -np.log(1 - y) / 6.84
 
-        return x
+        return min(x, 1)
 
     @staticmethod
     def _get_combined_weight_and_bias():
@@ -210,6 +210,20 @@ class TwoInputSigmoidOcclusionProfile:
 
     # noinspection PyTypeChecker
     def firing_rate_modifier(self, vis_nd, vis_d):
+        """
+         Get the normalized fire rate of the neuron based on the visibility levels provided.
+         If vis_d = -1, fire rates along the combined axis is returned, where
+         w_diagnostic = w_nondiagnostic.  Otherwise both visibilities are used to get the
+         firing rate from the two input sigmoid model.
+
+         Visibilities must either be a float or an ndarray.
+
+        :param vis_nd   : visibility level(s) of nondiagnostic parts
+        :param vis_d    : visibility level(s) of diagnostic parts
+
+        :return         : normalized fire rate for each set of diagnostic and nondiagnostic
+                          visibilities provided.
+        """
         use_combined = False
 
         if isinstance(vis_d, np.ndarray):

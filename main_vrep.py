@@ -687,7 +687,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 5 * 1000  # 5 seconds
+    t_stop_ms = 1 * 1000  # 5 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
     population_size = 100
@@ -737,6 +737,7 @@ def main():
                                position_profile='Gaussian',
                                size_profile='Lognormal',
                                dynamic_profile='Tamura',
+                               occlusion_profile='TwoInputSigmoid'
                                )
 
             it_cortex.append(neuron)

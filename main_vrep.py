@@ -16,6 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import warnings
 import ctypes
+import traceback
 
 from vrep.src import vrep
 
@@ -694,6 +695,7 @@ def main():
     it_cortex = []
     rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
+    # noinspection PyBroadException
     try:
 
         # SETUP VREP  ---------------------------------------------------------------------------
@@ -825,6 +827,9 @@ def main():
 
             fig_rates_vs_time.suptitle("Population (N=%d) Firing Rates " % len(it_cortex),
                                        fontsize=font_size + 10)
+
+    except Exception:
+        traceback.print_exc()
 
     finally:
         # Stop Simulation -----------------------------------------------------------------------

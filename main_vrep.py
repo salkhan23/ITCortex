@@ -552,28 +552,55 @@ def get_object_visibility_levels(objects_list, c_id):
             # previous request. We therefore need to match the object handle identities.
 
             # For each requested handle, the child script sends down the value of the requested
-            # handle followed by its visibility level. objects of interest sent down from VRep
-            # can either be a parent object or diagnostic part of an object.
-            for idx in np.arange(len(occlusion_data) / 2):
+            # handle followed by its visibility level and finally the number of pixels that are
+            # visible.
 
-                identity = np.int(occlusion_data[2 * idx])
-                value = occlusion_data[2 * idx + 1]
-                id_located = False
+            # Objects of interest sent down from VRep can either be a parent object or diagnostic
+            #  part of an object.
+            retrieved_data = np.reshape(occlusion_data, (len(occlusion_data) / 3, 3))
 
-                for idx2, obj in enumerate(objects_list):
+            for data_idx in np.arange(retrieved_data.shape[0]):
+                identity = np.int(retrieved_data[data_idx, 0])
+
+                for obj_list_idx, obj in enumerate(objects_list):
+
+                    # If parent object, store combined visibility as nondiagnostic visibility.
                     if identity == obj.handle:
-                        visibility_levels[idx2][0] = value
-                        id_located = True
+                        # Only adjust the visibility level if it hasn't been updated
+                        if not visibility_levels[obj_list_idx][0]:
+                            visibility_levels[obj_list_idx][0] = retrieved_data[data_idx, 1]
                         break
 
+                    # if diagnostic object part, add diagnostic visibility. But also adjust
+                    # nondiagnostic visibility. The returned nondiagnostic visibility is
+                    # total visibility, we here convert to visibility of nondiagnostic parts only.
                     elif identity in obj.diag_children:
-                        visibility_levels[idx2][1] = value
-                        id_located = True
-                        break
 
-                if not id_located:
-                    warnings.warn("Failed to find vrepObject for object %s returned from VREP" %
-                                  identity)
+                        # Find the parent data index:
+                        for count in np.arange(retrieved_data.shape[0]):
+                            if obj.handle == np.int(retrieved_data[count, 0]):
+                                parent_data_idx = count
+
+                        # find the total and visible pixel counts for parent and diagnostic
+                        parent_visible_pixels = retrieved_data[parent_data_idx, 2]
+                        parent_total_pixels = parent_visible_pixels / \
+                            retrieved_data[parent_data_idx, 1]  # visibility
+
+                        diagnostic_visible_pixels = retrieved_data[data_idx , 2]
+                        diagnostic_total_pixels = diagnostic_visible_pixels / \
+                            retrieved_data[data_idx, 1]  # visibility
+
+                        nondiagnostic_visible_pixels = parent_visible_pixels - \
+                            diagnostic_visible_pixels
+
+                        nondiagnostic_total_pixels = parent_total_pixels - \
+                            diagnostic_total_pixels
+
+                        # Store the correct visibilities
+                        visibility_levels[obj_list_idx][0] = nondiagnostic_visible_pixels / \
+                            nondiagnostic_total_pixels
+
+                        visibility_levels[obj_list_idx][1] = retrieved_data[data_idx, 1]
 
     return visibility_levels
 

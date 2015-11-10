@@ -203,8 +203,28 @@ class TwoInputSigmoidOcclusionProfile:
         print("weight diagnostic                            = %0.4f" % self.w_vector[1])
         print("bias                                         = %0.4f" % self.bias)
 
-    def firing_rate_modifier(self, stimulus_size):
-        pass
+    # noinspection PyTypeChecker
+    def firing_rate_modifier(self, vis_nd, vis_d):
+        use_combined = False
+
+        if isinstance(vis_d, np.ndarray):
+            if vis_d[0] == -1:
+                use_combined = True
+
+        else:
+            if vis_d == -1:
+                use_combined = True
+
+        if use_combined:
+            # separate diagnostic and non diagnostic visibilities are not available, use
+            # the combined visibilities axis to get the firing rates.
+            fire_rates = sigmoid(vis_nd, self.w_combine, self.bias)
+        else:
+            x = np.array([vis_nd, vis_d])
+            fire_rates = sigmoid(x.T, self.w_vector, self.bias)
+            fire_rates = np.reshape(fire_rates, fire_rates.shape[0])
+
+        return fire_rates
 
     def plot_complete_profile(self, axis=None):
         font_size = 20
@@ -288,3 +308,34 @@ if __name__ == "__main__":
     profile.print_parameters()
     profile.plot_complete_profile()
     profile.plot_combined_axis_tuning()
+
+    # Test fire rates
+    # (1) single only combined visibilities available
+    visibility_nd = 0.5
+    visibility_d = -1
+    rates = profile.firing_rate_modifier(visibility_nd, visibility_d)
+
+    print("Visibility levels (n, d) = (%0.2f,%0.2f). Fire Rate=%0.2f"
+          % (visibility_nd, visibility_d, rates))
+
+    # (2) Vector only combined visibilities
+    visibility_nd = np.array([0.3, 0.7])
+    visibility_d = np.array([-1, -1])
+    rates = profile.firing_rate_modifier(visibility_nd, visibility_d)
+    print("Visibility levels (n, d) = (%s, %s). Fire Rate=%s"
+          % (visibility_nd, visibility_d, rates))
+
+    # (3) single separate visibilities available
+    visibility_nd = 0.1
+    visibility_d = 0.4
+    rates = profile.firing_rate_modifier(visibility_nd, visibility_d)
+
+    print("Visibility levels (n, d) = (%0.2f,%0.2f). Fire Rate=%0.2f"
+          % (visibility_nd, visibility_d, rates))
+
+    # (4) Vector separate visibilities available
+    visibility_nd = np.array([0.3, 0.7])
+    visibility_d = np.array([0.4, 0.3])
+    rates = profile.firing_rate_modifier(visibility_nd, visibility_d)
+    print("Visibility levels (n, d) = (%s, %s). Fire Rate=%s"
+          % (visibility_nd, visibility_d, rates))

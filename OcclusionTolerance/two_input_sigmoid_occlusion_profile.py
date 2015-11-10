@@ -63,6 +63,10 @@ class TwoInputSigmoidOcclusionProfile:
         # of fire rates.
         self.w_vector = np.array([[w_nondiagnostic], [w_diagnostic]])
 
+        # Normalize the firing rate such that a fully visible object always returns a normalized
+        # firing rate of 1. At the maximum combined value
+        self.scale = sigmoid( np.sqrt(2), self.w_combine, self.bias)
+
     @staticmethod
     def _get_diagnostic_group_to_total_variance_ratio():
         """
@@ -202,6 +206,7 @@ class TwoInputSigmoidOcclusionProfile:
         print("weight nondiagnostic                         = %0.4f" % self.w_vector[0])
         print("weight diagnostic                            = %0.4f" % self.w_vector[1])
         print("bias                                         = %0.4f" % self.bias)
+        print("Scale Factor                                 = %0.4f" % self.scale)
 
     # noinspection PyTypeChecker
     def firing_rate_modifier(self, vis_nd, vis_d):
@@ -220,10 +225,10 @@ class TwoInputSigmoidOcclusionProfile:
             # the combined visibilities axis to get the firing rates.
 
             vis_nd = np.sqrt(2) * vis_nd  # On compressed scale, scale up to get true rate
-            fire_rates = sigmoid(vis_nd, self.w_combine, self.bias)
+            fire_rates = sigmoid(vis_nd, self.w_combine, self.bias) / self.scale
         else:
             x = np.array([vis_nd, vis_d])
-            fire_rates = sigmoid(x.T, self.w_vector, self.bias)
+            fire_rates = sigmoid(x.T, self.w_vector, self.bias) / self.scale
             fire_rates = np.reshape(fire_rates, fire_rates.shape[0])
 
         return fire_rates

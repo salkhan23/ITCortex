@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-#TODO: Finish this section
+Ref:
+[1] Neilson, Logothesis & Rainer - 2006 - Dissociation between Local Field Potentials & spiking
+activity in Macaque Inferior Temporal Cortex reveals diagnosticity based encoding of complex
+objects.
+
+[2] Kovacs, Vogels & Orban -1995 - Selectivity of Macaque Inferior Temporal Neurons for Partially
+Occluded Shapes.
+
+[3] Oreilly et. al. - 2013 - Recurrent processing during object recognition.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,6 +23,27 @@ def sigmoid(x, w, b):
 
 class TwoInputSigmoidOcclusionProfile:
     def __init__(self):
+        """
+        A two input (x1=nondiagnostic visibility, x2=diagnostic visibility) sigmoid is used to
+        model occlusion tolerances of IT Neurons.
+
+        It is derived from [1] where diagnostic and non-diagnostic parts visibilities are
+        considered separately. Typically, in other papers diagnostic and nondiagnostic visibilities
+        are not separated. However as noted by Neilson in [1] neurons respond preferentially to
+        diagnostic parts.
+
+        The level of preference for diagnostic parts was quantified by the level of variance
+        between groups to the total variance across all trials when trials were grouped by whether
+        diagnostic or nondiagnostic parts were visible. A diagnostic group variance of 1 means
+        that the neuron was highly selective for diagnostic parts and did not respond to
+        nondiagnostic parts (High between group variance)
+
+        A diagnostic group variance of 0 means there was no difference between the variance and
+        mean firing rates of the individual groups. The weights of the diagnostic and nondiagnostic
+        parts are equal.
+
+        :return:
+        """
 
         self.type = 'two_input_sigmoid'
 
@@ -65,7 +94,7 @@ class TwoInputSigmoidOcclusionProfile:
 
         # Normalize the firing rate such that a fully visible object always returns a normalized
         # firing rate of 1. At the maximum combined value
-        self.scale = sigmoid( np.sqrt(2), self.w_combine, self.bias)
+        self.scale = sigmoid(np.sqrt(2), self.w_combine, self.bias)
 
     @staticmethod
     def _get_diagnostic_group_to_total_variance_ratio():

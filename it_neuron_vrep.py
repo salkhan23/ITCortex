@@ -45,6 +45,7 @@ class Neuron:
             position_profile=None,
             dynamic_profile=None,
             size_profile=None,
+            occlusion_profile=None,
             clutter_profile='average'):
         """
         Create an Inferior Temporal Cortex  neuron instance.
@@ -68,6 +69,9 @@ class Neuron:
 
         :param dynamic_profile      : Type of dynamic profile.
                                       Allowed types = {None(Default), tamura}
+
+        :param occlusion_profile    : Type of occlusion profile.
+                                      Allowed types = {None(Default), 'TwoInputSigmoid'}
 
         :rtype : It neuron instance.
         """
@@ -121,6 +125,7 @@ class Neuron:
         # Size Tuning
         if size_profile is None:
             self.size = CompleteTolerance()
+
         elif size_profile.lower() == 'lognormal':
 
             import SizeTolerance.log_normal_size_profile as lst
@@ -133,8 +138,22 @@ class Neuron:
                 raise Exception("Position tolerance needed to create log normal size tuning")
 
             self.size = lst.LogNormalSizeProfile(pos_tol)
+
         else:
             raise Exception("Invalid size profile: %s" % size_profile)
+
+        # Occlusion Profile
+        if occlusion_profile is None:
+            self.occlusion = CompleteTolerance()
+
+        elif occlusion_profile.lower() == 'twoinputsigmoid':
+            import OcclusionTolerence.two_input_sigmoid_occlusion_profile as sot
+            reload(sot)
+
+            self.occlusion = sot.TwoInputSigmoidOcclusionProfile()
+
+        else:
+            raise Exception("Invalid occlusion profile: %s" % occlusion_profile)
 
         # Clutter Profile
         if clutter_profile.lower() == 'average':
@@ -163,6 +182,9 @@ class Neuron:
 
         print("CLUTTER TOLERANCE: %s" % ('-' * 33))
         self.clutter.print_parameters()
+
+        print("OCCLUSION TOLERANCE: %s" % ('-' * 33))
+        self.occlusion.print_parameters()
 
         print ("*" * 60)
 
@@ -228,7 +250,7 @@ class Neuron:
         # The IT cortex rotation tuning profile is around the vertical axis which is defined
         # as the y-axis of the vision sensor. Rotating the object (in real world coordinates)
         # around the x-axis results in rotations around the y axis of the vision sensor.
-        objects, x_arr, y_arr, size_arr, _, _, _, _, _ = zip(*ground_truth_list)
+        objects, x_arr, y_arr, size_arr, _, _, _, vis_nd, vis_d = zip(*ground_truth_list)
 
         objects = list(objects)
         x_arr = np.array(x_arr)
@@ -244,7 +266,8 @@ class Neuron:
         isolated_rates = self.max_fire_rate * \
             obj_pref_list * \
             position_weights * \
-            self.size.firing_rate_modifier(size_arr)
+            self.size.firing_rate_modifier(size_arr) *\
+            self.occlusion.firing_rate_modifier(vis_nd, vis_d)
 
         joint_rate = self.clutter.firing_rate_modifier(isolated_rates, position_weights)
 
@@ -444,7 +467,8 @@ if __name__ == "__main__":
                         dynamic_profile='Tamura',
                         selectivity_profile='Kurtosis',
                         position_profile='Gaussian',
-                        size_profile='Lognormal')
+                        size_profile='Lognormal',
+                        occlusion_profile='TwoInputSigmoid')
 
         it_population.append(neuron)
 

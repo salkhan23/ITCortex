@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Fit of the diagnostic Group variance to total variance ratio as seen in
+Fit of the diagnostic group variance to total variance ratio as seen in [1].
+In supplementary material of [1] diagnostic group variance was compared to the difference
+between the net firing rates to diagnostic and non-diagnostic parts. For all cases there was a
+positive correlation. Indicating neurons with high diagnostic group variance fired more to
+diagnostic parts than to nondiagnostic parts.
 
 [1] Neilson, Logothesis & Rainer - 2006 - Dissociation between Local Field Potentials & spiking
 activity in Macaque Inferior Temporal Cortex reveals diagnosticity based encoding of complex

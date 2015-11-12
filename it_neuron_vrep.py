@@ -26,7 +26,14 @@ class CompleteTolerance:
 
     @staticmethod
     def firing_rate_modifier(*args, **kwargs):
-        """Return 1 no matter what inputs are provided"""
+        """
+        Return 1 no matter what inputs are provided. Ones with dimensions = first dimension of
+        first  non keyword argument
+
+        :param  kwargs  : Any arguments specified as a keyword.
+        :param  args    : Any arguments specified without a keyword.
+        """
+        del kwargs
         return np.ones_like(args[0])
 
     def print_parameters(self):
@@ -188,6 +195,9 @@ class Neuron:
 
     def firing_rate(self, ground_truth_list):
         """
+        Get Neuron firing rate for the current time step.
+
+        :param ground_truth_list: see method _get_static_firing_rate for format.
         """
         rate = 0
         default_rate = 0
@@ -292,6 +302,11 @@ def plot_neuron_dynamic_profile(it_neuron, t_stop_ms=1000, time_step_ms=5, axis=
     """
     Plot the dynamic firing rate of the neuron, if it was seeing its ideal stimulus for half the
     specified interval.
+
+    :param  axis        : axis object to use for plotting.
+    :param  time_step_ms: time step in milliseconds.
+    :param  t_stop_ms   : Time period to plot dynamic response until.
+    :param  it_neuron   : IT neuron instance.
     """
 
     # Get optimum stimulus for neuron

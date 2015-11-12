@@ -76,6 +76,9 @@ def connect_vrep(sim_stop_time_ms, sim_dt_ms):
     NOTE: The port 19997 is for synchronous operation mode and is opened by default at startup.
     To configure it differently, change ports in remoteApiConnections.txt which is located in the
      external vrep application directory.
+
+    :param  sim_dt_ms       :  simulation time step in milliseconds
+    :param  sim_stop_time_ms:  simulation stop time in milliseconds
     """
     vrep.simxFinish(-1)  # Close any open connections.
 
@@ -117,7 +120,10 @@ def connect_vrep(sim_stop_time_ms, sim_dt_ms):
 
 
 def get_object_dimensions(c_id, object_handle):
-    """ Return x, y, z dimensions of an object. """
+    """ Return x, y, z dimensions of an object.
+    :param  object_handle   : vrep handle of object to get dimensions for.
+    :param  c_id            : c_id = id of the vrep session.
+    """
     max_x = 0
     max_y = 0
     max_z = 0
@@ -282,7 +288,8 @@ def set_robot_velocity(c_id, target_velocity):
     with an extra vision sensor it_cortex_vision_sensor, whose reference frame is used to
     generate the ground truth.
 
-    TODO: See how to make this robot into a single object or use a simpler robot
+    :param  c_id            :  vrep session ID
+    :param  target_velocity :  target velocity to mode the it cortex robot with.
     """
     motors_list = ["it_cortex_robot_left_motor", "it_cortex_robot_right_motor"]
     motors_handle_list = []

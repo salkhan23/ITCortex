@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Dec 24 09:19:15 2014
 
 Model rotation tolerance as a single gaussian rv, with mu = preferred angle and sigma = the spread
 of the tolerance.
@@ -12,16 +11,16 @@ Ref:
 [2] Hung, Carlson, Conner - 2012 -
     Medial Axis Shape Coding in Macaque Inferotemporal Cortex.
 
-IT neurons typically had a preferred view of an object - most familiar view - and responses
+IT neurons typically had a preferred view of an object - most familiar view - and their responses
 gradually declined as views shifted away (bell shaped function). Individual neurons are tuned
 around different views of an object. Average tuning curve width was 29 degrees. Fit with a single
-gaussian. Tuning with was the same around y (vertical) and x (horizontal) axis.
+gaussian. Tuning widths around y (vertical) and x (horizontal) axis were similar.
 
-Tuning curves of some neurons were found to be centered around two views. In all such curves it
-was found object views of both peaks displayed some level of symmetry. Fit with the linear sum of
-two gaussian functions. A small number of neurons also displayed view invariant responses to all
-views of the object. A sample tuning curve is shown, however the object is not shown and symmetry
-profile of the object cannot be determined.
+Tuning curves of some neurons were found to be centered around two views. In all such cases it
+was found object views of both peaks displayed some level of symmetry. A small number of neurons
+also displayed view invariant responses to all object views. A sample tuning curve is shown,
+however the object is not shown and it cannot be determined whether the symmetry of the object
+resulted in this view invariant tuning curve.
 
 For objects that display some symmetry in their rotation tuning, we defined symmetry periods
 around the x, y and z axes. Within the symmetry period each view is distinguishable by the neuron,
@@ -30,10 +29,12 @@ respond to how different a view of an object looks compared to its preferred vie
 its absolution orientation.
 
 For example a mirror symmetry objects suc as cars/faces will have a y-axis symmetry period of
-180 degrees (mirror symmetry) and a ball will have a symmetry period of 0 - completely symmetric -
-around any axis. Regardless of the actual orientation of the ball it will always look like the
-preferred view of the ball and from a purely rotation tuning prospective it will see its most
-preferred view of the ball.
+180 degrees (mirror symmetry). An arbitrary preferred view of the object will share some symmetry
+with the view of the neuron at preferred view + 180. Similarly a ball will have a symmetry period
+of 0 - completely symmetric - around any axis. Regardless of the actual orientation of the ball it
+will always look a neurons preferred view, from a purely rotation tuning perspective. This does not
+imply symmetry objects will generate larger responses, as many factors are involved in the
+calculation of the net firing rate of the neuron, such as object preference, location etc...
 
 Each neuron than has a single rotation tuning curve that ranges from -180, 180 for all objects it
 is selective for. However if an individual object defines a period of symmetry it will only see a

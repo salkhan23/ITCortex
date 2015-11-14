@@ -121,7 +121,7 @@ class GaussianRotationProfile:
 
         return angles
 
-    def firing_rate_modifier(self, x, rotation_symmetry_period, mirror_symmetry):
+    def firing_rate_modifier(self, x, rotation_symmetry_period, mirror_symmetric):
         """
 
         :param  x                       : Input angles in radians
@@ -129,7 +129,7 @@ class GaussianRotationProfile:
                                           rotation does the object looks like itself. Valid range
                                           {1, 360}. 1 = No rotation symmetry, 360 = compete
                                           symmetry.
-        :param  mirror_symmetry         : Whether the object is mirror symmetric. Valid values
+        :param  mirror_symmetric         : Whether the object is mirror symmetric. Valid values
                                           = {1, 0} for each input angle.
 
         Note: dimensions of x, rotation_symmetry_period and mirror_symmetry mast be equal
@@ -151,25 +151,54 @@ class GaussianRotationProfile:
         fire_rate_p = np.exp(-(x_adj - mu_p)**2 / (2 * self.sigma**2))
 
         x_adj = self.adjust_angles(x_p, mu_s, valid_range)
-        fire_rate_s = mirror_symmetry * np.exp(-(x_adj - mu_s)**2 / (2 * self.sigma**2))
+        fire_rate_s = mirror_symmetric * np.exp(-(x_adj - mu_s) ** 2 / (2 * self.sigma ** 2))
 
         # Return the maximum firing rate either from the normal or mirror symmetric gaussian
         return np.maximum(fire_rate_p, fire_rate_s)
 
-    # def plot_profile(self, angles=np.linspace(-np.pi, np.pi, num=200), axis = None):
-    #
-    #     if axis is None:
-    #         f, axis = plt.subplots()
-    #
-    #     axis.plot(angles, self.firing_rate_modifier(angles))
-    #
-    #     axis.set_title('Rotational Tolerance Profile')
-    #     axis.set_xlabel('angle (Radians)')
-    #     axis.set_ylabel('Normalized Spike Rate (Spikes/s)')
-    #     axis.grid()
-    #     axis.set_ylim([0, 1])
-    #     axis.set_xlim([])
-    #     axis.legend(loc=1, fontsize='small')
+    def plot_tuning_profile(self,
+                            rotation_symmetry_period=1,
+                            mirror_symmetric=False,
+                            axis=None,
+                            font_size=20):
+
+        if axis is None:
+            f, axis = plt.subplots()
+
+        angles = np.arange(-np.pi, np.pi, step=(1.0 / 360))
+        r_symmetry_periods = np.ones_like(angles) * rotation_symmetry_period
+        m_symmetries = np.ones_like(angles) * mirror_symmetric
+
+        plt.plot(
+            angles * 180 / np.pi,
+            profile.firing_rate_modifier(angles, r_symmetry_periods, m_symmetries),
+            linewidth=2)
+
+        axis.set_title('Rotational Tolerance Profile', fontsize=(font_size + 10))
+        axis.set_xlabel('Angle (Degrees)', fontsize=font_size)
+        axis.set_ylabel('Normalized spike rate (Spikes/s)')
+        axis.grid()
+        axis.set_ylim([0, 1])
+        axis.set_xlim([-180, 180])
+
+        axis.tick_params(axis='x', labelsize=font_size)
+        axis.tick_params(axis='y', labelsize=font_size)
+
+        axis.annotate('Preferred Angle = %0.2f\nSpread= %0.2f'
+                      % (self.mu * 180 / np.pi, self.sigma * 180 / np.pi),
+                      xy=(0.95, 0.9),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
+
+        axis.annotate('Rotation Symmetry Period = %0.2f\nMirror Symmetric=%s'
+                      % (rotation_symmetry_period, mirror_symmetric),
+                      xy=(0.95, 0.80),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
 
     def print_parameters(self):
         print("Profile            = %s" % self.type)
@@ -181,14 +210,16 @@ if __name__ == "__main__":
 
     profile = GaussianRotationProfile()
     profile.print_parameters()
-
-    angle_arr = np.arange(-np.pi, np.pi, step=1.0 / 360)
-
-    symmetry_periods = np.ones_like(angle_arr) * 1
-    mirror_symmetries = np.ones_like(angle_arr) * 0
-
-    plt.plot(angle_arr * 180 / np.pi,
-             profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries))
+    profile.plot_tuning_profile()
+    profile.plot_tuning_profile(mirror_symmetric=True)
+    #
+    # angle_arr = np.arange(-np.pi, np.pi, step=1.0 / 360)
+    #
+    # symmetry_periods = np.ones_like(angle_arr) * 1
+    # mirror_symmetries = np.ones_like(angle_arr) * 0
+    #
+    # plt.plot(angle_arr * 180 / np.pi,
+    #          profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries))
 
     # single input
     angle_arr = 1

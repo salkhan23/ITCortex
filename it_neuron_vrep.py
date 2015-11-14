@@ -48,10 +48,11 @@ class Neuron:
             selectivity_profile='power_law',
             max_fire_rate=100,
             position_profile=None,
-            dynamic_profile=None,
             size_profile=None,
+            rotation_profile=None,
             occlusion_profile=None,
-            clutter_profile='average'):
+            clutter_profile='average',
+            dynamic_profile=None,):
         """
         Create an Inferior Temporal Cortex  neuron instance.
 
@@ -72,11 +73,14 @@ class Neuron:
         :param size_profile         : Type of size tuning.
                                       Allowed types = {None(Default), 'Lognormal)}
 
-        :param dynamic_profile      : Type of dynamic profile.
-                                      Allowed types = {None(Default), tamura}
+        :param rotation_profile     : Type of Rotation tuning.
+                                      Allowed types = {None(Default), gaussian}
 
         :param occlusion_profile    : Type of occlusion profile.
                                       Allowed types = {None(Default), 'TwoInputSigmoid'}
+
+        :param dynamic_profile      : Type of dynamic profile.
+                                      Allowed types = {None(Default), tamura}
 
         :rtype : It neuron instance.
         """
@@ -102,17 +106,6 @@ class Neuron:
             self.max_fire_rate = self.selectivity.get_max_firing_rate()
         else:
             self.max_fire_rate = max_fire_rate
-
-        # Dynamic Profile
-        if dynamic_profile is None:
-            self.dynamics = None
-        elif dynamic_profile.lower() == 'tamura':
-            from Dynamics import tamura_dynamic_profile as td
-            reload(td)
-
-            self.dynamics = td.TamuraDynamics(sim_time_step_s, self.selectivity.objects)
-        else:
-            raise Exception("Invalid dynamic profile %s", dynamic_profile)
 
         # Position Tuning
         if position_profile is None:
@@ -147,6 +140,19 @@ class Neuron:
         else:
             raise Exception("Invalid size profile: %s" % size_profile)
 
+        # Rotation Tuning
+        if rotation_profile is None:
+            self.rotation = CompleteTolerance()
+
+        elif rotation_profile.lower() == 'gaussian':
+            import RotationalTolerance.gaussian_rotation_profile as grt
+            reload(grt)
+
+            self.rotation = grt.GaussianRotationProfile()
+
+        else:
+            raise Exception("Invalid rotation profile: %s" % size_profile)
+
         # Occlusion Profile
         if occlusion_profile is None:
             self.occlusion = CompleteTolerance()
@@ -168,22 +174,38 @@ class Neuron:
         else:
             raise Exception("Invalid Clutter Profile %s" % clutter_profile)
 
+        # Dynamic Profile
+        if dynamic_profile is None:
+            self.dynamics = None
+        elif dynamic_profile.lower() == 'tamura':
+            from Dynamics import tamura_dynamic_profile as td
+            reload(td)
+
+            self.dynamics = td.TamuraDynamics(sim_time_step_s, self.selectivity.objects)
+        else:
+            raise Exception("Invalid dynamic profile %s", dynamic_profile)
+
     def print_properties(self):
-        """ Print all parameters of neuron """
+        """ Print all parameters of neuron  """
         print (("*" * 20) + " Neuron Properties " + ("*" * 20))
+
+        print ("Max fire rate %0.2f" % self.max_fire_rate)
 
         print("SELECTIVITY TOLERANCE %s" % ('-' * 27))
         self.selectivity.print_parameters()
-
-        if self.dynamics is not None:
-            print("DYNAMIC FIRING RATE PROFILE: %s" % ('-' * 33))
-            self.dynamics.print_parameters()
 
         print("POSITION TOLERANCE %s" % ('-' * 30))
         self.position.print_parameters()
 
         print("SIZE TOLERANCE: %s" % ('-' * 33))
         self.size.print_parameters()
+
+        print("ROTATION TOLERANCE: %s" % ('-' * 33))
+        self.rotation.print_parameters()
+
+        if self.dynamics is not None:
+            print("DYNAMIC FIRING RATE PROFILE: %s" % ('-' * 33))
+            self.dynamics.print_parameters()
 
         print("CLUTTER TOLERANCE: %s" % ('-' * 33))
         self.clutter.print_parameters()
@@ -258,7 +280,7 @@ class Neuron:
         # The IT cortex rotation tuning profile is around the vertical axis which is defined
         # as the y-axis of the vision sensor. Rotating the object (in real world coordinates)
         # around the x-axis results in rotations around the y axis of the vision sensor.
-        objects, x_arr, y_arr, size_arr, _, _, _, vis_nd, vis_d = zip(*ground_truth_list)
+        objects, x_arr, y_arr, size_arr, _, rot_y, _, vis_nd, vis_d = zip(*ground_truth_list)
 
         objects = list(objects)
         x_arr = np.array(x_arr)
@@ -272,25 +294,30 @@ class Neuron:
         position_weights = self.position.firing_rate_modifier(x_arr, y_arr)
         size_fr = self.size.firing_rate_modifier(size_arr)
         occ_fr = self.occlusion.firing_rate_modifier(np.array(vis_nd), np.array(vis_d))
+        rot_fr = self.rotation.firing_rate_modifier(rot_y,
+                                                    np.ones_like(rot_y),
+                                                    np.ones_like(rot_y) * 0)
 
         isolated_rates = self.max_fire_rate * \
             obj_pref_list * \
             position_weights * \
             size_fr * \
-            occ_fr
+            occ_fr * \
+            rot_fr
 
         joint_rate = self.clutter.firing_rate_modifier(isolated_rates, position_weights)
 
         # # Debug Code - print all Isolated fire rates
         # print("Static Isolated Fire Rates:")
         # for ii in np.arange(len(objects)):
-        #     print ("%s: FR=%0.2f: pref=%0.2f, pos=%0.2f, size=%0.2f, occ=%0.2f"
-        #            %(objects[ii],
-        #              isolated_rates[ii],
-        #              obj_pref_list[ii],
-        #              position_weights[ii],
-        #              size_fr[ii],
-        #              occ_fr[ii]))
+        #     print ("%s: FR=%0.2f: pref=%0.2f, pos=%0.2f, size=%0.2f, rot=%0.2f, occ=%0.2f"
+        #            % (objects[ii],
+        #               isolated_rates[ii],
+        #               obj_pref_list[ii],
+        #               position_weights[ii],
+        #               size_fr[ii],
+        #               rot_fr[ii],
+        #               occ_fr[ii]))
         #
         # print ("static clutter rate %0.2f" % np.sum(joint_rate, axis=0))
         # raw_input('Continue?')

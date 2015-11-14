@@ -722,10 +722,10 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 5 * 1000  # 5 seconds
+    t_stop_ms = 1* 1000  # 5 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
-    population_size = 100
+    population_size = 9
     it_cortex = []
     rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
@@ -772,6 +772,7 @@ def main():
                                selectivity_profile='Kurtosis',
                                position_profile='Gaussian',
                                size_profile='Lognormal',
+                               rotation_profile='Gaussian',
                                dynamic_profile='Tamura',
                                occlusion_profile='TwoInputSigmoid'
                                )

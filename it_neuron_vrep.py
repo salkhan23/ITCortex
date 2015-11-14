@@ -280,7 +280,14 @@ class Neuron:
         # The IT cortex rotation tuning profile is around the vertical axis which is defined
         # as the y-axis of the vision sensor. Rotating the object (in real world coordinates)
         # around the x-axis results in rotations around the y axis of the vision sensor.
-        objects, x_arr, y_arr, size_arr, _, rot_y, _, vis_nd, vis_d = zip(*ground_truth_list)
+        objects, \
+        x_arr, \
+        y_arr, \
+        size_arr, \
+        _, _, _,\
+        rot_y, rot_y_period, rot_y_m,\
+        _, _, _,\
+        vis_nd, vis_d = zip(*ground_truth_list)
 
         objects = list(objects)
         x_arr = np.array(x_arr)
@@ -294,9 +301,9 @@ class Neuron:
         position_weights = self.position.firing_rate_modifier(x_arr, y_arr)
         size_fr = self.size.firing_rate_modifier(size_arr)
         occ_fr = self.occlusion.firing_rate_modifier(np.array(vis_nd), np.array(vis_d))
-        rot_fr = self.rotation.firing_rate_modifier(rot_y,
-                                                    np.ones_like(rot_y),
-                                                    np.ones_like(rot_y) * 0)
+        rot_fr = self.rotation.firing_rate_modifier(np.array(rot_y),
+                                                    np.array(rot_y_period),
+                                                    np.array(rot_y_m))
 
         isolated_rates = self.max_fire_rate * \
             obj_pref_list * \
@@ -323,7 +330,7 @@ class Neuron:
         # raw_input('Continue?')
 
         return joint_rate
-    
+
 
 def plot_neuron_dynamic_profile(it_neuron, t_stop_ms=1000, time_step_ms=5, axis=None):
     """

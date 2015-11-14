@@ -68,6 +68,15 @@ class VrepObject:
         self.max_dimension = max_dimension
         self.parent = parent_handle
 
+        # Store rotation periods and mirror symmetry along x,y,z defaults. These will be updated
+        # when the vrep scene is analyzed.
+        self.x_rot_period = 1
+        self.x_rot_mirror_symmetric = False
+        self.y_rot_period = 1
+        self.y_rot_mirror_symmetric = False
+        self.z_rot_period = 1
+        self.z_rot_mirror_symmetric = False
+
 
 def connect_vrep(sim_stop_time_ms, sim_dt_ms):
     """
@@ -625,16 +634,28 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
     :param projection_angle : Perspective angle of vision sensor in radians.
 
     :return: A list of tuples for each object that lies in the vision sensor projection frame.
+
     Each Tuple Entry consists of
-        obj_name,           : vrep name of object.
-        x,                  : object vision frame x coordinate in degree of eccentricity (radians).
-        y,                  : object vision frame y coordinate in degree of eccentricity (radians).
-        size,               : size of object (span of objects maximum dimension) in degree of
-                              eccentricity (radians).
-        rot_x,              : rotations about the x-axis  in degree of eccentricity (radians).
-        rot_y,              : rotations about the x-axis  in degree of eccentricity (radians).
-        rot_z,              : rotations about the x-axis  in degree of eccentricity (radians).
-        vis_non_diag        : Visibility percentage of total object (non-diagnostic). Range (0,1)
+        obj_name,               : vrep name of object.
+        x,                      : object vision frame x coordinate in degree of eccentricity
+                                  (radians).
+        y,                      : object vision frame y coordinate in degree of eccentricity
+                                  (radians).
+        size,                   : size of object (span of objects maximum dimension) in degree of
+                                  eccentricity (radians).
+        rot_x,                  : rotations about the x-axis  in degree of eccentricity (radians).
+        rot_x_period            : rotations symmetry period around x-axis
+        rot_x_mirror_symmetric  : whether the object is mirror symmetric about x-axis.
+        rot_y,                  : rotations about the y-axis  in degree of eccentricity (radians).
+        rot_y_period            : rotations symmetry period around y-axis
+        rot_y_mirror_symmetric  : whether the object is mirror symmetric about y-axis.
+        rot_z,                  : rotations about the z-axis  in degree of eccentricity (radians).
+        rot_z_period            : rotations symmetry period around z-axis
+        rot_z_mirror_symmetric  : whether the object is mirror symmetric about z-axis.
+        vis_non_diag            : Visibility percentage of non-diagnostic parts of the object.
+                                  Range (0, 1)
+        vis_diag                : Visibility percentage of diagnostic parts of the object.
+                                  Range (0, 1)
     """
     ground_truth_list = []
     objects_in_frame = []   # list of all Vrep Objects found in the frame
@@ -699,12 +720,18 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
             # Add Ground Truth
             ground_truth_list.append([
                 vrep_obj.name,
-                x,                  # x image coordinate in Radians
-                y,                  # y coordinates in Radians
-                size,               # size in Radians
-                rot_alpha,          # Rotation around the x-axis in Radians
-                rot_beta,           # Rotation around the y-axis in Radians
-                rot_gamma           # Rotation around the z-axis in Radians.
+                x,                                  # X object center image coordinate in Radians.
+                y,                                  # Y object center image coordinate in Radians.
+                size,                               # Size in Radians.
+                rot_alpha,                          # Rotation around the x-axis in Radians.
+                vrep_obj.x_rot_period,              # X rotation symmetry period.
+                vrep_obj.x_rot_mirror_symmetric,    # Are x_axis rotations mirror symmetric?
+                rot_beta,                           # Rotation around the y-axis in Radian.s
+                vrep_obj.y_rot_period,              # Y rotation symmetry period.
+                vrep_obj.y_rot_mirror_symmetric,    # Are y_axis rotations mirror symmetric?
+                rot_gamma,                          # Rotation around the z-axis in Radians.
+                vrep_obj.z_rot_period,              # Z rotation symmetry period.
+                vrep_obj.z_rot_mirror_symmetric,    # Are z axis rotations mirror symmetric?
             ])
 
             objects_in_frame.append(vrep_obj)
@@ -714,7 +741,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
     vis_array = get_object_visibility_levels(objects_in_frame, c_id)
 
     for idx, entry in enumerate(ground_truth_list):
-        entry.extend(vis_array[idx])
+        entry.extend(vis_array[idx])               # Add nondiagnostic and diagnostic visibilities.
 
     return ground_truth_list
 
@@ -808,9 +835,12 @@ def main():
                 # Print the Ground Truth
                 print("Time=%dms, Number of objects %d" % (t_current_ms, len(ground_truth)))
                 for entry in ground_truth:
-                    print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f, %0.2f"
+                    print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %d, %s, %0.2f, %d, %s, "
+                           "%0.2f, %d, %s, %0.2f, %0.2f"
                            % (entry[0].ljust(30), entry[1], entry[2], entry[3],
-                              entry[4], entry[5], entry[6], entry[7], entry[8]))
+                              entry[4], entry[5], entry[6], entry[7], entry[8],
+                              entry[9], entry[10], entry[11], entry[12], entry[13],
+                              entry[14]))
 
             # Get IT cortex firing rates
             for n_idx, neuron in enumerate(it_cortex):

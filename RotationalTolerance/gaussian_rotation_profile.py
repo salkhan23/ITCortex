@@ -212,16 +212,14 @@ if __name__ == "__main__":
     profile.print_parameters()
     profile.plot_tuning_profile()
     profile.plot_tuning_profile(mirror_symmetric=True)
-    #
-    # angle_arr = np.arange(-np.pi, np.pi, step=1.0 / 360)
-    #
-    # symmetry_periods = np.ones_like(angle_arr) * 1
-    # mirror_symmetries = np.ones_like(angle_arr) * 0
-    #
-    # plt.plot(angle_arr * 180 / np.pi,
-    #          profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries))
 
-    # single input
+    # test firing rate to an array of objects
+    angle_arr = np.array([-100, 40, 30, 150])
+    symmetry_periods = np.array([1, 2, 4, 360])
+    mirror_symmetries = np.array([False, True, True, True])
+    print profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries)
+
+    # Test firing rate to a single object
     angle_arr = 1
     symmetry_periods = np.ones_like(angle_arr) * 1
     mirror_symmetries = np.ones_like(angle_arr) * 1

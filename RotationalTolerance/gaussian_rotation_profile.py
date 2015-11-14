@@ -13,20 +13,25 @@ Ref:
 
 IT neurons typically had a preferred view of an object - most familiar view - and their responses
 gradually declined as views shifted away (bell shaped function). Individual neurons are tuned
-around different views of an object. Average tuning curve width was 29 degrees. Fit with a single
-gaussian. Tuning widths around y (vertical) and x (horizontal) axis were similar.
+around different views of an object. We model this as a single gaussian with parameters preferred
+view and rotational spread around the preferred view. [1] found that tuning widths around y
+(vertical) and x (horizontal) axis were similar and had an average value of 30 degrees.
 
 Tuning curves of some neurons were found to be centered around two views. In all such cases it
-was found object views of both peaks displayed some level of symmetry. A small number of neurons
+was found object views of both peaks displayed some level of symmetry.A small number of neurons
 also displayed view invariant responses to all object views. A sample tuning curve is shown,
 however the object is not shown and it cannot be determined whether the symmetry of the object
-resulted in this view invariant tuning curve.
+resulted in this view invariant tuning curve. Also note that the objects used in [1] were irregular
+wire or ameboid objects. Different views of the object shared some degree of symmetry but were
+never completely symmetrical. Hence some of their bimodal tuning curves had amplitude differences
+between the peaks. We are that if the objects were completely symmetric, peaks should have similar
+amplitudes taking noise into account.
 
-For objects that display some symmetry in their rotation tuning, we defined symmetry periods
-around the x, y and z axes. Within the symmetry period each view is distinguishable by the neuron,
-while an orientation outside maps to a view within the symmetry period. Neurons are more likely to
-respond to how different a view of an object looks compared to its preferred view as opposed to
-its absolution orientation.
+To model bimodal and invariant tuning curves, we assume each object defines a period of symmetry
+around the x, y, and z axis. Within the symmetry period each object view is distinguishable by
+the neuron. While an orientation outside maps to a view within the symmetry period.  Neurons are
+more likely to respond to how different a view of an object looks compared to its preferred view
+as opposed to absolution orientation.
 
 For example a mirror symmetry objects suc as cars/faces will have a y-axis symmetry period of
 180 degrees (mirror symmetry). An arbitrary preferred view of the object will share some symmetry
@@ -60,7 +65,7 @@ class GaussianRotationProfile:
 
     def __init__(self):
 
-        self.type = 'Gaussian'
+        self.type = 'gaussian'
         self.mu = self.__get_preferred_angle()
         self.sigma = self.__get_tuning_width()
 
@@ -69,56 +74,125 @@ class GaussianRotationProfile:
         """
         Preferred angles are uniformly distributed over the range -pi, pi.
 
-        :return : preferred orientation of Neuron.
+        :return : preferred orientation of neuron.
         """
         return np.float(np.random.uniform(low=-np.pi, high=np.pi))
 
     @staticmethod
     def __get_tuning_width():
         """
-        Average tuning width from ref [1], also from ref [2].
+        Average tuning width from ref [1] also from ref [2] = 30 degrees
         Spread of tuning widths arbitrarily chosen.
 
         :return : rotation tuning width.
         """
-        return np.float(np.random.normal(loc=30 * np.pi / 180, scale=50 * np.pi / 180))
+        return np.float(np.random.normal(loc=(30 * np.pi / 180), scale=(50 * np.pi / 180)))
 
-    def __adjust_angles(self, angles, mu):
-        '''Return angles such that they lie within [-pi, pi) of the mean, mu '''
+    @staticmethod
+    def adjust_angles(angles, mu, period):
+        """
+        Return angles array such that they lie within [-period, period) of the mean. This function
+        takes care of wrap effects around period edges.
 
-        if not isinstance(angles, (np.ndarray)):
-            angles = np.array(angles)
+        Note dimensions of angles, mu and period must be equal.
 
-        angles = [angle + 2*np.pi if angle < (mu - np.pi) else angle for angle in angles]
-        angles = [angle - 2*np.pi if angle > (mu + np.pi) else angle for angle in angles]
+        :param  angles  : Angles to adjust
+        :param  mu      : mu around width to adjust the angles
+        :param period:  : Period of adjustment. For full range = 2*np.pi. For a tuning profile
+                          With a rotation period of 4 =  2*np.pi / 4
 
+        :return:        : Adjust array of angles
+        """
+        if not isinstance(angles, np.ndarray):
+            angles = np.array([angles])
+            mu = np.array([mu])
+            period = np.array([period])
 
-        return np.array(angles)
+        min_allowed = mu - period / 2
+        max_allowed = mu + period / 2
 
-    def firing_rate_modifier(self, angles):
+        for idx in np.arange(angles.shape[0]):
 
-        angles = self.__adjust_angles(angles, self.mu)
+            if angles[idx] < min_allowed[idx]:
+                angles[idx] = angles[idx] + period[idx]
 
-        return(np.exp(-(angles - self.mu)**2 / (2.0*self.sigma**2)))
+            elif angles[idx] > max_allowed[idx]:
+                angles[idx] = angles[idx] - period[idx]
 
+        return angles
 
-    def plot_profile(self, angles=np.linspace(-np.pi, np.pi, num=200), axis = None):
+    def firing_rate_modifier(self, x, rotation_symmetry_period, mirror_symmetry):
+        """
 
-        if axis is None:
-            f, axis = plt.subplots()
+        :param  x                       : Input angles in radians
+        :param  rotation_symmetry_period: Rotation symmetry period, How many times in a 360 degree
+                                          rotation does the object looks like itself. Valid range
+                                          {1, 360}. 1 = No rotation symmetry, 360 = compete
+                                          symmetry.
+        :param  mirror_symmetry         : Whether the object is mirror symmetric. Valid values
+                                          = {1, 0} for each input angle.
 
-        axis.plot(angles, self.firing_rate_modifier(angles))
+        Note: dimensions of x, rotation_symmetry_period and mirror_symmetry mast be equal
+        """
+        valid_range = 2 * np.pi / rotation_symmetry_period
 
-        axis.set_title('Rotational Tolerance Profile')
-        axis.set_xlabel('angle (Radians)')
-        axis.set_ylabel('Normalized Spike Rate (Spikes/s)')
-        axis.grid()
-        axis.set_ylim([0, 1])
-        axis.set_xlim(min())
-        axis.legend(loc=1, fontsize='small')
+        # Adjust the mean to lie within the valid range
+        mu_p = np.mod(self.mu, valid_range)
+
+        # Map input angles to allowed range
+        x_p = np.mod(x, valid_range)
+
+        # Find the mirror symmetric mean, flip across the y-axis and map to the valid range
+        mu_s = np.mod(-mu_p, valid_range)
+
+        # Adjust input angles x_p such that they are defined around (-valid_range/2.valid_range/2)
+        # of the target mean. This takes care of edge effects.
+        x_adj = self.adjust_angles(x_p, mu_p, valid_range)
+        fire_rate_p = np.exp(-(x_adj - mu_p)**2 / (2 * self.sigma**2))
+
+        x_adj = self.adjust_angles(x_p, mu_s, valid_range)
+        fire_rate_s = mirror_symmetry * np.exp(-(x_adj - mu_s)**2 / (2 * self.sigma**2))
+
+        # Return the maximum firing rate either from the normal or mirror symmetric gaussian
+        return np.maximum(fire_rate_p, fire_rate_s)
+
+    # def plot_profile(self, angles=np.linspace(-np.pi, np.pi, num=200), axis = None):
+    #
+    #     if axis is None:
+    #         f, axis = plt.subplots()
+    #
+    #     axis.plot(angles, self.firing_rate_modifier(angles))
+    #
+    #     axis.set_title('Rotational Tolerance Profile')
+    #     axis.set_xlabel('angle (Radians)')
+    #     axis.set_ylabel('Normalized Spike Rate (Spikes/s)')
+    #     axis.grid()
+    #     axis.set_ylim([0, 1])
+    #     axis.set_xlim([])
+    #     axis.legend(loc=1, fontsize='small')
+
+    def print_parameters(self):
+        print("Profile            = %s" % self.type)
+        print("Preferred Angle    = %0.4f (Deg)" % (self.mu * 180 / np.pi))
+        print("Spread             = %0.4f (Deg)" % (self.sigma * 180 / np.pi))
 
 if __name__ == "__main__":
     plt.ion()
 
-    profiles = GaussianRotationProfile()
-    profiles.plot_profile()
+    profile = GaussianRotationProfile()
+    profile.print_parameters()
+
+    angle_arr = np.arange(-np.pi, np.pi, step=1.0 / 360)
+
+    symmetry_periods = np.ones_like(angle_arr) * 1
+    mirror_symmetries = np.ones_like(angle_arr) * 0
+
+    plt.plot(angle_arr * 180 / np.pi,
+             profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries))
+
+    # single input
+    angle_arr = 1
+    symmetry_periods = np.ones_like(angle_arr) * 1
+    mirror_symmetries = np.ones_like(angle_arr) * 1
+
+    print profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries)

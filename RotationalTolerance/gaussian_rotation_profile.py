@@ -171,7 +171,7 @@ class GaussianRotationProfile:
 
         plt.plot(
             angles * 180 / np.pi,
-            profile.firing_rate_modifier(angles, r_symmetry_periods, m_symmetries),
+            self.firing_rate_modifier(angles, r_symmetry_periods, m_symmetries),
             linewidth=2)
 
         axis.set_title('Rotational Tolerance Profile', fontsize=(font_size + 10))

@@ -66,8 +66,8 @@ class GaussianRotationProfile:
     def __init__(self):
 
         self.type = 'gaussian'
-        self.mu = self.__get_preferred_angle()
-        self.sigma = self.__get_tuning_width()
+        self.preferred_angle = self.__get_preferred_angle()
+        self.spread = self.__get_tuning_width()
 
     @staticmethod
     def __get_preferred_angle():
@@ -137,7 +137,7 @@ class GaussianRotationProfile:
         valid_range = 2 * np.pi / rotation_symmetry_period
 
         # Adjust the mean to lie within the valid range
-        mu_p = np.mod(self.mu, valid_range)
+        mu_p = np.mod(self.preferred_angle, valid_range)
 
         # Map input angles to allowed range
         x_p = np.mod(x, valid_range)
@@ -148,10 +148,10 @@ class GaussianRotationProfile:
         # Adjust input angles x_p such that they are defined around (-valid_range/2.valid_range/2)
         # of the target mean. This takes care of edge effects.
         x_adj = self.adjust_angles(x_p, mu_p, valid_range)
-        fire_rate_p = np.exp(-(x_adj - mu_p)**2 / (2 * self.sigma**2))
+        fire_rate_p = np.exp(-(x_adj - mu_p)**2 / (2 * self.spread ** 2))
 
         x_adj = self.adjust_angles(x_p, mu_s, valid_range)
-        fire_rate_s = mirror_symmetric * np.exp(-(x_adj - mu_s) ** 2 / (2 * self.sigma ** 2))
+        fire_rate_s = mirror_symmetric * np.exp(-(x_adj - mu_s) ** 2 / (2 * self.spread ** 2))
 
         # Return the maximum firing rate either from the normal or mirror symmetric gaussian
         return np.maximum(fire_rate_p, fire_rate_s)
@@ -185,7 +185,7 @@ class GaussianRotationProfile:
         axis.tick_params(axis='y', labelsize=font_size)
 
         axis.annotate('Preferred Angle = %0.2f\nSpread= %0.2f'
-                      % (self.mu * 180 / np.pi, self.sigma * 180 / np.pi),
+                      % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
                       xy=(0.95, 0.9),
                       xycoords='axes fraction',
                       fontsize=font_size,
@@ -202,8 +202,8 @@ class GaussianRotationProfile:
 
     def print_parameters(self):
         print("Profile            = %s" % self.type)
-        print("Preferred Angle    = %0.4f (Deg)" % (self.mu * 180 / np.pi))
-        print("Spread             = %0.4f (Deg)" % (self.sigma * 180 / np.pi))
+        print("Preferred Angle    = %0.4f (Deg)" % (self.preferred_angle * 180 / np.pi))
+        print("Spread             = %0.4f (Deg)" % (self.spread * 180 / np.pi))
 
 if __name__ == "__main__":
     plt.ion()

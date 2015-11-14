@@ -87,7 +87,7 @@ class TwoInputSigmoidOcclusionProfile:
         self.d_to_t_ratio = self._get_diagnostic_group_to_total_variance_ratio()
 
         if self.d_to_t_ratio > 1:
-            warnings.warn("Invalid d_to_t ratio! %0.4f", self.d_to_t_ratio)
+            warnings.warn("Invalid d_to_t ratio! %0.4f" % self.d_to_t_ratio)
 
         self.w_combine, self.bias = self._get_combined_weight_and_bias()
         self.w_combine = np.float(self.w_combine)

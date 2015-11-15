@@ -284,8 +284,8 @@ class Neuron:
         x_arr, \
         y_arr, \
         size_arr, \
-        _, _, _,\
-        rot_y, rot_y_period, rot_y_m,\
+        _, _, _, \
+        rot_y, rot_y_period, rot_y_m, \
         _, _, _,\
         vis_nd, vis_d = zip(*ground_truth_list)
 
@@ -344,13 +344,21 @@ def plot_neuron_dynamic_profile(it_neuron, t_stop_ms=1000, time_step_ms=5, axis=
     """
 
     # Get optimum stimulus for neuron
+    # TODO: Add checks to see if they exist before taking their values
     pref_obj = it_neuron.selectivity.get_ranked_object_list()[0][0]
     pref_pos = it_neuron.position.rf_center
     pref_size = it_neuron.size.pref_size
+    pref_rot = it_neuron.rotation.preferred_angle
 
     # Create ideal stimulus
     # TODO: Add optimum values for other ground truths when enabled in the larger model.
-    ground_truth = [pref_obj, pref_pos[0], pref_pos[1], pref_size, 0, 0, 0, 0, 0]
+    ground_truth = [pref_obj,
+                    pref_pos[0], pref_pos[1],
+                    pref_size,
+                    0, 1, 0,
+                    pref_rot, 1, 0,
+                    0, 1, 0,
+                    1, 1]
 
     time_arr = np.arange(t_stop_ms, step=time_step_ms)
     rates = np.zeros(shape=time_arr.shape[0])

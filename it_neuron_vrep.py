@@ -281,8 +281,7 @@ class Neuron:
         # as the y-axis of the vision sensor. Rotating the object (in real world coordinates)
         # around the x-axis results in rotations around the y axis of the vision sensor.
         objects, \
-        x_arr, \
-        y_arr, \
+        x_arr, y_arr, \
         size_arr, \
         _, _, _, \
         rot_y, rot_y_period, rot_y_m, \
@@ -440,7 +439,14 @@ def main(it_cortex):
     # Example 1
     title = "Test 1 - Response to single Item"
     print title
-    ground_truth = (most_pref_obj, rf_center[0], rf_center[1], 0.0, 0.0, 0.0, 0.0, 1.0, 1.0)
+
+    ground_truth = (most_pref_obj,
+                    rf_center[0], rf_center[1],
+                    pref_size,
+                    0.0, 1, False,
+                    0.0, 1, False,
+                    0.0, 1, False,
+                    1.0, 1.0)
     print ("Ground Truth: ", ground_truth)
 
     print ("Neurons response %0.4f" % it_cortex[0].firing_rate(ground_truth))
@@ -449,9 +455,21 @@ def main(it_cortex):
     title = "Test 2 -  Response to multiple items"
     print title
     ground_truth = [
-        # object,       x,            y,            size,     rot_x, rot_y, rot_z, vis_nd, vis_d
-        [most_pref_obj, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,   1.0,    1.0],
-        ['monkey',      rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,   1.0,    1.0]]
+        [most_pref_obj,                   # object,
+         rf_center[0], rf_center[1],      # x, y,
+         pref_size,                       # size
+         0.0, 1, False,                   # x Rotation angle, period of symmetry, mirror symmetry
+         0.0, 1, False,                   # y Rotation angle, period of symmetry, mirror symmetry
+         0.0, 1, False,                   # z Rotation angle, period of symmetry, mirror symmetry
+         1.0, 1.0],                       # nondiagnostic, diagnostic visibilities
+
+        ['monkey',
+         rf_center[0], rf_center[1],
+         pref_size,  0.0, 1, False,
+         0.0, 1, False,
+         0.0, 1, False,
+         1.0, 1.0]
+    ]
 
     print ("Ground Truth:")
     for entry in ground_truth:
@@ -470,9 +488,21 @@ def main(it_cortex):
         ground_truth_present = np.zeros_like(rates_arr)
 
         ground_truth = [
-            # object,       x,            y,            size,      rot_x, rot_y, rot_z v_nd, v_d
-            [most_pref_obj, rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,  1.0,  1.0],
-            ['monkey',      rf_center[0], rf_center[1], pref_size, 0.0,   0.0,   0.0,  1.0,  1.0]]
+            [most_pref_obj,                 # object,
+             rf_center[0], rf_center[1],    # x, y,
+             pref_size,                     # size
+             0.0, 1, False,                 # x Rotation angle, period of symmetry, mirror symmetry
+             0.0, 1, False,                 # y Rotation angle, period of symmetry, mirror symmetry
+             0.0, 1, False,                 # z Rotation angle, period of symmetry, mirror symmetry
+             1.0, 1.0],                     # nondiagnostic, diagnostic visibilities
+
+            ['monkey',
+             rf_center[0], rf_center[1],
+             pref_size,  0.0, 1, False,
+             0.0, 1, False,
+             0.0, 1, False,
+             1.0, 1.0]
+        ]
 
         for ii in np.arange(steps):
 

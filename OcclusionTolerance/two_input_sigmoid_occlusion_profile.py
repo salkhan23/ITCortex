@@ -85,6 +85,9 @@ class TwoInputSigmoidOcclusionProfile:
         self.type = 'two_input_sigmoid'
 
         self.d_to_t_ratio = self._get_diagnostic_group_to_total_variance_ratio()
+        if self.d_to_t_ratio > 1:
+            raise Exception("Invalid diagnostic to total variance ratio generated %0.2f"
+                            % self.d_to_t_ratio)
 
         if self.d_to_t_ratio > 1:
             warnings.warn("Invalid d_to_t ratio! %0.4f" % self.d_to_t_ratio)

@@ -497,6 +497,11 @@ def initialize_vrep_streaming_operations(c_id,
             (ctypes.c_ubyte * len('-1')).from_buffer_copy('-1'),
             vrep.simx_opmode_oneshot)
 
+        _ = vrep.simxReadStringStream(
+            c_id,
+            "rotationData",
+            vrep.simx_opmode_streaming)
+
         # wait some time to allow VREP to setup streaming services.
         time.sleep(0.1)
 
@@ -619,6 +624,59 @@ def get_object_visibility_levels(objects_list, c_id):
                         visibility_levels[obj_list_idx][1] = retrieved_data[data_idx, 1]
 
     return visibility_levels
+
+
+def set_object_handles_for_rotation_symmetries(objects_list, c_id):
+    """
+
+    :param objects_list: List of Vrep objects to get rotation symmetries for
+    :param c_id: connected scene id.
+
+    :return:
+    """
+    if objects_list:
+
+        # Send parent handles to it cortex robot child script that retrieves rotation symmetries
+        handles_to_send = []
+
+        for obj in objects_list:
+            handles_to_send.append(obj.handle)
+        # print ("Sending:", handles_to_send)
+
+        obj_handles_string = vrep.simxPackInts(handles_to_send)
+        raw_bytes = (ctypes.c_ubyte * len(obj_handles_string)).from_buffer_copy(obj_handles_string)
+
+        res = vrep.simxSetStringSignal(
+            c_id,
+            "getRotationSymmetryForHandles",
+            raw_bytes,
+            vrep.simx_opmode_oneshot)
+
+        if res != vrep.simx_return_ok and \
+           res != vrep.simx_return_novalue_flag:
+            warnings.warn("Failed to send object handles for rotation symmetries. Err. %d" % res)
+
+
+def get_rotation_symmetries(c_id):
+
+    res, rotation_data = vrep.simxReadStringStream(
+        c_id,
+        "rotationData",
+        vrep.simx_opmode_buffer)
+
+    if vrep.simx_return_ok != res and \
+       vrep.simx_return_novalue_flag != res:
+            warnings.warn("Failed to get rotation symmetries, Error %d" % res)
+    else:
+        rotation_data = vrep.simxUnpackInts(rotation_data)
+
+        if not rotation_data:
+            raw_input("Empty rotation data data")
+        else:
+            print("Received:", rotation_data)
+            print("Length Received %d" % len(rotation_data))
+
+        # retrieved_data = np.reshape(occlusion_data, (len(occlusion_data) / 3, 3))
 
 
 def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_angle):
@@ -764,6 +822,10 @@ def main():
         print("Initializing VREP simulation...")
         objects_array = []
         get_scene_objects(client_id, objects_array)
+
+        # Pass the handles of all parent objects, to get rotation symmetries for
+        set_object_handles_for_rotation_symmetries(objects_array, client_id)
+
         print ("%d objects of in scene." % len(objects_array))
         print_objects(objects_array)
 
@@ -820,6 +882,24 @@ def main():
             if res != vrep.simx_return_ok:
                 print ("Failed to step simulation! Err %s" % res)
                 break
+
+            # The occlusion calculate script take some time to run and send the results up to the
+            # streaming buffer. Add some delay to allow the calculated occlusion data to be written
+            # into the streaming buffer so it can be correctly picked up by the python side of the
+            # code. Without this additional time delay, the second time step also results in an
+            # empty occlusion data stream retrieved. In this case, received occlusion data is from
+            # current time step - 2, instead of -1. The first empty occlusion data string is
+            # because of VREPs communication mechanism for streaming data. Good system but just
+            # need to be aware of 1 step delay it causes.
+            time.sleep(1.25)
+
+            if t_current_ms == 0:
+                # Because object handles need to be sent to the child script and the fact that
+                # the api to get custom data is not supported over python, we need to setup a
+                # signal communication mechanism to get this information from the script. This
+                # causes a delay of 1 time step of when we send up the object handles and when
+                # data is returned.
+                get_rotation_symmetries(client_id)
 
             # raw_input("Continue with step %d ?" % t_current_ms)
 

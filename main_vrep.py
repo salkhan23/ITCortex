@@ -283,10 +283,17 @@ def print_objects(objects):
     longest_name = max([len(obj.name) for obj in objects])
 
     for obj in objects:
-        print("\t%s: handle=%s, size=%0.1f, non-diag children=%s, diag children=%s"
+        print("%s: handle=%s, size=%0.1f, "
+              "rot_x_p=%d, rot_x_m_sym=%d, "
+              "rot_y_p=%d, rot_y_m_sym=%d, "
+              "rot_z_p=%d, rot_z_m_sym=%d, "
+              "Handles: nondiag=%s, diag=%s"
               % (obj.name.ljust(longest_name),
                  obj.handle,
                  obj.max_dimension,
+                 obj.x_rot_period, obj.x_rot_mirror_symmetric,
+                 obj.y_rot_period, obj.y_rot_mirror_symmetric,
+                 obj.z_rot_period, obj.z_rot_mirror_symmetric,
                  ",".join(str(x) for x in obj.non_diag_children),
                  ",".join(str(x) for x in obj.diag_children)))
 
@@ -657,7 +664,7 @@ def set_object_handles_for_rotation_symmetries(objects_list, c_id):
             warnings.warn("Failed to send object handles for rotation symmetries. Err. %d" % res)
 
 
-def get_rotation_symmetries(c_id):
+def update_rotation_symmetries(c_id, vrep_objs):
 
     res, rotation_data = vrep.simxReadStringStream(
         c_id,
@@ -673,10 +680,24 @@ def get_rotation_symmetries(c_id):
         if not rotation_data:
             raw_input("Empty rotation data data")
         else:
-            print("Received:", rotation_data)
-            print("Length Received %d" % len(rotation_data))
+            # print("Received:", rotation_data)
+            # print("Length Received %d" % len(rotation_data))
 
-        # retrieved_data = np.reshape(occlusion_data, (len(occlusion_data) / 3, 3))
+            retrieved_data = np.reshape(rotation_data, (len(rotation_data) / 7, 7))
+
+            for rotation_data in retrieved_data:
+                rot_obj_handle = rotation_data[0]
+
+                for obj in vrep_objs:
+                    if obj.handle == rot_obj_handle:
+                        obj.x_rot_period = rotation_data[1]
+                        obj.x_rot_mirror_symmetric = rotation_data[2]
+                        obj.y_rot_period = rotation_data[3]
+                        obj.y_rot_mirror_symmetric = rotation_data[4]
+                        obj.z_rot_period = rotation_data[5]
+                        obj.z_rot_mirror_symmetric = rotation_data[6]
+
+    return vrep_objs
 
 
 def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_angle):
@@ -827,7 +848,7 @@ def main():
         set_object_handles_for_rotation_symmetries(objects_array, client_id)
 
         print ("%d objects of in scene." % len(objects_array))
-        print_objects(objects_array)
+        # print_objects(objects_array)
 
         # Get IT Cortex Robot Vision sensor parameters
         alpha_rad, aspect_ratio, z_near, z_far, vs_handle = get_vision_sensor_parameters(client_id)
@@ -899,7 +920,8 @@ def main():
                 # signal communication mechanism to get this information from the script. This
                 # causes a delay of 1 time step of when we send up the object handles and when
                 # data is returned.
-                get_rotation_symmetries(client_id)
+                objects_array = update_rotation_symmetries(client_id, objects_array)
+                print_objects(objects_array)
 
             # raw_input("Continue with step %d ?" % t_current_ms)
 

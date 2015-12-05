@@ -876,6 +876,10 @@ def main():
         list_of_objects = [obj.name for obj in objects_array
                            if 'diagnostic' not in obj.name.lower()]
 
+        # Increase the number objects Neurons respond to
+        # for ii in np.arange(len(list_of_objects), 806):
+        #     list_of_objects.append('random_' + str(ii))
+
         for _ in np.arange(population_size):
             neuron = it.Neuron(list_of_objects,
                                sim_time_step_s=t_step_ms / 1000.0,

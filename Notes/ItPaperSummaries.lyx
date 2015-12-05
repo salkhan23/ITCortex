@@ -1296,5 +1296,145 @@ Pooling across mirror symmetric views may constitute a crucial step in the
 Spatial Sensitivity of Macaque Inferior Temporal Neurons
 \end_layout
 
+\begin_layout Section
+Selectivity of Macaque Inferior Temporal Neurons for Partially Occluded
+ Shapes - Kovacs, Vogels, Orban - 1995
+\end_layout
+
+\begin_layout Enumerate
+
+\emph on
+Occlusion and Neuronal Responses:
+\emph default
+ The responsiveness of IT neurons changes with the level of occlusion: the
+ greater the occlusion the less the response strength.
+ True for both (1) outline shapes and filled shapes & (2) static & moving
+ occluder patterns.
+ Responsivity Index 
+\begin_inset Formula $\frac{Response_{noOcclusion}-Response_{Occlusion}}{Response_{noOcclusion}+Response_{Occlusion}}$
+\end_inset
+
+ distribution over all recorded neurons have average > 0 (Fig 6).
+\end_layout
+
+\begin_layout Enumerate
+
+\emph on
+Occlusion and Neuronal Selectivity:
+\emph default
+ Shape rank vs firing rate curves are flatter in occlusion conditions compared
+ to the no occlusion condition.
+ There was also a higher noise floor in the occlusion condition.
+ In high occlusion conditions (
+\begin_inset Formula $\approx$
+\end_inset
+
+ 90%), the neuron is selective to only its most preferred shape.
+ For 50% occlusion level, shape selectivity of the neuron was weakly affected:
+ for all except the weakest shape, IT neurons were able to maintain shape
+ preferences in occlusion conditions (Fig7, Fig 8 and Fig 9).
+\end_layout
+
+\begin_layout Enumerate
+
+\emph on
+Occlusion and stimulus presentation duration:
+\emph default
+ Discrimination of partially occluded shapes requires longer stimulus presentati
+on duration than discrimination of non-occluded shapes.
+ Behavior level experiment: At short stimulus presentation times in no-occlusion
+ there is only a slight drop in percentage correct responses.
+ For occluded shapes there is a significantly larger drop in percentage
+ correct responses (Fig 10).
+ Neuronal responses: The response to the preferred shape declined with decreasin
+g presentation time, the effect of exposure duration was much stronger in
+ the occlusion than in the no-occlusion condition.
+ At 40ms duration, in the no occlusion case the neuron was unable to differentia
+te its most preferred shape from its least preferred shape (Figure 11 and
+ 12 (population)).
+\end_layout
+
+\begin_layout Enumerate
+
+\emph on
+Effect of occluder visibility:
+\emph default
+ The effect of occluder visibility on shape selectivity was greater for
+ filled shapes than for outline shapes.
+ With visible occlusion, the brain uses '
+\emph on
+amodal
+\emph default
+' object completion where the brain does not preseve the occluded parts
+ of the object as of different contrast.
+ With amodal completion the brain perceives the object as a single complete
+ object.
+ For amodal completion the occluder has to be visible.
+ If the occluder is invisible, the brain uses '
+\emph on
+illusory
+\emph default
+' completion.
+ With illusory completion, objects are perceived as of two or more disconnected
+ forms.
+ This effect is more pronounced with filled objects than outlined objects.
+ 
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+For shape outline objects, the shape selectivity curves of IT neuron to
+ visible and invisible occlusions were similar.
+ The response latencies were also similar.
+ These results show that object completion (absent when occluder is invisible)
+ is not required to make the neuron respond to its target shapes and does
+ not change the neurons selectivity.
+ 
+\end_layout
+
+\begin_layout Enumerate
+For filled shape IT neuronal shape selectivity does depend on the visibility
+ of the occluding pattern in some conditions.
+ For moving invisible occluder the shape selectivity was similar to the
+ the moving visible occluder.
+ However for static invisible occluder, selectivity curves were very diffrent
+ compared to the static visible occluder condition.
+ In the static invisible condition, response selectivity curve was much
+ flatter, but was still able to show its preferred shape.
+ In contrast to outline shapes, the neuron did not respond to shape components
+ and required a visible occluder to detect the shape.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+
+\emph on
+IT neurons respond to disjoint components of the shape and not the complete
+ shape
+\emph default
+: Based on the results of the invisible occluder with shape outlines, where
+ the neuron responded to the shape even when it was perceived as incomplete
+ suggest that IT neurons respond selectively to disjoint shape elements.
+ Response strength depended on the degree of occlusion, suggesting that
+ the more the shape components are present the larger the response.
+ The results of filled shape are in disagreement with this hypothesis.
+ However there is a difference between the two objects types.
+ In the case of outline shapes, object parts are deleted while in the case
+ of filled shapes new boundaries are defined which close the non-occluded
+ shapes and form new objects.
+ When occluder boundaries are visible, borders belonging to the shape and
+ the occluder can be separated and produce response selectivity similar
+ to the no occlusion condition.
+\end_layout
+
+\begin_layout Enumerate
+
+\emph on
+All results can be explained in two principles: (1) the occluder pattern
+ is segregated from the shape, isolating the contours that belong to the
+ occluder from those that respond to the shape, (2) the IT units respond
+ to the disconnected, segregated shape elements.
+\end_layout
+
 \end_body
 \end_document

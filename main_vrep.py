@@ -781,8 +781,8 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
             # ---------------
             # (3) np.pi * max_dimension / (2 * aspect_ratio * distance * tan(alpha_rad/2)).
             #     See Notes.
-            x = np.pi / 2 * camera_cartesian[0]
-            y = np.pi / (2 * ar) * camera_cartesian[1]
+            x = np.pi / 2 * ar * camera_cartesian[0]
+            y = np.pi / 2 * camera_cartesian[1]
 
             # For correct projection in the plane we actually need the euclidean distance to
             # object , not only its z coordinate.

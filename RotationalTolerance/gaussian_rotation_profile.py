@@ -63,11 +63,21 @@ import matplotlib.pyplot as plt
 
 class GaussianRotationProfile:
 
-    def __init__(self):
+    def __init__(self, preferred_angle=(360 * np.pi / 180), spread=(360 * np.pi / 180)):
 
         self.type = 'gaussian'
-        self.preferred_angle = self.__get_preferred_angle()
-        self.spread = self.__get_tuning_width()
+
+        # if input preferred angle is outside range (> np.pi), generate the angle
+        if preferred_angle > np.pi:
+            self.preferred_angle = self.__get_preferred_angle()
+        else:
+            self.preferred_angle = preferred_angle
+
+        # if input spread is outside range (> np.pi), generate spread
+        if spread > np.pi:
+            self.spread = self.__get_tuning_width()
+        else:
+            self.spread = spread
 
     @staticmethod
     def __get_preferred_angle():
@@ -169,36 +179,54 @@ class GaussianRotationProfile:
         r_symmetry_periods = np.ones_like(angles) * rotation_symmetry_period
         m_symmetries = np.ones_like(angles) * mirror_symmetric
 
-        plt.plot(
+        axis.plot(
             angles * 180 / np.pi,
             self.firing_rate_modifier(angles, r_symmetry_periods, m_symmetries),
-            linewidth=2)
+            linewidth=2, color='green')
 
         axis.set_title('Rotational Tolerance Profile', fontsize=(font_size + 10))
         axis.set_xlabel('Angle (Degrees)', fontsize=font_size)
-        axis.set_ylabel('Normalized spike rate (Spikes/s)')
+        axis.set_ylabel('Normalized spike rate (Spikes/s)', fontsize=font_size)
         axis.grid()
-        axis.set_ylim([0, 1])
+        axis.set_ylim([0, 1.1])
         axis.set_xlim([-180, 180])
 
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
 
-        axis.annotate('Preferred Angle = %0.2f\nSpread= %0.2f'
-                      % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
-                      xy=(0.95, 0.9),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+        # axis.annotate('Preferred Angle = %0.2f\nSpread= %0.2f'
+        #               % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
+        #               xy=(-0.95, 0.9),
+        #               xycoords='axes fraction',
+        #               fontsize=font_size,
+        #               horizontalalignment='right',
+        #               verticalalignment='top')
+        #
+        # axis.annotate('Rotation Symmetry Period = %0.2f\nMirror Symmetric=%s'
+        #               % (rotation_symmetry_period, mirror_symmetric),
+        #               xy=(0.95, 0.80),
+        #               xycoords='axes fraction',
+        #               fontsize=font_size,
+        #               horizontalalignment='right',
+        #               verticalalignment='top')
 
-        axis.annotate('Rotation Symmetry Period = %0.2f\nMirror Symmetric=%s'
-                      % (rotation_symmetry_period, mirror_symmetric),
-                      xy=(0.95, 0.80),
+        axis.annotate('Preferred Angle=%d, Spread=%d'
+                      % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
+                      (0, 0),
+                      (10, -50),
                       xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+                      textcoords='offset points',
+                      va='top',
+                      fontsize=font_size)
+
+        axis.annotate('Sym Freq=%0.2f, Mirror Sym=%s'
+                      % (rotation_symmetry_period, mirror_symmetric),
+                      (0, 0),
+                      (10, -70),
+                      xycoords='axes fraction',
+                      textcoords='offset points',
+                      va='top',
+                      fontsize=font_size,)
 
     def print_parameters(self):
         print("Profile            = %s" % self.type)
@@ -210,18 +238,76 @@ if __name__ == "__main__":
 
     profile = GaussianRotationProfile()
     profile.print_parameters()
-    profile.plot_tuning_profile()
-    profile.plot_tuning_profile(mirror_symmetric=True)
+    # profile.plot_tuning_profile()
+    # profile.plot_tuning_profile(mirror_symmetric=True)
+    #
+    # # test firing rate to an array of objects
+    # angle_arr = np.array([-100, 40, 30, 150])
+    # symmetry_periods = np.array([1, 2, 4, 360])
+    # mirror_symmetries = np.array([False, True, True, True])
+    # print profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries)
+    #
+    # # Test firing rate to a single object
+    # angle_arr = 1
+    # symmetry_periods = np.ones_like(angle_arr) * 1
+    # mirror_symmetries = np.ones_like(angle_arr) * 1
+    #
+    # print profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries)
 
-    # test firing rate to an array of objects
-    angle_arr = np.array([-100, 40, 30, 150])
-    symmetry_periods = np.array([1, 2, 4, 360])
-    mirror_symmetries = np.array([False, True, True, True])
-    print profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries)
+    # profile = GaussianRotationProfile( (-120 * np.pi / 180), (30 * np.pi / 180))
+    # profile.print_parameters()
+    # profile.plot_tuning_profile(rotation_symmetry_period=2)
 
-    # Test firing rate to a single object
-    angle_arr = 1
-    symmetry_periods = np.ones_like(angle_arr) * 1
-    mirror_symmetries = np.ones_like(angle_arr) * 1
+    # ------------------------------------------------------------------------------------
+    import pickle
 
-    print profile.firing_rate_modifier(angle_arr, symmetry_periods, mirror_symmetries)
+    fig_tuning_types, ax_arr = plt.subplots(1, 3, sharey=True)
+    fig_tuning_types.subplots_adjust(wspace=0.1, hspace=0.5)
+
+    ax_arr[0].set_ylim([0, 1.1])
+    ax_arr[0].set_xlim([-180, 180])
+    ax_arr[1].set_xlim([-180, 180])
+    ax_arr[2].set_xlim([-180, 180])
+
+    with open('rotationalTolerance.pkl', 'rb') as handle:
+        data = pickle.load(handle)
+
+    # ------------------------------------------------------------------------------
+    title = 'Rotation Tuning - Fig 5a, Logothesis, Pauls & Poggio -1995'
+
+    x_in = data['fig5ax']
+    y = data['fig5ay']
+    y = y / max(y)
+    ax_arr[0].scatter(x_in, y, marker='o', label='Original Data', s=60)
+
+    profile = GaussianRotationProfile((103.14 * np.pi / 180), (26.55 * np.pi / 180))
+    profile.print_parameters()
+    profile.plot_tuning_profile(rotation_symmetry_period=1, axis=ax_arr[0])
+    ax_arr[0].set_title('Single Peak', fontsize=(20 + 10))
+    ax_arr[0].legend()
+
+    # ------------------------------------------------------------------------------
+    title = 'Fig 5c, logothesis, Pauls & poggio - 1995'
+    x_in = data['fig5cx']
+    y = data['fig5cy']
+    y = y / max(y)
+    ax_arr[1].scatter(x_in, y, marker='o', label='Original Data', s=60)
+
+    profile = GaussianRotationProfile((117.85 * np.pi / 180), (13.36 * np.pi / 180))
+    profile.print_parameters()
+    profile.plot_tuning_profile(rotation_symmetry_period=2, axis=ax_arr[1])
+    ax_arr[1].set_title('Pseudo Mirror Symmetric', fontsize=(20 + 10))
+    ax_arr[1].legend()
+
+    # ------------------------------------------------------------------------------
+    title = 'Fig 5e, logothesis, Pauls & poggio -1995'
+    x_in = data['fig5ex']
+    y = data['fig5ey']
+    y = y / max(y)
+
+    ax_arr[2].scatter(x_in, y, marker='o', label='Original Data', s=60)
+    profile = GaussianRotationProfile((-70.00 * np.pi / 180), (11 * np.pi / 180))
+    profile.print_parameters()
+    profile.plot_tuning_profile(rotation_symmetry_period=16, axis=ax_arr[2])
+    ax_arr[2].set_title('View Invariant', fontsize=(20 + 10))
+    ax_arr[2].legend()

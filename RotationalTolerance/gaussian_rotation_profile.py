@@ -184,11 +184,11 @@ class GaussianRotationProfile:
             self.firing_rate_modifier(angles, r_symmetry_periods, m_symmetries),
             linewidth=2, color='green')
 
-        axis.set_title('Rotational Tolerance Profile', fontsize=(font_size + 10))
+        # axis.set_title('Rotational Tolerance Profile', fontsize=(font_size + 10))
         axis.set_xlabel('Angle (Degrees)', fontsize=font_size)
         axis.set_ylabel('Normalized spike rate (Spikes/s)', fontsize=font_size)
         axis.grid()
-        axis.set_ylim([0, 1.1])
+        axis.set_ylim([0, 1.05])
         axis.set_xlim([-180, 180])
 
         axis.tick_params(axis='x', labelsize=font_size)
@@ -259,10 +259,11 @@ if __name__ == "__main__":
     # profile.plot_tuning_profile(rotation_symmetry_period=2)
 
     # ------------------------------------------------------------------------------------
+    # Fit some of the tuning curves in the literature
     import pickle
 
     fig_tuning_types, ax_arr = plt.subplots(1, 3, sharey=True)
-    fig_tuning_types.subplots_adjust(wspace=0.1, hspace=0.5)
+    fig_tuning_types.subplots_adjust(wspace=0.025)
 
     ax_arr[0].set_ylim([0, 1.1])
     ax_arr[0].set_xlim([-180, 180])
@@ -284,7 +285,7 @@ if __name__ == "__main__":
     profile.print_parameters()
     profile.plot_tuning_profile(rotation_symmetry_period=1, axis=ax_arr[0])
     ax_arr[0].set_title('Single Peak', fontsize=(20 + 10))
-    ax_arr[0].legend()
+    #ax_arr[0].legend()
 
     # ------------------------------------------------------------------------------
     title = 'Fig 5c, logothesis, Pauls & poggio - 1995'
@@ -297,7 +298,8 @@ if __name__ == "__main__":
     profile.print_parameters()
     profile.plot_tuning_profile(rotation_symmetry_period=2, axis=ax_arr[1])
     ax_arr[1].set_title('Pseudo Mirror Symmetric', fontsize=(20 + 10))
-    ax_arr[1].legend()
+    #ax_arr[1].legend()
+    ax_arr[1].set_ylabel('')
 
     # ------------------------------------------------------------------------------
     title = 'Fig 5e, logothesis, Pauls & poggio -1995'
@@ -310,4 +312,6 @@ if __name__ == "__main__":
     profile.print_parameters()
     profile.plot_tuning_profile(rotation_symmetry_period=16, axis=ax_arr[2])
     ax_arr[2].set_title('View Invariant', fontsize=(20 + 10))
-    ax_arr[2].legend()
+    ax_arr[2].legend(loc='best', fontsize=24.0)
+    ax_arr[2].set_ylabel('')
+

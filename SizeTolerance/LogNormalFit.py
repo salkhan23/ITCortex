@@ -370,31 +370,55 @@ fig_n3.suptitle("Neuron 3 - Figure 5 - Response only to largest Stimulus size")
 
 
 # -------------------------------------------------------------------------------------------------
-# Plot All 3 Log scale Tuning curves in a single figure
+# Plot all 3 Log scale Tuning curves in a single figure
 f_size = 34
 fig_n4, ax_arr = plt.subplots(1, 3, sharey=True)
-fig_n4.subplots_adjust(wspace=.1)
+fig_n4.subplots_adjust(wspace=0.1)
 
 
 ax_arr[0].plot(np.log2(n1_stim_size), n1_firing_rate,
-               marker='o', markersize=10, label='Original Data')
+               marker='o', markersize=10, label='Original Data', linewidth=2)
+
+ax_arr[0].vlines(
+    np.log2(max_stim_size_n1),
+    0,
+    1,
+    linewidth=3,
+    linestyle='--',
+    label='Max. size')
 
 ax_arr[1].plot(np.log2(n2_stim_size), n2_firing_rate,
-               marker='o', markersize=10, label='Original Data')
+               marker='o', markersize=10, label='Original Data', linewidth=2)
+
+ax_arr[1].vlines(
+    np.log2(max_stim_size_n2),
+    0,
+    1,
+    linewidth=3,
+    linestyle='--',
+    label='Max. size')
 
 ax_arr[2].plot(np.log2(n3_stim_size), n3_firing_rate,
-               marker='o', markersize=10, label='Original Data')
+               marker='o', markersize=10, label='Original Data', linewidth=2)
+
+ax_arr[2].vlines(
+    np.log2(max_stim_size_n3),
+    0,
+    1,
+    linewidth=3,
+    linestyle='--',
+    label='Max. size')
 
 
 # Plot the Fitting Curves.
 ax_arr[0].plot(x_arr_n1, norm_pdf_n1 / norm_pdf_n1.max(),
-               label='Lognormal Fit')
-ax_arr[1].plot(x_arr_n2, norm_pdf_n2 / norm_pdf_n2.max(), label='Lognormal Fit')
-ax_arr[2].plot(x_arr_n3, norm_pdf_n3 / norm_pdf_n3.max(), label='Lognormal Fit')
+               label='Lognormal Fit', linewidth=2)
+ax_arr[1].plot(x_arr_n2, norm_pdf_n2 / norm_pdf_n2.max(), label='Lognormal Fit', linewidth=2)
+ax_arr[2].plot(x_arr_n3, norm_pdf_n3 / norm_pdf_n3.max(), label='Lognormal Fit', linewidth=2)
 
 
 ax_arr[1].set_xlabel(r'$log_2(Stimulus\ Size)\ [Degrees]$', fontsize=f_size)
-ax_arr[1].set_ylim([0, 1.2])
+ax_arr[1].set_ylim([0, 1.1])
 ax_arr[0].set_ylabel('Normalized Firing Rate (Spikes/s)', fontsize=f_size)
 
 for ii in np.arange(3):
@@ -402,10 +426,11 @@ for ii in np.arange(3):
     ax_arr[ii].tick_params(axis='y', labelsize=f_size)
     ax_arr[ii].grid()
 
-ax_arr[0].set_title("Narrow BW", fontsize=f_size)
-ax_arr[1].set_title("Wide BW", fontsize=f_size)
-ax_arr[2].set_title("Largest Size Only", fontsize=f_size)
+# ax_arr[0].set_title("Narrow BW", fontsize=f_size)
+# ax_arr[1].set_title("Wide BW", fontsize=f_size)
+# ax_arr[2].set_title("Largest Size Only", fontsize=f_size)
 
-ax_arr[2].legend(loc='best', fontsize=f_size)
+ax_arr[2].legend(loc='best', fontsize=f_size-5)
+ax_arr[1].set_xlim([0,6])
 
-fig_n4.suptitle("Sample Size Tuning Curves", fontsize=f_size + 10)
+# fig_n4.suptitle("Sample Size Tuning Curves", fontsize=f_size + 10)

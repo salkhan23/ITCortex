@@ -15,31 +15,32 @@ class LogNormalSizeProfile:
         self.type = 'lognormal'
 
         # pol_tol is defined as 2x the standard deviation of the RF spatial extent of the
-        # neuron. it comes from the position profile. Specifically from gaussianPositionProfile.
+        # neuron. It comes from the position profile. Specifically from gaussianPositionProfile.
 
-        # Convert from pol_tol to rf_size as defined in Ito 95 paper: Square root of the area
+        # Convert from pol_tol to rf_size as defined in Ito 95 paper: Square root of the areal
         # extent of the neuron.
-        #   pol_tol = 2 * r
-        #   rf_size     = np.sqrt(pi) * r = pol_tol / 2 * np.sqrt(pi)
+        #   pol_tol = r
+        #   rf_size     = np.sqrt(pi) * r = pol_tol / np.sqrt(pi)
         self.rf_size = pol_tol / 2 * np.sqrt(np.pi)
 
         # Given a receptive field size, get max. stimulus size supported.
         #   rf_size       = area extent of RF, if assume circular = np.sqrt(np.pi) * r
         #   stim_size     = distance between the the outer edges along the longest axis
         #                   of the stimulus. If we assume a circular stimulus = 2r
-        self.max_stim_size = self.rf_size / np.sqrt(np.pi) * 2
+        self.max_stim_size = 2 * pol_tol
 
         # Minimum stimulus size = 0.08 degrees, from Ito-95. Below this size, the object is
         # too small to allow proper recognition. Converted to radians.
         self.min_stim_size = 0.08 * np.pi / 180.0
 
-        # Get parameters for the Lognormal distribution.
+        # Get parameters for the Lognormal distribution. Preferred size is limited to the max
+        # and min supported size inside the function
         self.pref_size = self.__get_preferred_size()
+
         self.size_bw = self.__get_size_bandwidth()
 
         # Internal parameters - Needed for calculating the firing rate
-        self.__log2_mu = np.log2(self.pref_size)
-        self.__log2_sigma = (self.size_bw / 2) / np.sqrt(2 * np.log(2))
+        self.set_params(self.pref_size, self.size_bw)
 
     def set_params(self, pref_size, size_bw):
         """
@@ -54,7 +55,8 @@ class LogNormalSizeProfile:
         self.size_bw = size_bw
 
         self.__log2_mu = np.log2(self.pref_size)
-        self.__log2_sigma = (self.size_bw / 2) / np.sqrt(2 * np.log(2))
+        self.__log2_sigma = (self.size_bw) / (2 * np.sqrt(2 * np.log(2)))
+        # For conversion factor see https://en.wikipedia.org/wiki/Full_width_at_half_maximum
 
     def __get_preferred_size(self):
         """
@@ -120,15 +122,7 @@ class LogNormalSizeProfile:
         fire_rate = np.exp(
             -(np.log2(stimulus_size) - self.__log2_mu)**2 / (2 * self.__log2_sigma ** 2))
 
-        # Do not respond to stimuli outside max. supported size. This allows the 3 different
-        # types of tuning profiles as described in the paper.
-        # (1) <2 octaves lognormal,
-        # (2) >5 octaves bandwidth and
-        # (3) Responds only to the largest stimulus size.
-        mask_upper = stimulus_size <= self.max_stim_size
-        mask_lower = stimulus_size > self.min_stim_size
-
-        return fire_rate * mask_upper * mask_lower
+        return fire_rate
 
     def print_parameters(self):
         print("Profile                      = %s" % self.type)

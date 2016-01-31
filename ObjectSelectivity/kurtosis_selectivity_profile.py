@@ -171,20 +171,20 @@ class KurtosisSparseness:
         axis.set_ylim([0, 1])
 
         max_fire = self.get_max_firing_rate()
-        print type(max_fire)
-        axis.annotate('Kurtosis=%0.2f' % (self.kurtosis_measured * max_fire),
-                      xy=(0.95, 0.95),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
-
-        axis.annotate('Activity Fraction=%0.2f' % self.activity_fraction_measured,
-                      xy=(0.95, 0.82),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+        #
+        # axis.annotate('Kurtosis=%0.2f' % (self.kurtosis_measured * max_fire),
+        #               xy=(0.95, 0.95),
+        #               xycoords='axes fraction',
+        #               fontsize=font_size,
+        #               horizontalalignment='right',
+        #               verticalalignment='top')
+        #
+        # axis.annotate('Activity Fraction=%0.2f' % self.activity_fraction_measured,
+        #               xy=(0.95, 0.82),
+        #               xycoords='axes fraction',
+        #               fontsize=font_size,
+        #               horizontalalignment='right',
+        #               verticalalignment='top')
 
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)

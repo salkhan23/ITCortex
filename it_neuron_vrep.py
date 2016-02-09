@@ -331,11 +331,17 @@ class Neuron:
         return joint_rate
 
 
-def plot_neuron_dynamic_profile(it_neuron, t_stop_ms=1000, time_step_ms=5, axis=None):
+def plot_neuron_dynamic_profile(
+        it_neuron,
+        t_stop_ms=1000,
+        time_step_ms=5,
+        axis=None,
+        font_size=34):
     """
     Plot the dynamic firing rate of the neuron, if it was seeing its ideal stimulus for half the
     specified interval.
 
+    :param font_size    : graph font size. Default=34
     :param  axis        : axis object to use for plotting.
     :param  time_step_ms: time step in milliseconds.
     :param  t_stop_ms   : Time period to plot dynamic response until.
@@ -372,51 +378,54 @@ def plot_neuron_dynamic_profile(it_neuron, t_stop_ms=1000, time_step_ms=5, axis=
             rates[ii] = it_neuron.firing_rate([])
             stimulus[ii] = 0
 
-    font_size = 34
-
     if axis is None:
         f, axis = plt.subplots()
 
     axis.plot(time_arr, rates, linewidth=2)
     axis.plot(time_arr, stimulus, linewidth=2, color='black', label="Input")
 
-    axis.set_title("Dynamic Firing Rate Profile", fontsize=font_size)
-    axis.set_ylabel('Spikes/s', fontsize=font_size)
+    # axis.set_title("Dynamic Firing Rate Profile", fontsize=font_size)
+    axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
     axis.set_xlabel('Time (ms)', fontsize=font_size)
 
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
 
     axis.grid()
-    axis.legend(fontsize=font_size)
+    axis.legend(fontsize=font_size, loc='best')
 
-    axis.annotate('Early Kurtosis=%0.2f' % it_neuron.dynamics.early_kurtosis_measured,
-                  xy=(0.95, 0.80),
+    axis.annotate(r'$SI_{K\_early}=%0.2f,\ SI_{K\_late}=%0.2f$' %
+                  (it_neuron.dynamics.early_kurtosis_measured,
+                   it_neuron.selectivity.kurtosis_measured),
+                  xy=(0.7, 0.90),
                   xycoords='axes fraction',
                   fontsize=font_size,
                   horizontalalignment='right',
                   verticalalignment='top')
 
-    axis.annotate('Late Kurtosis=%0.2f' % it_neuron.selectivity.kurtosis_measured,
-                  xy=(0.95, 0.75),
+    # axis.annotate(r'$SI_{K/_late}=%0.2f$' % it_neuron.selectivity.kurtosis_measured,
+    #               xy=(0.7, 0.75),
+    #               xycoords='axes fraction',
+    #               fontsize=font_size,
+    #               horizontalalignment='right',
+    #               verticalalignment='top')
+
+    axis.annotate(r'$L_{early}=%0.2f,\ L_{late}=%0.2f$'
+                  % (it_neuron.dynamics.early_tau * 1000 * time_step_ms,
+                     it_neuron.dynamics.late_tau * 1000 * time_step_ms),
+                  xy=(0.7, 0.75),
                   xycoords='axes fraction',
                   fontsize=font_size,
                   horizontalalignment='right',
                   verticalalignment='top')
 
-    axis.annotate('Early Latency=%0.2f' % (it_neuron.dynamics.early_tau * 1000 * time_step_ms),
-                  xy=(0.95, 0.70),
-                  xycoords='axes fraction',
-                  fontsize=font_size,
-                  horizontalalignment='right',
-                  verticalalignment='top')
-
-    axis.annotate('Late Latency=%0.2f' % (it_neuron.dynamics.late_tau * 1000 * time_step_ms),
-                  xy=(0.95, 0.65),
-                  xycoords='axes fraction',
-                  fontsize=font_size,
-                  horizontalalignment='right',
-                  verticalalignment='top')
+    # axis.annotate(r'$Latency_{late}=%0.2f$'
+    #               % (it_neuron.dynamics.late_tau * 1000 * time_step_ms),
+    #               xy=(0.7, 0.55),
+    #               xycoords='axes fraction',
+    #               fontsize=font_size,
+    #               horizontalalignment='right',
+    #               verticalalignment='top')
 
 
 def main(it_cortex):

@@ -26,12 +26,15 @@ def calculate_kurtosis(rates_per_object):
 
     This is defined outside the class as it is used by other selectivity profiles.
     """
-    n = rates_per_object.shape[0]
+    n = np.float(rates_per_object.shape[0])
 
     rates_mean = np.mean(rates_per_object)
     rates_sigma = np.std(rates_per_object)
 
     kurtosis = np.sum((rates_per_object - rates_mean)**4) / (n * rates_sigma**4) - 3
+
+    # kurtosis2= np.sum((rates_per_object - rates_mean)**4) / n \
+    #            / (np.sum((rates_per_object - rates_mean)**2) / n)** 2 - 3
 
     return kurtosis
 
@@ -149,44 +152,44 @@ class KurtosisSparseness:
         for obj, rate in lst:
             print ("\t%s : %0.4f" % (obj.ljust(max_name_length), rate))
 
-    def plot_object_preferences(self, axis=None):
-        """ Plot Neurons Object Preferences """
+    def plot_object_preferences(self, axis=None, font_size=34):
+        """ Plot Neurons Object Preferences
+        :param axis: axis to plot in. [default=None]
+        """
         lst = self.get_ranked_object_list()
         objects, rate = zip(*lst)
         x = np.arange(len(rate))
-
-        font_size = 34
 
         if axis is None:
             fig_obj_pref, axis = plt.subplots()
 
         axis.plot(x, rate, marker='o', markersize=15, linewidth=2)
 
-        axis.set_title("Object Selectivity", fontsize=font_size)
+        # axis.set_title("Object Selectivity", fontsize=font_size)
         axis.set_xticklabels(objects, size='small')
         axis.set_xlabel('Ranked Objects', fontsize=font_size)
-        axis.set_ylabel('Normalized Rate (Spikes/s)', fontsize=font_size)
+        axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
         axis.grid()
 
         axis.set_ylim([0, 1])
 
         max_fire = self.get_max_firing_rate()
-        #
-        # axis.annotate('Kurtosis=%0.2f' % (self.kurtosis_measured * max_fire),
-        #               xy=(0.95, 0.95),
-        #               xycoords='axes fraction',
-        #               fontsize=font_size,
-        #               horizontalalignment='right',
-        #               verticalalignment='top')
-        #
-        # axis.annotate('Activity Fraction=%0.2f' % self.activity_fraction_measured,
-        #               xy=(0.95, 0.82),
-        #               xycoords='axes fraction',
-        #               fontsize=font_size,
-        #               horizontalalignment='right',
-        #               verticalalignment='top')
 
-        axis.tick_params(axis='x', labelsize=font_size)
+        axis.annotate(r'$SI_K=%0.2f$' % (self.kurtosis_measured * max_fire),
+                      xy=(0.95, 0.9),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
+
+        axis.annotate(r'$SI_{AF}=%0.2f$' % self.activity_fraction_measured,
+                      xy=(0.95, 0.75),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
+
+        axis.tick_params(axis='x', labelsize=font_size - 5)
         axis.tick_params(axis='y', labelsize=font_size)
 
 
@@ -202,7 +205,47 @@ if __name__ == '__main__':
                 'tram',
                 'person sitting']
 
+    for ii in np.arange(len(obj_list), 806):
+        obj_list.append('random_' + str(ii))
+
     profile1 = KurtosisSparseness(obj_list)
     profile1.get_ranked_object_list()
-    profile1.print_parameters()
-    print ("Max Firing Rate: %0.4f" % profile1.get_max_firing_rate())
+    # profile1.print_parameters()
+
+    print("Sparseness(absolute kurtosis)             = %0.4f" % profile1.kurtosis_absolute)
+    print("Sparseness(measured kurtosis)             = %0.4f" % profile1.kurtosis_measured)
+
+
+    selectivities_abs = []
+    selectivities_meas = []
+    mean_rates = []
+
+    for idx in np.arange(674):
+         print idx
+         profile = KurtosisSparseness(obj_list)
+
+         mean_rates.append(np.mean(profile.objects.values())* profile.get_max_firing_rate())
+         selectivities_meas.append(profile.kurtosis_measured)
+
+    mean_rates = np.array(mean_rates)
+    selectivities_abs = np.array(selectivities_abs)
+    selectivities_meas = np.array(selectivities_meas)
+
+
+    f, axis = plt.subplots()
+    font_size=24
+    axis.scatter(mean_rates, np.log(selectivities_meas + 1), color='g', s=60)
+    # axis.loglog(mean_rates, selectivities_meas + 1, 'go', fontsize=font_size)
+    axis.set_xlabel("log(Average Fire Rate) (spikes/second)", fontsize=font_size)
+    axis.set_ylabel("log(Object Selectivity + 1)", fontsize=font_size)
+    axis.grid()
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+
+    plt.figure()
+    plt.scatter(mean_rates, selectivities_meas, color='g', s=60)
+
+
+
+
+    # print ("Max Firing Rate: %0.4f" % profile1.get_max_firing_rate())

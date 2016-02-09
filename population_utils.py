@@ -11,6 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import sys
+from mpl_toolkits.mplot3d import proj3d
+import it_neuron_vrep as it
+
 
 # Do relative import of the main folder to get files in sibling directories
 top_level_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -33,8 +36,20 @@ def population_max_firing_rate(it_population):
     return np.max(rates)
 
 
+def plot_max_fire_distribution(it_population, axis=None):
+    rates = [n.max_fire_rate for n in it_population]
+
+    if axis is None:
+        f, axis = plt.subplots()
+
+    axis.plot(np.arange(len(it_population)), rates)
+
+
 def plot_population_selectivity_distribution(it_population, axis=None):
-    """Plot selectivity distribution (activity fractions) of the population """
+    """Plot selectivity distribution (activity fractions) of the population
+    :param axis:
+    :param it_population:
+    """
     if axis is None:
         f, axis = plt.subplots()
 
@@ -50,7 +65,10 @@ def plot_population_selectivity_distribution(it_population, axis=None):
 
 
 def plot_single_neuron_selectivities(it_population, axis=None):
-    """ Plot histogram of single neuron selectivity (kurtosis) across population """
+    """ Plot histogram of single neuron selectivity (kurtosis) across population
+    :param axis:
+    :param it_population:
+    """
 
     if axis is None:
         f, axis = plt.subplots()
@@ -100,7 +118,10 @@ def plot_single_neuron_selectivities(it_population, axis=None):
 
 
 def plot_population_sparseness(it_population, axis=None):
-    """ Plot histogram of population sparseness (kurtosis) of each object in the population """
+    """ Plot histogram of population sparseness (kurtosis) of each object in the population
+    :param axis:
+    :param it_population:
+    """
 
     if axis is None:
         f, axis = plt.subplots()
@@ -150,7 +171,10 @@ def plot_population_sparseness(it_population, axis=None):
 
 
 def plot_population_obj_preferences(it_population, axis=None):
-    """ Plot Selectivity Profiles of entire Population """
+    """ Plot Selectivity Profiles of entire Population
+    :param axis:
+    :param it_population:
+    """
     if axis is None:
         f, axis = plt.subplots()
 
@@ -181,7 +205,10 @@ def plot_population_obj_preferences(it_population, axis=None):
 
 
 def plot_selectivity_vs_position_tolerance(it_population, axis=None):
-    """  Plot population selectivity, activity fraction, verses  position tolerance """
+    """  Plot population selectivity, activity fraction, verses  position tolerance
+    :param axis:
+    :param it_population:
+    """
 
     if axis is None:
         f, axis = plt.subplots()
@@ -208,3 +235,56 @@ def plot_selectivity_vs_position_tolerance(it_population, axis=None):
     axis.tick_params(axis='y', labelsize=f_size)
 
     plt.legend(loc='best', fontsize=f_size)
+
+
+def plot_selectivity_vs_mean_response(it_population, axis=None):
+
+    if axis is None:
+        f, axis = plt.subplots()
+
+    mean_responses = []
+    selectivities = []
+    for neuron in it_population:
+        mean_responses.append(
+            np.mean(neuron.selectivity.objects.values()) * neuron.max_fire_rate * 10)
+        selectivities.append(neuron.selectivity.kurtosis_measured)
+
+    mean_responses = np.array(mean_responses)
+    selectivities = np.array(selectivities)
+
+    axis.scatter(selectivities, mean_responses)
+
+
+def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
+
+    f = plt.figure()
+    font_size = 20
+
+    ax1 = f.add_subplot(4, 2, 1)
+    it_neuron.selectivity.plot_object_preferences(axis=ax1, font_size=font_size)
+
+    ax2 = f.add_subplot(4, 2, 2)
+    it_neuron.position.plot_position_tolerance_contours(axis=ax2, font_size=font_size)
+
+    ax3 = f.add_subplot(4, 2, 3)
+    it_neuron.size.plot_size_tolerance(axis=ax3, font_size=font_size)
+
+    ax4 = f.add_subplot(4, 2, 4)
+    it_neuron.rotation.plot_tuning_profile(axis=ax4, mirror_symmetric=True, font_size=font_size)
+
+    ax5 = f.add_subplot(4, 2, 5, projection='3d')
+    it_neuron.occlusion.plot_complete_profile(axis=ax5, font_size=font_size)
+
+    ax4 = f.add_subplot(4, 2, 6)
+    it_neuron.clutter.plot_clutter_profile(axis=ax4, font_size=font_size)
+
+    ax7 = f.add_subplot(4, 2, 7)
+    it.plot_neuron_dynamic_profile(it_neuron, axis=ax7, font_size=font_size)
+
+    if net_fire_rates is not None:
+        ax8 = f.add_subplot(4, 2, 8)
+        ax8.plot(np.arange(0, net_fire_rates.shape[0] * dt, step=dt), net_fire_rates)
+        ax8.set_xlabel("time(s)", fontsize=font_size)
+        ax8.set_ylabel("FR (Spikes/s)", fontsize=font_size)
+
+    return f

@@ -895,7 +895,7 @@ def main():
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")
-        set_robot_velocity(client_id, 2)
+        set_robot_velocity(client_id, 5)
 
         rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
@@ -1026,3 +1026,8 @@ if __name__ == "__main__":
     #
     # # Plot Object preferences of population
     # utils.plot_population_obj_preferences(population)
+
+    # population spareness and selectivity plots
+    # fig, axArr = plt.subplots(1,2, sharex=True)
+    # utils.plot_single_neuron_selectivities(population,axis=axArr[0])
+    # utils.plot_population_sparseness(population, axis=axArr[1])

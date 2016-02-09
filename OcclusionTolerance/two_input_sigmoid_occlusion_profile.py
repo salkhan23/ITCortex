@@ -18,6 +18,7 @@ import scipy.optimize as so
 import warnings
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
+from matplotlib import cm
 
 
 def sigmoid(x, w, b):
@@ -324,8 +325,10 @@ class TwoInputSigmoidOcclusionProfile:
 
         return fire_rates
 
-    def plot_complete_profile(self, axis=None):
-        font_size = 20
+    def plot_complete_profile(self, axis=None, font_size=20):
+        """
+        axis must be  an axis with a projection of type 3d
+        """
 
         if axis is None:
             f = plt.figure()
@@ -343,11 +346,7 @@ class TwoInputSigmoidOcclusionProfile:
                     self.firing_rate_modifier(vis_arr[r_idx], vis_arr[c_idx])
 
         yy, xx = np.meshgrid(vis_arr, vis_arr)
-        axis.plot_wireframe(xx, yy, fire_rates)
-
-        axis.set_xlabel("Nondiagnostic visibility", fontsize=font_size)
-        axis.set_ylabel("Diagnostic Visibility", fontsize=font_size)
-        axis.set_zlabel("Normalize fire rate (spikes/s)", fontsize=font_size)
+        axis.plot_surface(xx, yy, fire_rates, cmap=cm.coolwarm, rstride=1, cstride=1)
 
         axis.set_xlim([1, 0])
         axis.set_ylim([0, 1])
@@ -356,18 +355,18 @@ class TwoInputSigmoidOcclusionProfile:
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
         axis.tick_params(axis='z', labelsize=font_size)
-        axis.set_title("Complete Tuning Curve", fontsize=font_size + 10)
 
-        x2, y2, _ = proj3d.proj_transform(1.25, 0.15, 1.0, axis.get_proj())
-        axis.annotate("w_n=%0.2f, w_d=%0.2f" % (self.w_vector[0], self.w_vector[1]),
-                      xy=(x2, y2),
-                      xytext=(-20, 20),
-                      fontsize=font_size,
-                      textcoords='offset points')
+        axis.set_xlabel("\n" + r"$v_{nd}$", fontsize=font_size + 10, fontweight='bold', color='b')
+        axis.set_ylabel("\n" + r"$v_d$", fontsize=font_size + 10, fontweight='bold', color='b')
+        axis.set_zlabel("FR (spikes/s)", fontsize=font_size)
+        # axis.set_title("Complete Tuning Curve", fontsize=font_size + 10)
 
-        x = np.arange(0, 1, step=0.1)
-        z = np.zeros_like(x)
-        axis.plot(x, x, z, label="Combined visibility axis", color='red', linewidth=2)
+        label = r"$w_n=%0.2f,$" % self.w_vector[0] + "\n" \
+                + r'$w_{nd}$=%0.2f' % self.w_vector[1] + '\n' \
+                + r'$\sigma_b=%0.2f$' %self.d_to_t_ratio
+
+
+        axis.text(1.3, 0, 0.5, label, fontsize=font_size)
 
     def plot_combined_axis_tuning(self, axis=None):
         font_size = 20

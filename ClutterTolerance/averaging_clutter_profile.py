@@ -65,47 +65,63 @@ class AveragingClutterProfile:
 
         return np.max([0, clutter_rate + self._deviation_from_average()])
 
-if __name__ == "__main__":
-    plt.ion()
+    def plot_clutter_profile(self, axis=None, font_size=34, num_objs=2, num_samples=100):
+        """
+        Plots the clutter profile of the neuron if it were seeing two and three objects at random
+        places within its receptive field
 
-    profile1 = AveragingClutterProfile()
+        :param num_samples: number of sample points to consider. Default=100
+        :param num_objs: number of objects in the neurons receptive field.Default=2.
+        :param font_size: graph font size. Default=34
+        :param axis: axis to plot. Default is None, which means create a new figure.
+        """
 
-    # Plot the clutter profile of the neuron
-    num_obj_array = [2, 3]
-    num_samples = 100
+        if axis is None:
+            fig, axis = plt.subplots()
 
-    f, ax_arr = plt.subplots(1, len(num_obj_array))
-    font_size = 34
-
-    for idx, num_obj in enumerate(num_obj_array):
+        # Generate some random responses and random positions of objects
+        isolated_responses = np.random.uniform(low=0, high=1, size=(num_samples, num_objs))
+        position_weights = np.random.uniform(low=0, high=1, size=(num_samples, num_objs))
 
         clutter_rates = []
-        isolated_responses = np.random.uniform(low=0, high=1, size=(num_samples, num_obj))
-        position_weights = np.random.uniform(low=0, high=1, size=(num_samples, num_obj))
-
         for sample in np.arange(num_samples):
             clutter_rates.append(
-                profile1.firing_rate_modifier(
+                self.firing_rate_modifier(
                     isolated_responses[sample, :],
                     position_weights[sample, :])
             )
 
         sum_isolated_responses = np.sum(isolated_responses, axis=1)
 
-        ax_arr[idx].scatter(sum_isolated_responses, clutter_rates, s=60)
+        axis.scatter(sum_isolated_responses, clutter_rates, s=60)
 
         x = np.linspace(0, np.max(sum_isolated_responses), 100)
-        ax_arr[idx].plot(x, x / num_obj, label="Average", linewidth=2)
-        ax_arr[idx].plot(x, x, label="Sum", linewidth=2)
-        ax_arr[idx].legend(fontsize=font_size)
+        axis.plot(x, x / num_objs, label="Average", linewidth=2)
+        axis.plot(x, x, label="Sum", linewidth=2)
+        axis.legend(fontsize=font_size - 5)
 
-        ax_arr[idx].set_xlabel('Sum Isolated Responses (spikes/s)', fontsize=font_size)
-        ax_arr[idx].set_ylabel('Joint Response (spikes/s)', fontsize=font_size)
-        ax_arr[idx].tick_params(axis='x', labelsize=font_size)
-        ax_arr[idx].tick_params(axis='y', labelsize=font_size)
-        ax_arr[idx].set_title("%d Objects" %num_obj, fontsize=font_size)
-        ax_arr[idx].grid()
-        ax_arr[idx].set_xlim([0, 3])
-        ax_arr[idx].set_ylim([0, 3])
+        axis.set_xlabel('Sum Isolated Responses (spikes/s)', fontsize=font_size)
+        axis.set_ylabel('Joint FR', fontsize=font_size)
+        axis.tick_params(axis='x', labelsize=font_size)
+        axis.tick_params(axis='y', labelsize=font_size)
+        # axis.set_title("%d Objects" % num_objs, fontsize=font_size)
+        axis.grid()
+        axis.set_xlim([0, num_objs])
+        axis.set_ylim([0, num_objs])
+
+        axis.annotate('%d objects' % num_objs,
+                      xy=(0.25, 0.9),
+                      xycoords='axes fraction',
+                      fontsize=font_size,
+                      horizontalalignment='right',
+                      verticalalignment='top')
 
 
+if __name__ == "__main__":
+    plt.ion()
+
+    profile1 = AveragingClutterProfile()
+
+    f, ax_arr = plt.subplots(1, 2, sharey=True)
+    profile1.plot_clutter_profile(num_objs=2, axis=ax_arr[0])
+    profile1.plot_clutter_profile(num_objs=3, axis=ax_arr[1])

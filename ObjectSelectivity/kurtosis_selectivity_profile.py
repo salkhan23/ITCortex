@@ -175,7 +175,7 @@ class KurtosisSparseness:
 
         max_fire = self.get_max_firing_rate()
 
-        axis.annotate(r'$SI_K=%0.2f$' % (self.kurtosis_measured * max_fire),
+        axis.annotate(r'$SI_K=%0.2f$' % (self.kurtosis_measured),
                       xy=(0.95, 0.9),
                       xycoords='axes fraction',
                       fontsize=font_size,

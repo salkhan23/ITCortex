@@ -119,10 +119,12 @@ class GaussianPositionProfile:
                                          y_start=-np.pi / 2,
                                          y_stop=np.pi / 2,
                                          axis=None,
-                                         n_contours=6):
+                                         n_contours=6,
+                                         font_size=34):
         """
         Contour Plots of the spatial receptive field of the neuron.
 
+        :param font_size    : font_size of text on plot (default=34)
         :param x_start      : Default = -np.pi/2
         :param x_stop       : Default = np.pi/2
         :param y_start      : Default = -np.pi/2
@@ -136,7 +138,6 @@ class GaussianPositionProfile:
         :rtype              : None.
         """
         n_points = 180
-        font_size = 34
 
         x = np.linspace(start=x_start, stop=x_stop, num=n_points)
         y = np.linspace(start=y_start, stop=y_stop, num=n_points)
@@ -168,13 +169,23 @@ class GaussianPositionProfile:
 
         # If more details are required use a higher contour value.
         if 1 != n_contours:
-            axis.scatter(self.rf_center[0], self.rf_center[1], color='green', marker='o',
-                         linewidth=4,
-                         label='Rf Center (%0.2f, %0.2f)' % (self.rf_center[0], self.rf_center[1]))
-            axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance,
-                           fontsize=font_size)
+            axis.scatter(
+                self.rf_center[0], self.rf_center[1], color='green', marker='o',
+                linewidth=4,
+                label='Rf Center\n(%0.2f, %0.2f)' % (self.rf_center[0], self.rf_center[1]))
+            # axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance,
+            #                fontsize=font_size)
+
+            axis.annotate(
+                r'$\sigma_{PT}=%0.2f$' % self.position_tolerance,
+                xy=(0.95, 0.2),
+                xycoords='axes fraction',
+                fontsize=font_size,
+                horizontalalignment='right',
+                verticalalignment='top')
+
             axis.grid()
-            axis.legend(fontsize=font_size)
+            axis.legend(fontsize=font_size - 5, loc='best', scatterpoints=1)
 
 if __name__ == "__main__":
     plt.ion()

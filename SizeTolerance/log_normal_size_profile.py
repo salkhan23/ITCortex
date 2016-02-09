@@ -132,29 +132,27 @@ class LogNormalSizeProfile:
         print("Size bandwidth               = %0.4f octaves" % self.size_bw)
         print("RF Size (area extent of RF)  = %0.4f" % self.rf_size)
 
-    def plot_size_tolerance(self, axis=None):
+    def plot_size_tolerance(self, axis=None, font_size=34):
 
         x = np.linspace(0, self.max_stim_size * 1.2, num=100)
 
         if axis is None:
             f, axis = plt.subplots()
 
-        font_size = 34
-
         axis.plot(x, self.firing_rate_modifier(x), linewidth=2)
-        axis.set_xlabel('Stimulus Size (Radians)', fontsize=font_size)
-        axis.set_ylabel('Normalized Firing Rate', fontsize=font_size)
-        axis.set_title("Size Tolerance", fontsize=font_size + 10)
+        axis.set_xlabel('Size', fontsize=font_size)
+        axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
+        # axis.set_title("Size Tolerance", fontsize=font_size + 10)
 
-        axis.annotate('Size Bandwidth=%0.2f' % self.size_bw,
+        axis.annotate(r'$\sigma_{ST}=%0.2f$' % self.size_bw,
                       xy=(0.95, 0.85),
                       xycoords='axes fraction',
                       fontsize=font_size,
                       horizontalalignment='right',
                       verticalalignment='top')
 
-        axis.annotate('Preferred Size =%0.2f' % self.pref_size,
-                      xy=(0.95, 0.80),
+        axis.annotate(r'$\mu_s=%0.2f$' % self.pref_size,
+                      xy=(0.95, 0.75),
                       xycoords='axes fraction',
                       fontsize=font_size,
                       horizontalalignment='right',

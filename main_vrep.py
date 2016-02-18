@@ -895,7 +895,7 @@ def main():
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")
-        set_robot_velocity(client_id, 5)
+        set_robot_velocity(client_id, 2)
 
         rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 

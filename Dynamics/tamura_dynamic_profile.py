@@ -161,8 +161,8 @@ class TamuraDynamics:
                 self.early_x[:, ii],
                 early_u[ii])
 
-            late_a = 1/self.late_tau[ii] * self.late_A
-            late_b = 1/self.late_tau[ii] * self.late_B
+            late_a = 1 / self.late_tau[ii] * self.late_A
+            late_b = 1 / self.late_tau[ii] * self.late_B
 
             self.late_x[ii], late_y = integrate(
                 self.dt,

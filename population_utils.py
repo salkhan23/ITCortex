@@ -258,7 +258,7 @@ def plot_selectivity_vs_mean_response(it_population, axis=None):
 def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
 
     f = plt.figure()
-    font_size = 20
+    font_size = 16
 
     ax1 = f.add_subplot(4, 2, 1)
     it_neuron.selectivity.plot_object_preferences(axis=ax1, font_size=font_size)
@@ -286,5 +286,7 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
         ax8.plot(np.arange(0, net_fire_rates.shape[0] * dt, step=dt), net_fire_rates)
         ax8.set_xlabel("time(s)", fontsize=font_size)
         ax8.set_ylabel("FR (Spikes/s)", fontsize=font_size)
+        ax8.tick_params(axis='x', labelsize=font_size)
+        ax8.tick_params(axis='y', labelsize=font_size)
 
     return f

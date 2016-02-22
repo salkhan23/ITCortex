@@ -18,7 +18,7 @@ def sigmoid(x, w, b):
 
 class TwoInputSigmoidOcclusionProfile:
 
-    def __init__(self, d_to_t_ratio=None):
+    def __init__(self, d_to_t_ratio=None, w_c=None, b=None):
         """
         A two input sigmoid is used to model occlusion tolerances of IT Neurons.
 
@@ -102,7 +102,13 @@ class TwoInputSigmoidOcclusionProfile:
         while not generatable:
 
             # Get weight along combined visibilities axis
-            self.w_combine, self.bias = self._get_combined_weight_and_bias()
+            if w_c is None and b is None:
+                self.w_combine, self.bias = self._get_combined_weight_and_bias()
+            else :
+                self.w_combine = w_c
+                self.bias = b
+                # only one iteration for the case when w_combined and bias are defined
+                iteration = max_iterations
 
             # Use nonlinear optimization to find w_diagnostic and w_nondiagnostic that can generate
             # the desired diagnostic to total variance ratio.
@@ -132,7 +138,7 @@ class TwoInputSigmoidOcclusionProfile:
                 #          w_nd,
                 #          ))
 
-                if iteration == max_iterations:
+                if iteration >= max_iterations:
                     raise Exception("Unable to generate desired diagnostic group variance" +
                                     "to total group variance ratio. Desired=%0.4f" % self.ratio)
 
@@ -325,7 +331,7 @@ class TwoInputSigmoidOcclusionProfile:
 
         label = r"$w_n=%0.2f,$" % self.w_vector[0] + "\n" \
                 + r'$w_{nd}=%0.2f$' % self.w_vector[1] + '\n' \
-                + r'$\sigma_b=%0.2f$' % self.ratio
+                + r'$R=%0.2f$' % self.ratio
 
         axis.text(1.3, 0, 0.5, label, fontsize=font_size)
 

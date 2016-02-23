@@ -372,7 +372,7 @@ if __name__ == "__main__":
     for i in np.arange(1000):
         profile = TwoInputSigmoidOcclusionProfile()
         print profile.ratio - \
-              profile.calculate_ratio(profile.w_vector[1], profile.w_vector[0],profile.bias)
+            profile.calculate_ratio(profile.w_vector[1], profile.w_vector[0], profile.bias)
 
     # Check plots are working fine ----------------------------------------------------------
     profile = TwoInputSigmoidOcclusionProfile()

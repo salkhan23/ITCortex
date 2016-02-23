@@ -192,8 +192,8 @@ class TwoInputSigmoidOcclusionProfile:
 
         :return: weight_combined, bias
         """
-        w_c = np.float(np.random.normal(loc=5.5758, scale=1.7840, size=1))
-        b = np.float(np.random.normal(loc=-3.2128, scale=1.3297, size=1))
+        w_c = np.float(np.random.normal(loc=7.7621, scale=2.5784, size=1))
+        b = np.float(np.random.normal(loc=-3.6684, scale=0.8909, size=1))
 
         return w_c, b
 

@@ -118,7 +118,7 @@ def plot_tuning_curve_along_combined_axis(w_c, b, axis=None, font_size=20):
     # axis.set_title("Tuning along equal visibilities axis",
     #                fontsize=font_size + 10)
 
-    #axis.legend(fontsize=font_size, loc=4)
+    # axis.legend(fontsize=font_size, loc=4)
 
     axis.annotate(r'$w_c=%0.2f,$' % w_c + "\n" + r'$b=%0.2f$' % b,
                   xy=(0.40, 0.95),

@@ -30,8 +30,11 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as so
-from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
+
+import two_input_sigmoid_occlusion_profile as occlusion_profile
+# Force reload (compile) IT cortex modules to pick changes not included in cached version.
+reload(occlusion_profile)
 
 
 def sigmoid(x, w, b):
@@ -99,24 +102,25 @@ def plot_tuning_curve_along_combined_axis(w_c, b, axis=None, font_size=20):
     if axis is None:
         f, axis = plt.subplots(projection='3d')
 
-    vis_levels = np.linspace(0, 1 * np.sqrt(2), num=100)
+    vis_levels = np.linspace(0, 1, num=100)
     axis.plot(vis_levels,
-              sigmoid(vis_levels, w_c, b), linewidth=2, label='Best fit sigmoid')
+              sigmoid(vis_levels, w_c, b),
+              linewidth=2, label='Best fit sigmoid', color='green')
 
-    axis.set_xlim([0, 1.5])
+    axis.set_xlim([0, 1.1])
     axis.set_ylim([0, 1.1])
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
     axis.grid()
 
-    axis.set_xlabel("Visibility Combined", fontsize=font_size)
-    axis.set_ylabel("Normalized fire rate (spikes/s)", fontsize=font_size)
-    axis.set_title("Tuning along equal visibilities axis",
-                   fontsize=font_size + 10)
+    axis.set_xlabel(r"$v_c$", fontsize=font_size)
+    axis.set_ylabel("FR (spikes/s)", fontsize=font_size)
+    # axis.set_title("Tuning along equal visibilities axis",
+    #                fontsize=font_size + 10)
 
-    axis.legend(fontsize=font_size, loc=4)
+    #axis.legend(fontsize=font_size, loc=4)
 
-    axis.annotate('w_c=%0.2f, bias=%0.2f' % (w_c, b),
+    axis.annotate(r'$w_c=%0.2f,$' % w_c + "\n" + r'$b=%0.2f$' % b,
                   xy=(0.40, 0.95),
                   xycoords='axes fraction',
                   fontsize=font_size,
@@ -170,98 +174,97 @@ def plot_full_tuning_curve(w_n, w_d, b, axis=None, font_size=20):
     axis.plot(x, x, z, label="Combined visibility axis", color='red', linewidth=2)
 
 
-def main(visibilities, fire_rates, d_to_t_var_ratio, title=''):
-    # Scale up the visibilities to range from [0, np.sqrt(2)]. We assume on the combined scale
-    # equal parts diagnostic and nondiagnostic visibilities. Along this axis
-    #           visibility = np.sqrt(vis_d + vis_nd) = np.sqrt(2)*vis_c.
-    # In measured data, visibility ranges between [0, 1]. Hence we scale up to get the correct
-    # combined weight and bias.
-    visibilities = np.sqrt(2) * visibilities
+def optimization_equations(w, w_d, b, desired_ratio):
+    """
+    Function(s) to solve using nonlinear numerical optimization.
+
+    (1) Desired ratio - Actual ratio = 0
+    (2) the sum of the weights cannot be more than weight on the combined axis.
+
+    :param w            : tuple of (w_d, w_nd). What we find optimum values for.
+    :param w_d          : weight on combined axis
+    :param b            : bias
+    :param desired_ratio: desired diagnostic to total variance ratio
+
+    :return: tuple (Desired ratio - Actual ratio, w_c - (w_d + w_nd)
+    """
+    w_c, w_nd = w
+    print ("w_c %0.4f, w_nd %0.4f, R=%0.2f" % (w_c, w_nd, calculate_ratio(w_d, w_nd, b)))
+    return desired_ratio - calculate_ratio(w_d, w_nd, b), w_c - w_d - w_nd
+
+
+def calculate_ratio(w_d, w_nd, b, step_size=0.05):
+    """
+    Calculate the ratio of how much of the total variance is explained by the variance between
+    diagnostic/non-diagnostic grouping
+
+    :param w_d:
+    :param w_nd:
+    :param b:
+    :param step_size:
+    :return:
+    """
+
+    vis_arr = np.arange(1, step=step_size)
+    vis_arr = vis_arr.reshape((vis_arr.shape[0], 1))
+
+    rates_n = sigmoid(vis_arr, w_nd, b)
+    rates_d = sigmoid(vis_arr, w_d, b)
+
+    mean_n = np.mean(rates_n)
+    mean_d = np.mean(rates_d)
+
+    mean_t = np.mean(np.append(rates_n, rates_d))
+    sigma_t = np.var(np.append(rates_n, rates_d))
+
+    sigma_b = ((mean_n - mean_t) ** 2 + (mean_d - mean_t) ** 2) / 2
+
+    ratio = sigma_b / sigma_t
+
+    return ratio
+
+
+def main(visibilities, fire_rates, ratio, title=''):
 
     # Find optimal w_c and bias that fit the data -------------------------------------------
     p_opt, p_cov = so.curve_fit(sigmoid, visibilities, fire_rates)
     w_combined = p_opt[0]
     bias = p_opt[1]
     # print("Data fit parameters: w_c=%0.2f, b=%0.2f: standard error of parameter fits %s"
-    #       % (w_combined, bias, np.sqrt(np.diag(p_cov))))
+    #        % (w_combined, bias, np.sqrt(np.diag(p_cov))))
 
-    # Plot the data and the fitted sigmoid
-    fig = plt.figure()
-    font_size = 20
+    # find w_d and w_nd
+    neuron = occlusion_profile.TwoInputSigmoidOcclusionProfile(ratio, w_combined, bias)
 
+    font_size = 34
+    f = plt.figure()
     if title:
-        fig.suptitle(title + ". [Diagnostic group to total variance ratio=%0.2f]"
-                     % d_to_t_var_ratio,
-                     fontsize=font_size + 10)
+        f.suptitle(title + ". [R=%0.2f]" % ratio, fontsize=font_size + 10)
 
-    ax = fig.add_subplot(121)
+    ax1 = f.add_subplot(1, 2, 1)
+    plot_tuning_curve_along_combined_axis(w_combined, bias, ax1)
+    ax1.scatter(visibilities, fire_rates,
+                s=60, color='blue', label="Original data")
 
-    ax.scatter(visibilities, fire_rates,
-               marker='+', linewidth=2, s=60, color='red', label="Original data")
+    ax2 = f.add_subplot(1, 2, 2, projection='3d')
+    neuron.plot_complete_profile(axis=ax2)
 
-    plot_tuning_curve_along_combined_axis(w_combined, bias, ax, font_size)
+    # To plot the combined visibility axis on the 3D plot
+    # we assume combined visibility and diagnostic and nondiagnostic visibility levels are related
+    # by v_c = np.sqrt(vnd**2 + vd**2) / sqrt(2). We vnd=1 and vd=1, vc=1 and this function
+    # monotonously increases with visibility as required by our logistic function
+    vis_combined = np.linspace(0, 1, num=100)
 
-    # Find the highest possible diagnostic group variances to total variance ratio that is
-    # possible for the fitted  w_combined and bias.
-    # -------------------------------------------------------------------------------------
-    # Diagnostic weight is equal to the scaled combined weight, which means the nondiagnostic
-    # weight is zero. Depending on the bias, the firing rate sigmoid for the nondiagnostic
-    # visibility may not go to zero. This means the variances between the diagnostic and
-    # nondiagnostic groups may nut equal to the full variances of the data, when calculated from
-    # the means. Therefore we find the maximum ratio possible for this sigmoid which happens when
-    # one weight accounts for all the variance.
-    w_diagnostic = np.sqrt(2) * w_combined
-    max_diagnostic_group_to_total_var_ratio = \
-        get_diagnostic_group_to_total_variance_ratio_from_diagnostic_weight(
-            w_diagnostic,
-            w_combined,
-            bias)
+    # Along the combined axis vd = v_nd hence
+    #     v_c = np.sqrt(2) * vd / np.sqrt(2) = vd
 
-    if d_to_t_var_ratio > max_diagnostic_group_to_total_var_ratio:
-        # noinspection PyStringFormat
-        raise Exception("Specified diagnostic group variance to total variance Ratio" +
-                        " greater than maximum possible (Max=%0.2f, specified=%0.2f)"
-                        % (max_diagnostic_group_to_total_var_ratio, d_to_t_var_ratio))
+    # Additionally the tuning profile is normalized to its maximum value by neuron, so scale the
+    # sigmoid as well.
 
-    #  Given w_combined, bias and the d_to_t_var_ratio  find a distribution w_diagnostic
-    #  w_nondiagnostic pair that will generate the target diagnostic group variance to total
-    #  variance ratio
-    # ----------------------------------------------------------------------------------------
-    w_diagnostic = so.fsolve(
-        diff_between_meas_and_tgt_d_to_total_var_ratio,
-        (np.sqrt(2) * w_combined / 2),  # Initial guess half the combined weight
-        args=(w_combined, bias, d_to_t_var_ratio),
-        factor=0.5)  # Reduce the step size for the non-linear optimization.
-    # TODO: Add some error checks on the return parameters
-
-    # w_diagnostic ranges between np.sqrt(2) * w_c and 0, and is always > weight_nondiagnostic.
-    w_nondiagnostic = (np.sqrt(2) * w_combined) - w_diagnostic
-
-    if w_nondiagnostic > w_diagnostic:
-        temp = w_nondiagnostic
-        w_nondiagnostic = w_diagnostic
-        w_diagnostic = temp
-
-    print("w_diagnostic = %0.2f, w_nondiagnostic = %0.2f" % (w_diagnostic, w_nondiagnostic))
-    print ("w_combined=%0.2f, bias=%0.2f" % (w_combined, bias))
-
-    # Plot the 3D Tuning Curve
-    ax2 = fig.add_subplot(122, projection='3d')
-    plot_full_tuning_curve(
-        np.float(w_nondiagnostic),
-        np.float(w_diagnostic),
-        bias,
-        ax2,
-        font_size)
-
-    # # Plot the diagnostic and nondiagnostic sigmoid separately
-    # plt.figure()
-    # vis_levels = np.arange(1, step=0.01)
-    # vis_levels = np.reshape(vis_levels, (vis_levels.shape[0], 1))
-
-    # plt.plot(vis_levels, sigmoid(vis_levels, w_nondiagnostic, bias), label='nondiag')
-    # plt.plot(vis_levels, sigmoid(vis_levels, w_diagnostic, bias), label='diag')
-    # plt.legend()
+    ax2.plot(vis_combined,
+             vis_combined,
+             sigmoid(vis_combined, w_combined, bias) / sigmoid(1, w_combined, bias),
+             linewidth=3, label='Best fit sigmoid', color='green')
 
     return w_combined, bias
 
@@ -273,14 +276,14 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title='
     p_opt, p_cov = so.curve_fit(sigmoid, visibilities, r_diagnostic)
     w_diagnostic = p_opt[0]
     bias = p_opt[1]
-    # print("weight diagnostic %0.2f, bias diagnostic %0.2f" % (w_diagnostic, bias))
+    print("weight diagnostic %0.2f, bias diagnostic %0.2f" % (w_diagnostic, bias))
 
     # NOTE: too few points to do a meaningful fit (only one above 0)
-    # p_opt, p_cov = so.curve_fit(sigmoid, visibilities, r_nondiagnostic)
-    # w_nondiagnostic = p_opt[0]
-    # b_nondiagnostic = p_opt[1]
-    # print("weight nondiagnostic %0.2f, bias nondiagnostic %0.2f"
-    #       % (w_nondiagnostic, b_nondiagnostic))
+    p_opt, p_cov = so.curve_fit(sigmoid, visibilities, r_nondiagnostic)
+    w_nondiagnostic = p_opt[0]
+    b_nondiagnostic = p_opt[1]
+    print("weight nondiagnostic %0.2f, bias nondiagnostic %0.2f"
+          % (w_nondiagnostic, b_nondiagnostic))
 
     # Plot the original data
     font_size = 20
@@ -298,42 +301,18 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title='
     ax.scatter(np.zeros_like(r_diagnostic), visibilities, r_diagnostic,
                marker='+', linewidth=2, s=60, color='blue', label="Original Diagnostic Data")
 
-    # Given the diagnostic weight, bias and the diagnostic group to total variance ratio,
-    # determine wn, and w_c
+    # Given w_d, b and R, determine wn, and w_c
 
-    w_combined = so.fsolve(
-        diff_between_meas_and_tgt_d_to_total_var_ratio_2,
-        (w_diagnostic / 2 / np.sqrt(2)),
+    # Use nonlinear optimization to find w_diagnostic and w_nondiagnostic that can generate
+    # the desired diagnostic to total variance ratio.
+    w_combined, w_nondiagnostic = so.fsolve(
+        optimization_equations,
+        (w_diagnostic , 0),
         args=(w_diagnostic, bias, d_to_t_var_ratio),
-        factor=0.5)
-    # TODO: Add some error checks on the return parameters
+        factor=0.5,  # w_d increases rapidly without this factor adjustment)
+    )
 
-    # w_diagnostic ranges between np.sqrt(2) * w_c and 0, and is always > weight_nondiagnostic.
-    w_nondiagnostic = (np.sqrt(2) * w_combined) - w_diagnostic
-
-    if w_nondiagnostic > w_diagnostic:
-        temp = w_nondiagnostic
-        w_nondiagnostic = w_diagnostic
-        w_diagnostic = temp
-
-    print("w_diagnostic = %0.2f, w_nondiagnostic = %0.2f" % (w_diagnostic, w_nondiagnostic))
-    print ("w_combined=%0.2f, bias=%0.2f" % (w_combined, bias))
-
-    plot_full_tuning_curve(
-        np.float(w_nondiagnostic),
-        np.float(w_diagnostic),
-        bias,
-        axis=ax,
-        font_size=font_size)
-
-    # Plot the tuning curve along the combined axis
-    ax2 = fig.add_subplot(121)
-
-    plot_tuning_curve_along_combined_axis(
-        np.float(w_combined),
-        bias,
-        ax2,
-        font_size=font_size)
+    plot_full_tuning_curve(w_nondiagnostic, w_diagnostic, bias, axis=ax)
 
     return w_combined, bias
 
@@ -361,7 +340,7 @@ if __name__ == "__main__":
 
         weight_c, bias_c = main(visibility_arr,
                                 rates,
-                                d_to_t_var_ratio=0.3,
+                                ratio=0.3,
                                 title='Kovacs 1995 - Object %d' % obj)
 
         w_combined_arr.append(weight_c)
@@ -380,40 +359,51 @@ if __name__ == "__main__":
 
     weight_c, bias_c = main(visibility_arr,
                             rates,
-                            d_to_t_var_ratio=0.1,
+                            ratio=0.1,
                             title='Oreilly 2013')
     w_combined_arr.append(weight_c)
     bias_arr.append(bias_c)
 
     # Fit Neilson Tuning Curve  -------------------------------------------------------
-    with open('Neilson2006.pkl', 'rb') as fid:
-        NeilsonData = pickle.load(fid)
+    # Here we try the reverse of our method, given w_d and w_nd (found by fitting the diagnostic
+    # and nondiagnostic tuning curves) we use fsolve to find a w_c. Unfortunately, the
+    # nondiagnostic data does not have sufficient nonzero points to get a good logistic function
+    # fit. Neither is there sufficient information to find the max firing rate to normalize the
+    # the two input logistic complete tuning profile. Recall that as noted by Neilson, both the
+    # diagnostic and nondiagnostic parts are needed to get the max firing rate of the neuron.
+    # Neurons are sensitive to both size and diagnosticity and even if all the diagnostic parts
+    # of the neuron are fully visible, depending on the neurons diagnosticity, it will not fire at
+    # its max firing rate.
+    # For now we assume the reverse process does not work and disable the following  code
 
-    # With Neilson Data, we have the diagnostic and non-diagnostic tuning curves,
-    # we fit these and calculate the combined tuning curve
-    visibility_arr = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
-
-    nondiag_rates = NeilsonData['singleNonDiagRate']
-    diag_rates = NeilsonData['singleDiagRate']
-
-    # First element of both the non_diag and diag rates is the full rate, so remove them
-    r_max = nondiag_rates[0]
-
-    nondiagnostic_rates = np.array(nondiag_rates[1:]) / r_max
-    diagnostic_rates = np.array(diag_rates[1:]) / r_max
-    visibility_arr = np.array(visibility_arr[1:])
-
-    # Remove all negative rates
-    nondiag_rates[nondiag_rates < 0] = 0
-    diag_rates[diag_rates < 0] = 0
-
-    ratio_diag_var_to_total_var = 0.437
-
-    weight_c, bias_c = main2(visibility_arr,
-                             nondiagnostic_rates,
-                             diagnostic_rates,
-                             ratio_diag_var_to_total_var,
-                             title='Neilson 2006 - Single Neuron')
+    # with open('Neilson2006.pkl', 'rb') as fid:
+    #     NeilsonData = pickle.load(fid)
+    #
+    # # With Neilson Data, we have the diagnostic and non-diagnostic tuning curves,
+    # # we fit these and calculate the combined tuning curve
+    # visibility_arr = [(1 - (occlusion / 100.0)) for occlusion in NeilsonData['singleOcc']]
+    #
+    # nondiag_rates = NeilsonData['singleNonDiagRate']
+    # diag_rates = NeilsonData['singleDiagRate']
+    #
+    # # First element of both the non_diag and diag rates is the full rate, so remove them
+    # r_max = nondiag_rates[0]
+    #
+    # nondiagnostic_rates = np.array(nondiag_rates[0:]) / r_max
+    # diagnostic_rates = np.array(diag_rates[0:]) / r_max
+    # visibility_arr = np.array(visibility_arr[0:])
+    #
+    # # Remove all negative rates
+    # nondiag_rates[nondiag_rates < 0] = 0
+    # diag_rates[diag_rates < 0] = 0
+    #
+    # ratio_diag_var_to_total_var = 0.437
+    #
+    # weight_c, bias_c = main2(visibility_arr,
+    #                          nondiagnostic_rates,
+    #                          diagnostic_rates,
+    #                          ratio_diag_var_to_total_var,
+    #                          title='Neilson 2006 - Single Neuron')
 
     w_combined_arr.append(weight_c)
     bias_arr.append(bias_c)

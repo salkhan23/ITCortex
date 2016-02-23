@@ -369,10 +369,10 @@ if __name__ == "__main__":
     plt.ion()
 
     # Make several profiles and check that optimization is working. Doesnt break the model.
-    # for i in np.arange(1000):
-    #     profile = TwoInputSigmoidOcclusionProfile()
-    #     print profile.ratio - \
-    #           profile.calculate_ratio(profile.w_vector[1], profile.w_vector[0],profile.bias)
+    for i in np.arange(1000):
+        profile = TwoInputSigmoidOcclusionProfile()
+        print profile.ratio - \
+              profile.calculate_ratio(profile.w_vector[1], profile.w_vector[0],profile.bias)
 
     # Check plots are working fine ----------------------------------------------------------
     profile = TwoInputSigmoidOcclusionProfile()

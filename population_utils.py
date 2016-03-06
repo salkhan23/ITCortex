@@ -237,22 +237,38 @@ def plot_selectivity_vs_position_tolerance(it_population, axis=None):
     plt.legend(loc='best', fontsize=f_size)
 
 
-def plot_selectivity_vs_mean_response(it_population, axis=None):
+def plot_selectivity_vs_mean_response(it_population, axis=None, font_size=34):
 
     if axis is None:
         f, axis = plt.subplots()
 
-    mean_responses = []
-    selectivities = []
-    for neuron in it_population:
-        mean_responses.append(
-            np.mean(neuron.selectivity.objects.values()) * neuron.max_fire_rate * 10)
-        selectivities.append(neuron.selectivity.kurtosis_measured)
+    selectivities_abs = []
+    selectivities_meas = []
+    mean_rates = []
 
-    mean_responses = np.array(mean_responses)
-    selectivities = np.array(selectivities)
+    population_size = len(it_population)
 
-    axis.scatter(selectivities, mean_responses)
+    for neuron_idx in np.arange(population_size):
+
+         obj_pref = it_population[neuron_idx].selectivity.objects.values()
+         max_fire = it_population[neuron_idx].max_fire_rate
+
+         mean_rates.append(np.mean(obj_pref) * max_fire)
+         selectivities_meas.append(it_population[neuron_idx].selectivity.kurtosis_measured)
+
+    mean_rates = np.array(mean_rates)
+    selectivities_abs = np.array(selectivities_abs)
+    selectivities_meas = np.array(selectivities_meas)
+
+    axis.scatter(mean_rates, np.log(selectivities_meas + 1), color='g', s=60)
+    #axis.loglog(mean_rates, selectivities_meas + 1, 'go')
+    axis.set_xlabel("Average Fire Rate (Spikes/s)", fontsize=font_size)
+    axis.set_ylabel(r"$log(\sigma_{KI} + 1)$", fontsize=font_size)
+    axis.grid()
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+    axis.set_xlim([0, np.max(mean_rates)*1.1])
+    axis.set_ylim([0, np.max(np.log(selectivities_meas + 1))*1.1])
 
 
 def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
@@ -290,3 +306,49 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
         ax8.tick_params(axis='y', labelsize=font_size)
 
     return f
+
+
+def plot_population_fire_rates(rates_array, dt=0.005, font_size=20):
+
+    markers = ['+', '.', '*', '^', 'o', '8', 'd', 's']
+
+    # Get maximum_fire_rate
+    max_fire_rate = np.max(rates_array)
+
+    population_size = rates_array.shape[1]
+
+    quotient, remainder = divmod(population_size, len(markers))
+
+    t_stop = rates_array.shape[0] * dt
+    time = np.arange(0, t_stop, dt)
+
+    n_subplots = quotient
+
+    if 0 != remainder:
+        n_subplots += 1
+
+    fig_rates_vs_time, ax_array = plt.subplots(n_subplots, sharex=True)
+    fig_rates_vs_time.subplots_adjust(hspace=0.0)
+
+    for neuron_idx in np.arange(population_size):
+        marker_idx = neuron_idx % len(markers)
+        subplot_idx = neuron_idx / len(markers)
+
+        ax_array[subplot_idx].plot(time, rates_array[:, neuron_idx],
+                                   marker=markers[marker_idx], label='N%i' % neuron_idx)
+
+        # Set the limits for all subplots
+        for ax in ax_array:
+                ax.legend(fontsize='5')
+                ax.set_ylim(0, max_fire_rate)
+                ax.yaxis.set_ticks(np.arange(20, max_fire_rate, step=20))
+
+    # Set the limits for the last subplot
+    ax_array[-1].set_xlabel("Time (s)", fontsize=font_size)
+    ax_array[-1].tick_params(axis='x', labelsize=font_size)
+
+    # Set the y label on the middle subplot
+    ax_array[n_subplots / 2].set_ylabel("Fire Rates", fontsize=font_size)
+
+    fig_rates_vs_time.suptitle("Population (N=%d) Firing Rates " % population_size,
+                               fontsize=font_size + 10)

@@ -570,8 +570,8 @@ def get_object_visibility_levels(objects_list, c_id):
         else:
 
             occlusion_data = vrep.simxUnpackFloats(occlusion_data)
-            if not occlusion_data:
-                raw_input("Empty occlusion data")
+            # if not occlusion_data:
+            #     raw_input("Empty occlusion data")
 
             # print("Received:", occlusion_data)
 
@@ -828,10 +828,10 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 5 * 1000  # 5 seconds
+    t_stop_ms = 2 * 1000  # 5 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
-    population_size = 100
+    population_size = 674
     it_cortex = []
     rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
@@ -877,8 +877,8 @@ def main():
                            if 'diagnostic' not in obj.name.lower()]
 
         # Increase the number objects Neurons respond to
-        # for ii in np.arange(len(list_of_objects), 806):
-        #     list_of_objects.append('random_' + str(ii))
+        for ii in np.arange(len(list_of_objects), 806):
+            list_of_objects.append('random_' + str(ii))
 
         for _ in np.arange(population_size):
             neuron = it.Neuron(list_of_objects,
@@ -892,6 +892,11 @@ def main():
                                )
 
             it_cortex.append(neuron)
+
+        # Scale up the firing rates of neurons
+        pop_max_fire = utils.population_max_firing_rate(it_cortex)
+        for n_idx in np.arange(population_size):
+            it_cortex[n_idx].max_fire_rate = it_cortex[n_idx].max_fire_rate * 200.0 / pop_max_fire
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")
@@ -961,43 +966,14 @@ def main():
 
         if np.count_nonzero(rates_vs_time_arr):
             print("Plotting Results...")
-            rates_vs_time_arr = np.array(rates_vs_time_arr)
+            utils.plot_population_fire_rates(rates_vs_time_arr, t_step_ms, font_size)
 
-            markers = ['+', '.', '*', '^', 'o', '8', 'd', 's']
+            # Also plot all neurons on a single plot
+            plt.figure()
+            for n_idx in np.arange(population_size):
+                plt.plot(np.arange(t_stop_ms, step=t_step_ms), rates_vs_time_arr[:, n_idx])
 
-            quotient, remainder = divmod(population_size, len(markers))
-            n_subplots = quotient
-            if 0 != remainder:
-                n_subplots += 1
-
-            fig_rates_vs_time, ax_array = plt.subplots(n_subplots, sharex=True)
-            fig_rates_vs_time.subplots_adjust(hspace=0.0)
-
-            for neuron_idx in np.arange(population_size):
-                marker_idx = neuron_idx % len(markers)
-                subplot_idx = neuron_idx / len(markers)
-
-                ax_array[subplot_idx].plot(
-                    np.arange(t_stop_ms, step=t_step_ms),
-                    rates_vs_time_arr[:, neuron_idx],
-                    marker=markers[marker_idx],
-                    label='N%i' % neuron_idx)
-
-            for ax in ax_array:
-                ax.legend(fontsize='5')
-                ax.set_ylim(0, population_max_fire_rate + 1)
-                ax.set_yticks([])
-
-            ax_array[-1].set_yticks(
-                np.arange(0, population_max_fire_rate + 1, step=10))
-            ax_array[-1].set_xlabel("Time (ms)", fontsize=font_size)
-            ax_array[-1].set_ylabel("Firing Rate", fontsize=font_size)
-
-            ax_array[-1].tick_params(axis='x', labelsize=font_size)
-            ax_array[-1].tick_params(axis='y', labelsize=font_size - 7)
-
-            fig_rates_vs_time.suptitle("Population (N=%d) Firing Rates " % len(it_cortex),
-                                       fontsize=font_size + 10)
+            plt.title("Population (N=%d) Firing Rates " % len(it_cortex), fontsize=font_size + 10)
 
     except Exception:
         traceback.print_exc()

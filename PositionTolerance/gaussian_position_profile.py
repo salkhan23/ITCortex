@@ -159,7 +159,7 @@ class GaussianPositionProfile:
         axis.set_xlim([x_start, x_stop])
         axis.set_ylim([y_start, y_stop])
 
-        axis.scatter(0, 0, 1, color='red', marker='+', linewidth=12, label='Gaze Center')
+        axis.scatter(0, 0, 1, color='black', marker='+', linewidth=12, label='Gaze Center')
 
         axis.set_ylabel('Y (Radians)', fontsize=font_size)
         axis.set_xlabel('X(Radians)', fontsize=font_size)

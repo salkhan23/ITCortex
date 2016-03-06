@@ -105,7 +105,7 @@ def plot_tuning_curve_along_combined_axis(w_c, b, axis=None, font_size=20):
     vis_levels = np.linspace(0, 1, num=100)
     axis.plot(vis_levels,
               sigmoid(vis_levels, w_c, b),
-              linewidth=2, label='Best fit sigmoid', color='green')
+              linewidth=2, color='green')
 
     axis.set_xlim([0, 1.1])
     axis.set_ylim([0, 1.1])
@@ -242,12 +242,14 @@ def main(visibilities, fire_rates, ratio, title=''):
         f.suptitle(title + ". [R=%0.2f]" % ratio, fontsize=font_size + 10)
 
     ax1 = f.add_subplot(1, 2, 1)
-    plot_tuning_curve_along_combined_axis(w_combined, bias, ax1)
+    plot_tuning_curve_along_combined_axis(w_combined, bias, ax1, font_size=font_size)
     ax1.scatter(visibilities, fire_rates,
                 s=60, color='blue', label="Original data")
 
+    ax1.legend()
+
     ax2 = f.add_subplot(1, 2, 2, projection='3d')
-    neuron.plot_complete_profile(axis=ax2)
+    neuron.plot_complete_profile(axis=ax2, font_size=font_size)
 
     # To plot the combined visibility axis on the 3D plot
     # we assume combined visibility and diagnostic and nondiagnostic visibility levels are related
@@ -286,7 +288,7 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title='
           % (w_nondiagnostic, b_nondiagnostic))
 
     # Plot the original data
-    font_size = 20
+    font_size = 34
     fig = plt.figure()
     if title:
         fig.suptitle(title + ". [Diagnostic group to total variance ratio=%0.2f]"
@@ -341,7 +343,10 @@ if __name__ == "__main__":
         weight_c, bias_c = main(visibility_arr,
                                 rates,
                                 ratio=0.3,
-                                title='Kovacs 1995 - Object %d' % obj)
+                                # title='Kovacs 1995 - Object %d' % obj
+                                )
+        raw_input()
+
 
         w_combined_arr.append(weight_c)
         bias_arr.append(bias_c)

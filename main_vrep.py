@@ -828,10 +828,10 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 2 * 1000  # 5 seconds
+    t_stop_ms = 2 * 1000  # 2 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
-    population_size = 674
+    population_size = 100
     it_cortex = []
     rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
@@ -877,8 +877,8 @@ def main():
                            if 'diagnostic' not in obj.name.lower()]
 
         # Increase the number objects Neurons respond to
-        for ii in np.arange(len(list_of_objects), 806):
-            list_of_objects.append('random_' + str(ii))
+        # for ii in np.arange(len(list_of_objects), 806):
+        #     list_of_objects.append('random_' + str(ii))
 
         for _ in np.arange(population_size):
             neuron = it.Neuron(list_of_objects,

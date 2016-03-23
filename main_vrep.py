@@ -513,6 +513,7 @@ def initialize_vrep_streaming_operations(c_id,
         time.sleep(0.1)
 
 
+occlusion_data_prev = 0
 def get_object_visibility_levels(objects_list, c_id):
     """
     Inform the vision sensor child script which  object handles to calculate occlusion levels
@@ -523,6 +524,8 @@ def get_object_visibility_levels(objects_list, c_id):
 
     :rtype : List of (non-diagnostic, diagnostic) visibility levels for each specified object
     """
+    global occlusion_data_prev
+
     visibility_levels = np.zeros(shape=(len(objects_list), 2))
     # For diagnostic visibility, -1 = no data as no parts are labeled diagnostic
     visibility_levels[:, 1] = -1
@@ -570,8 +573,11 @@ def get_object_visibility_levels(objects_list, c_id):
         else:
 
             occlusion_data = vrep.simxUnpackFloats(occlusion_data)
-            # if not occlusion_data:
-            #     raw_input("Empty occlusion data")
+
+            if not occlusion_data:
+                 #raw_input("Empty occlusion data")
+                 if occlusion_data_prev:
+                    occlusion_data = occlusion_data_prev
 
             # print("Received:", occlusion_data)
 
@@ -629,6 +635,8 @@ def get_object_visibility_levels(objects_list, c_id):
                             nondiagnostic_total_pixels
 
                         visibility_levels[obj_list_idx][1] = retrieved_data[data_idx, 1]
+
+            occlusion_data_prev = occlusion_data
 
     return visibility_levels
 
@@ -828,7 +836,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 2 * 1000  # 2 seconds
+    t_stop_ms = 5 * 1000  # 2 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
     population_size = 100
@@ -900,7 +908,7 @@ def main():
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")
-        set_robot_velocity(client_id, 2)
+        set_robot_velocity(client_id, 6)
 
         rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 

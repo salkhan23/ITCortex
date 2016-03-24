@@ -64,8 +64,9 @@ def plot_population_selectivity_distribution(it_population, axis=None):
     axis.legend()
 
 
-def plot_single_neuron_selectivities(it_population, axis=None):
+def plot_single_neuron_selectivities(it_population, axis=None,  font_size=40):
     """ Plot histogram of single neuron selectivity (kurtosis) across population
+    :param font_size:
     :param axis:
     :param it_population:
     """
@@ -87,7 +88,6 @@ def plot_single_neuron_selectivities(it_population, axis=None):
 
     axis.hist(single_neuron_selectivity, bins=np.arange(0, 100, step=1))
 
-    font_size = 34
     axis.set_ylabel('Frequency', fontsize=font_size)
     # axis.set_xlabel('Kurtosis', fontsize=font_size)
     axis.tick_params(axis='x', labelsize=font_size)
@@ -117,8 +117,9 @@ def plot_single_neuron_selectivities(it_population, axis=None):
     axis.set_xlim([0, 80])
 
 
-def plot_population_sparseness(it_population, axis=None):
+def plot_population_sparseness(it_population, axis=None, font_size=40):
     """ Plot histogram of population sparseness (kurtosis) of each object in the population
+    :param font_size:
     :param axis:
     :param it_population:
     """
@@ -140,7 +141,6 @@ def plot_population_sparseness(it_population, axis=None):
 
     axis.hist(population_sparseness, bins=np.arange(0, 100, step=1))
 
-    font_size = 34
     axis.set_ylabel('Frequency', fontsize=font_size)
     axis.set_xlabel('Kurtosis', fontsize=font_size)
     axis.tick_params(axis='x', labelsize=font_size)
@@ -227,17 +227,25 @@ def plot_selectivity_vs_position_tolerance(it_population, axis=None):
 
     plt.plot(selectivity, fit[0] * selectivity + fit[1], ':', color='green')
 
-    f_size = 34
+    f_size = 40
     axis.set_ylabel('Position Tolerance (Radians)', fontsize=f_size)
     axis.set_xlabel('Selectivity (Activity Fraction)', fontsize=f_size)
-    axis.set_title('Position Tolerance vs Selectivity', fontsize=f_size + 10)
+    # axis.set_title('Position Tolerance vs Selectivity', fontsize=f_size + 10)
     axis.tick_params(axis='x', labelsize=f_size)
     axis.tick_params(axis='y', labelsize=f_size)
 
     plt.legend(loc='best', fontsize=f_size)
 
+    # axis.annotate(
+    #     'r=%0.4f' % np.corrcoef(selectivity, position_tolerance)[0, 1],
+    #     xy=(0.90, 0.85),
+    #     xycoords='axes fraction',
+    #     fontsize=f_size,
+    #     horizontalalignment='right',
+    #     verticalalignment='top')
 
-def plot_selectivity_vs_mean_response(it_population, axis=None, font_size=34):
+
+def plot_selectivity_vs_mean_response(it_population, axis=None, font_size=40):
 
     if axis is None:
         f, axis = plt.subplots()
@@ -264,11 +272,19 @@ def plot_selectivity_vs_mean_response(it_population, axis=None, font_size=34):
     # axis.loglog(mean_rates, selectivities_meas + 1, 'go')
     axis.set_xlabel("Average Fire Rate (Spikes/s)", fontsize=font_size)
     axis.set_ylabel(r"$log(\sigma_{KI} + 1)$", fontsize=font_size)
-    axis.grid()
+    # axis.grid()
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
     axis.set_xlim([0, np.max(mean_rates) * 1.1])
     axis.set_ylim([0, np.max(np.log(selectivities_meas + 1)) * 1.1])
+
+    axis.annotate(
+        'r=%0.4f' % np.corrcoef(mean_rates, np.log(selectivities_meas + 1))[0, 1],
+        xy=(0.90, 0.95),
+        xycoords='axes fraction',
+        fontsize=font_size,
+        horizontalalignment='right',
+        verticalalignment='top')
 
 
 def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
@@ -300,7 +316,6 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
         fontsize=30,
         horizontalalignment='right',
         verticalalignment='top')
-
 
     ax3 = f.add_subplot(4, 2, 3)
     it_neuron.size.plot_size_tolerance(axis=ax3, font_size=font_size)
@@ -369,13 +384,12 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
         ax8.tick_params(axis='x', labelsize=font_size)
         ax8.tick_params(axis='y', labelsize=font_size)
         ax8.annotate(
-        'H',
-        xy=(0.05, 0.95),
-        xycoords='axes fraction',
-        fontsize=30,
-        horizontalalignment='right',
-        verticalalignment='top')
-
+            'H',
+            xy=(0.05, 0.95),
+            xycoords='axes fraction',
+            fontsize=30,
+            horizontalalignment='right',
+            verticalalignment='top')
 
     return f
 
@@ -424,3 +438,47 @@ def plot_population_fire_rates(rates_array, dt=0.005, font_size=20):
 
     fig_rates_vs_time.suptitle("Population (N=%d) Firing Rates " % population_size,
                                fontsize=font_size + 10)
+
+
+def plot_receptive_field_centers(it_population, axis=None, font_size=40):
+
+    if axis is None:
+        f, axis = plt.subplots()
+
+    population_size = len(it_population)
+    centers = []
+
+    for neuron_idx in np.arange(population_size):
+        centers.append(it_population[neuron_idx].position.rf_center)
+
+    centers = np.array(centers)
+
+    axis.scatter(centers[:, 0], centers[:, 1],
+                 label='Generated Data', color='green', marker='o', s=60)
+
+    # axis.scatter(0, 0, color='red', marker='+', linewidth=10, label='Gaze Center')
+
+    axis.set_xlabel('Horizontal position (Radians)', fontsize=font_size)
+    axis.set_ylabel('Vertical position (Radians)',  fontsize=font_size)
+
+    plt.axvline(linewidth=1, color='k')
+    plt.axhline(linewidth=1, color='k')
+
+    plt.tick_params(axis='x', labelsize=font_size)
+    plt.tick_params(axis='y', labelsize=font_size)
+
+    plt.legend(loc='best', fontsize=font_size)
+
+    plt.annotate("Ipsilateral",
+                 xy=(0.15, 0.1),
+                 xycoords='axes fraction',
+                 fontsize=font_size,
+                 horizontalalignment='right',
+                 verticalalignment='top')
+
+    plt.annotate("Contralateral",
+                 xy=(0.95, 0.1),
+                 xycoords='axes fraction',
+                 fontsize=font_size,
+                 horizontalalignment='right',
+                 verticalalignment='top')

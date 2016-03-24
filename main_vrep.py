@@ -904,7 +904,7 @@ def main():
         # Scale up the firing rates of neurons
         pop_max_fire = utils.population_max_firing_rate(it_cortex)
         for n_idx in np.arange(population_size):
-            it_cortex[n_idx].max_fire_rate = it_cortex[n_idx].max_fire_rate * 200.0 / pop_max_fire
+            it_cortex[n_idx].max_fire_rate = it_cortex[n_idx].max_fire_rate * 100.0 / pop_max_fire
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")

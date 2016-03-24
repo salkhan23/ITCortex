@@ -14,6 +14,20 @@ plt.ion()
 
 dill.load_session('positionToleranceData.pkl')
 
+
+# ---------------------------------------------------------
+# Code to plot Zoccolan Data onto a figure
+zoc_pos_tol = yScatterRaw * np.pi / 180.0  # in Radians
+zoc_sel_af = xScatterRaw
+
+plt.scatter(zoc_sel_af, zoc_pos_tol, label='Original Data',  marker='o', s=60, color='blue')
+plt.plot(xScatterRaw,
+         (yLineFit[0]* np.pi / 180.0 * xScatterRaw + yLineFit[1] * np.pi / 180.0),
+         color='blue',
+         linewidth=2)
+#----------------------------------------------------------
+
+
 plt.figure('Original Data')
 
 plt.scatter(xScatterRaw,yScatterRaw, label='Scatter Data')

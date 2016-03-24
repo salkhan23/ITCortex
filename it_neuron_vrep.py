@@ -373,7 +373,7 @@ def plot_neuron_dynamic_profile(
 
         if ii < time_arr.shape[0] / 2:
             rates[ii] = it_neuron.firing_rate([ground_truth])
-            stimulus[ii] = 1
+            stimulus[ii] = 10
         else:
             rates[ii] = it_neuron.firing_rate([])
             stimulus[ii] = 0

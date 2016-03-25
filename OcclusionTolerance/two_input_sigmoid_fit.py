@@ -111,7 +111,7 @@ def plot_tuning_curve_along_combined_axis(w_c, b, axis=None, font_size=20):
     axis.set_ylim([0, 1.1])
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
-    axis.grid()
+    #axis.grid()
 
     axis.set_xlabel(r"$v_c$", fontsize=font_size)
     axis.set_ylabel("FR (spikes/s)", fontsize=font_size)
@@ -236,7 +236,7 @@ def main(visibilities, fire_rates, ratio, title=''):
     # find w_d and w_nd
     neuron = occlusion_profile.TwoInputSigmoidOcclusionProfile(ratio, w_combined, bias)
 
-    font_size = 34
+    font_size = 50
     f = plt.figure()
     if title:
         f.suptitle(title + ". [R=%0.2f]" % ratio, fontsize=font_size + 10)
@@ -245,8 +245,9 @@ def main(visibilities, fire_rates, ratio, title=''):
     plot_tuning_curve_along_combined_axis(w_combined, bias, ax1, font_size=font_size)
     ax1.scatter(visibilities, fire_rates,
                 s=60, color='blue', label="Original data")
+    ax1.set_ylabel("Normalized Firing Rate (spikes/s)", fontsize=font_size)
 
-    ax1.legend()
+    ax1.legend(fontsize=24)
 
     ax2 = f.add_subplot(1, 2, 2, projection='3d')
     neuron.plot_complete_profile(axis=ax2, font_size=font_size)
@@ -267,6 +268,10 @@ def main(visibilities, fire_rates, ratio, title=''):
              vis_combined,
              sigmoid(vis_combined, w_combined, bias) / sigmoid(1, w_combined, bias),
              linewidth=3, label='Best fit sigmoid', color='green')
+
+    ax2.set_xticks(np.arange(0, 1.1, step=0.5))
+    ax2.set_yticks(np.arange(0.5, 1.1, step=0.5))
+    ax2.set_zticks(np.arange(0, 1.1, step=0.5))
 
     return w_combined, bias
 

@@ -326,7 +326,7 @@ class TwoInputSigmoidOcclusionProfile:
 
         axis.set_xlabel("\n" + r"$v_{nd}$", fontsize=font_size + 10, fontweight='bold', color='b')
         axis.set_ylabel("\n" + r"$v_d$", fontsize=font_size + 10, fontweight='bold', color='b')
-        axis.set_zlabel("FR (spikes/s)", fontsize=font_size)
+        axis.set_zlabel("\n\n" + "FR (spikes/s)", fontsize=font_size)
         # axis.set_title("Complete Tuning Curve", fontsize=font_size + 10)
 
         label = r"$w_n=%0.2f,$" % self.w_vector[0] + "\n" \
@@ -350,7 +350,7 @@ class TwoInputSigmoidOcclusionProfile:
         axis.set_ylim([0, 1.1])
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
-        axis.grid()
+        #axis.grid()
 
         axis.set_xlabel("Visibility Combined", fontsize=font_size)
         axis.set_ylabel("Normalized fire rate (spikes/s)", fontsize=font_size)

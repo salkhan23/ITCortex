@@ -187,14 +187,14 @@ class GaussianRotationProfile:
         # axis.set_title('Rotational Tolerance Profile', fontsize=(font_size + 10))
         axis.set_xlabel('Angle (Degrees)', fontsize=font_size)
         axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
-        axis.grid()
+        # axis.grid()
         axis.set_ylim([0, 1.05])
         axis.set_xlim([-180, 180])
 
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
 
-        axis.annotate( r'$\mu_r = %0.2f,\ \sigma_{RT}= %0.2f$'
+        axis.annotate(r'$\mu_r = %0.2f,\ \sigma_{RT}= %0.2f$'
                       % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
                       xy=(0.95, 0.9),
                       xycoords='axes fraction',
@@ -202,8 +202,8 @@ class GaussianRotationProfile:
                       horizontalalignment='right',
                       verticalalignment='top')
 
-        axis.annotate(r'$f_{y\_sym} = %0.2f\ m_{y\_sym}=%s$'
-                      % (rotation_symmetry_period, mirror_symmetric),
+        axis.annotate(r'$f_{sym} = %0.2f$'
+                      % rotation_symmetry_period,
                       xy=(0.95, 0.80),
                       xycoords='axes fraction',
                       fontsize=font_size,
@@ -262,6 +262,8 @@ if __name__ == "__main__":
     # Fit some of the tuning curves in the literature
     import pickle
 
+    f_size = 50
+
     fig_tuning_types, ax_arr = plt.subplots(1, 3, sharey=True)
     fig_tuning_types.subplots_adjust(wspace=0.025)
 
@@ -283,9 +285,14 @@ if __name__ == "__main__":
 
     profile = GaussianRotationProfile((103.14 * np.pi / 180), (26.55 * np.pi / 180))
     profile.print_parameters()
-    profile.plot_tuning_profile(rotation_symmetry_period=1, axis=ax_arr[0])
-    ax_arr[0].set_title('Single Peak', fontsize=(20 + 10))
-    #ax_arr[0].legend()
+    profile.plot_tuning_profile(rotation_symmetry_period=1, axis=ax_arr[0], font_size=f_size)
+    ax_arr[0].set_xticks(np.arange(-180, 180, step=90))
+    ax_arr[0].set_xlim([-179, 180])
+    ax_arr[0].set_ylabel('Normalized Firing Rate (Spikes/s)', fontsize=f_size)
+    ax_arr[0].set_xlabel('')
+
+    # ax_arr[0].set_title('Single Peak', fontsize=font_size)
+    # ax_arr[0].legend()
 
     # ------------------------------------------------------------------------------
     title = 'Fig 5c, logothesis, Pauls & poggio - 1995'
@@ -296,10 +303,13 @@ if __name__ == "__main__":
 
     profile = GaussianRotationProfile((117.85 * np.pi / 180), (13.36 * np.pi / 180))
     profile.print_parameters()
-    profile.plot_tuning_profile(rotation_symmetry_period=2, axis=ax_arr[1])
-    ax_arr[1].set_title('Pseudo Mirror Symmetric', fontsize=(20 + 10))
-    #ax_arr[1].legend()
+    profile.plot_tuning_profile(rotation_symmetry_period=2, axis=ax_arr[1], font_size=f_size)
     ax_arr[1].set_ylabel('')
+    ax_arr[1].set_xticks(np.arange(-180, 180, step=90))
+    ax_arr[1].set_xlim([-179, 180])
+
+    # ax_arr[1].set_title('Pseudo Mirror Symmetric', fontsize=font_size)
+    # ax_arr[1].legend()
 
     # ------------------------------------------------------------------------------
     title = 'Fig 5e, logothesis, Pauls & poggio -1995'
@@ -310,8 +320,11 @@ if __name__ == "__main__":
     ax_arr[2].scatter(x_in, y, marker='o', label='Original Data', s=60)
     profile = GaussianRotationProfile((-70.00 * np.pi / 180), (11 * np.pi / 180))
     profile.print_parameters()
-    profile.plot_tuning_profile(rotation_symmetry_period=16, axis=ax_arr[2])
-    ax_arr[2].set_title('View Invariant', fontsize=(20 + 10))
-    ax_arr[2].legend(loc='best', fontsize=24.0)
+    profile.plot_tuning_profile(rotation_symmetry_period=16, axis=ax_arr[2], font_size=f_size)
     ax_arr[2].set_ylabel('')
+    ax_arr[2].set_xticks(np.arange(-180, 180, step=90))
+    ax_arr[2].set_xlim([-179, 180])
+    ax_arr[2].set_xlabel('')
 
+    # ax_arr[2].set_title('View Invariant', fontsize=font_size)
+    ax_arr[2].legend(loc='best', fontsize=24.0)

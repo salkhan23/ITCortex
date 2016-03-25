@@ -153,8 +153,7 @@ class GaussianPositionProfile:
             # the same figure
             axis.contour(xx, yy, zz, 1, colors='blue')
         else:
-            # Plot a filled contour plot.
-            axis.contourf(xx, yy, zz, n_contours)
+            axis.contour(xx, yy, zz, n_contours, linewidths=2)
 
         axis.set_xlim([x_start, x_stop])
         axis.set_ylim([y_start, y_stop])

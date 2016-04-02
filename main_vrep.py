@@ -527,6 +527,7 @@ def get_object_visibility_levels(objects_list, c_id):
     global occlusion_data_prev
 
     visibility_levels = np.zeros(shape=(len(objects_list), 2))
+    sizes = np.zeros(shape=len(objects_list))
     # For diagnostic visibility, -1 = no data as no parts are labeled diagnostic
     visibility_levels[:, 1] = -1
 
@@ -575,8 +576,8 @@ def get_object_visibility_levels(objects_list, c_id):
             occlusion_data = vrep.simxUnpackFloats(occlusion_data)
 
             if not occlusion_data:
-                 #raw_input("Empty occlusion data")
-                 if occlusion_data_prev:
+                # raw_input("Empty occlusion data")
+                if occlusion_data_prev:
                     occlusion_data = occlusion_data_prev
 
             # print("Received:", occlusion_data)
@@ -591,7 +592,7 @@ def get_object_visibility_levels(objects_list, c_id):
 
             # Objects of interest sent down from VRep can either be a parent object or diagnostic
             #  part of an object.
-            retrieved_data = np.reshape(occlusion_data, (len(occlusion_data) / 3, 3))
+            retrieved_data = np.reshape(occlusion_data, (len(occlusion_data) / 4, 4))
 
             for data_idx in np.arange(retrieved_data.shape[0]):
                 identity = np.int(retrieved_data[data_idx, 0])
@@ -603,6 +604,15 @@ def get_object_visibility_levels(objects_list, c_id):
                         # Only adjust the visibility level if it hasn't been updated
                         if not visibility_levels[obj_list_idx][0]:
                             visibility_levels[obj_list_idx][0] = retrieved_data[data_idx, 1]
+
+                        # Only interested in parent object sizes
+                        # the returned size is based on percentage of the axis,
+                        # assume both axis range from -pi to pi. Current the size to radians.
+
+                        # TODO: Need to consider aspect ratio in this calculation.
+                        # Current assumption is  = 1. so both axis span the specified range.
+                        # for a different aspect ratio this would not necessarily be the case.
+                        sizes[obj_list_idx] = retrieved_data[data_idx, 3] * np.pi * 2
                         break
 
                     # if diagnostic object part, add diagnostic visibility. But also adjust
@@ -638,7 +648,7 @@ def get_object_visibility_levels(objects_list, c_id):
 
             occlusion_data_prev = occlusion_data
 
-    return visibility_levels
+    return visibility_levels, sizes
 
 
 def set_object_handles_for_rotation_symmetries(objects_list, c_id):
@@ -728,17 +738,22 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
                                   (radians).
         y,                      : object vision frame y coordinate in degree of eccentricity
                                   (radians).
+
         size,                   : size of object (span of objects maximum dimension) in degree of
                                   eccentricity (radians).
+
         rot_x,                  : rotations about the x-axis  in degree of eccentricity (radians).
         rot_x_period            : rotations symmetry period around x-axis
         rot_x_mirror_symmetric  : whether the object is mirror symmetric about x-axis.
+
         rot_y,                  : rotations about the y-axis  in degree of eccentricity (radians).
         rot_y_period            : rotations symmetry period around y-axis
         rot_y_mirror_symmetric  : whether the object is mirror symmetric about y-axis.
+
         rot_z,                  : rotations about the z-axis  in degree of eccentricity (radians).
         rot_z_period            : rotations symmetry period around z-axis
         rot_z_mirror_symmetric  : whether the object is mirror symmetric about z-axis.
+
         vis_non_diag            : Visibility percentage of non-diagnostic parts of the object.
                                   Range (0, 1)
         vis_diag                : Visibility percentage of diagnostic parts of the object.
@@ -806,7 +821,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
             # Add Ground Truth
             ground_truth_list.append([
-                vrep_obj.name,
+                vrep_obj.name,                      # object name
                 x,                                  # X object center image coordinate in Radians.
                 y,                                  # Y object center image coordinate in Radians.
                 size,                               # Size in Radians.
@@ -825,10 +840,34 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
     # After identifying all objects that lie within the field of vision of the vision sensor,
     # get occlusion levels from child script.
-    vis_array = get_object_visibility_levels(objects_in_frame, c_id)
+    vis_array, sizes_array = get_object_visibility_levels(objects_in_frame, c_id)
 
     for idx, entry in enumerate(ground_truth_list):
         entry.extend(vis_array[idx])               # Add nondiagnostic and diagnostic visibilities.
+
+    # TODO:Fix me
+    # Remove projection plane matrix and find another way of getting the number of visible objects
+    # Try to see if simxHandleVisionSensor is any good. Based on the configured mode, in the
+    # auxiliary package returned from this api contains the number of detections made by the vision
+    # sensor.
+
+    # For now, we get the position and size of the objects using the new methods and replaces
+    # these values in the returned ground truth. Once the project plane matrix is removed,
+    # clean this up
+    for o_idx, vrep_obj in enumerate(objects_in_frame):
+
+        x, y, z = get_object_position(
+            c_id,
+            vrep_obj.handle,
+            vis_sen_handle)
+
+        x = np.tan(x / z)
+        y = np.tan(y / z)
+
+        # Replace x coordinate
+        ground_truth_list[o_idx][1] = x
+        ground_truth_list[o_idx][2] = y
+        ground_truth_list[o_idx][3] = sizes_array[o_idx]
 
     return ground_truth_list
 
@@ -836,7 +875,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 5 * 1000  # 2 seconds
+    t_stop_ms = 2 * 1000  # 2 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
     population_size = 100
@@ -902,13 +941,14 @@ def main():
             it_cortex.append(neuron)
 
         # Scale up the firing rates of neurons
-        pop_max_fire = utils.population_max_firing_rate(it_cortex)
-        for n_idx in np.arange(population_size):
-            it_cortex[n_idx].max_fire_rate = it_cortex[n_idx].max_fire_rate * 100.0 / pop_max_fire
+        # pop_max_fire = utils.population_max_firing_rate(it_cortex)
+        # for n_idx in np.arange(population_size):
+        #     it_cortex[n_idx].max_fire_rate = \
+        #         it_cortex[n_idx].max_fire_rate * 200.0 / pop_max_fire
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")
-        set_robot_velocity(client_id, 6)
+        set_robot_velocity(client_id, 4)
 
         rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
@@ -969,19 +1009,23 @@ def main():
             t_current_ms += t_step_ms
 
         # Plot firing rates ---------------------------------------------------------------------
-        population_max_fire_rate = utils.population_max_firing_rate(it_cortex)
-        font_size = 34
+        font_size = 40
 
         if np.count_nonzero(rates_vs_time_arr):
             print("Plotting Results...")
-            utils.plot_population_fire_rates(rates_vs_time_arr, t_step_ms, font_size)
 
             # Also plot all neurons on a single plot
             plt.figure()
             for n_idx in np.arange(population_size):
-                plt.plot(np.arange(t_stop_ms, step=t_step_ms), rates_vs_time_arr[:, n_idx])
+                plt.plot(np.arange(t_stop_ms, step=t_step_ms) / 1000.0,
+                         rates_vs_time_arr[:, n_idx])
 
-            plt.title("Population (N=%d) Firing Rates " % len(it_cortex), fontsize=font_size + 10)
+            # plt.title("Population (N=%d) Firing Rates " % len(it_cortex), fontsize=font_size)
+            plt.xlabel("Time(s)", fontsize=font_size)
+            plt.ylabel("Firing Rates (spikes/s)", fontsize=font_size)
+
+            plt.tick_params(axis='x', labelsize=font_size)
+            plt.tick_params(axis='y', labelsize=font_size)
 
     except Exception:
         traceback.print_exc()

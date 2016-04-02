@@ -16,18 +16,7 @@ class LogNormalSizeProfile:
 
         # pol_tol is defined as 2x the standard deviation of the RF spatial extent of the
         # neuron. It comes from the position profile. Specifically from gaussianPositionProfile.
-
-        # Convert from pol_tol to rf_size as defined in Ito 95 paper: Square root of the areal
-        # extent of the neuron.
-        #   pol_tol = r
-        #   rf_size     = np.sqrt(pi) * r = pol_tol / np.sqrt(pi)
-        self.rf_size = pol_tol / 2 * np.sqrt(np.pi)
-
-        # Given a receptive field size, get max. stimulus size supported.
-        #   rf_size       = area extent of RF, if assume circular = np.sqrt(np.pi) * r
-        #   stim_size     = distance between the the outer edges along the longest axis
-        #                   of the stimulus. If we assume a circular stimulus = 2r
-        self.max_stim_size = 2 * pol_tol
+        self.max_pref_stim_size = 2 * pol_tol
 
         # Minimum stimulus size = 0.08 degrees, from Ito-95. Below this size, the object is
         # too small to allow proper recognition. Converted to radians.
@@ -82,7 +71,7 @@ class LogNormalSizeProfile:
         preferred_size = np.float(ss.lognorm.rvs(s=0.80, scale=5.40, size=1)) * np.pi / 180.0
 
         preferred_size = np.max((preferred_size, self.min_stim_size))
-        preferred_size = np.min((preferred_size, self.max_stim_size))
+        preferred_size = np.min((preferred_size, self.max_pref_stim_size))
 
         return preferred_size
 
@@ -126,15 +115,12 @@ class LogNormalSizeProfile:
 
     def print_parameters(self):
         print("Profile                      = %s" % self.type)
-        print("Valid stimulus size range    = [%0.4f, %0.4f] (Radians)"
-              % (self.min_stim_size, self.max_stim_size))
         print("Preferred Stimulus Size      = %0.4f (Radians)" % self.pref_size)
         print("Size bandwidth               = %0.4f octaves" % self.size_bw)
-        print("RF Size (area extent of RF)  = %0.4f" % self.rf_size)
 
     def plot_size_tolerance(self, axis=None, font_size=34):
 
-        x = np.linspace(0, self.max_stim_size * 1.2, num=100)
+        x = np.linspace(0, self.max_pref_stim_size * 1.2, num=100)
 
         if axis is None:
             f, axis = plt.subplots()

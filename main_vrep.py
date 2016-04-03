@@ -576,11 +576,17 @@ def get_object_visibility_levels(objects_list, c_id):
             occlusion_data = vrep.simxUnpackFloats(occlusion_data)
 
             if not occlusion_data:
-                # raw_input("Empty occlusion data")
+
+                # In case of an empty data string from the child script. This is due to the
+                # script taking to long. Possible solutions include (1) increase sleep time
+                # between simulation triggers or (2) decrease the vision sensor resolution.
+                warnings.warn("Empty vrep script data!")
+                raw_input("Empty vrep script data!")
+
+                # Try to recover from this situation by using the data from the previous step.
+                # It should not be too different
                 if occlusion_data_prev:
                     occlusion_data = occlusion_data_prev
-
-            # print("Received:", occlusion_data)
 
             # The occlusion data sent down is actually for the previous time step, to the child
             # script we specify which objects we are interested in and it returns values from its
@@ -875,7 +881,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 2 * 1000  # 2 seconds
+    t_stop_ms = 5 * 1000  # 2 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
     population_size = 100
@@ -948,7 +954,7 @@ def main():
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")
-        set_robot_velocity(client_id, 4)
+        set_robot_velocity(client_id, 6)
 
         rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
@@ -961,15 +967,14 @@ def main():
                 print ("Failed to step simulation! Err %s" % res)
                 break
 
-            # The occlusion calculate script take some time to run and send the results up to the
-            # streaming buffer. Add some delay to allow the calculated occlusion data to be written
-            # into the streaming buffer so it can be correctly picked up by the python side of the
-            # code. Without this additional time delay, the second time step also results in an
-            # empty occlusion data stream retrieved. In this case, received occlusion data is from
-            # current time step - 2, instead of -1. The first empty occlusion data string is
-            # because of VREPs communication mechanism for streaming data. Good system but just
-            # need to be aware of 1 step delay it causes.
-            time.sleep(1.25)
+            # The Vrep child script takes time to run. vrep is running on a separate thread.
+            # Add a delay to allow the calculated occlusion data to be written into the vrep
+            # streaming buffer so it can be correctly picked up by the thread running the IT
+            # cortex model. Without this delay, empty buffer strings will be picked up the model
+            # (since we clear it after reading). At the moment value is arbitrarily chosen. It
+            # should be slightly higher then the max execution time of the child script. This can
+            # be seen in the vrep scene data printed out every step.
+            time.sleep(1.75)
 
             if t_current_ms == 0:
                 # Because object handles need to be sent to the child script and the fact that

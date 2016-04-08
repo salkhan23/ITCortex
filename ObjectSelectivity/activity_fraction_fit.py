@@ -6,6 +6,8 @@ Created on Fri May 15 16:44:45 2015
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
+import pickle
 
 
 def get_activity_fraction_sparseness(n=1):
@@ -32,3 +34,19 @@ def get_activity_fraction_sparseness(n=1):
     :rtype : sparseness (activity fraction) metrics of size n.
     """
     return np.random.uniform(size=n)
+
+
+if __name__ == "__main__":
+    plt.ion()
+
+
+    with open('activity_frac_selectivity_dist.pkl', 'rb') as handle:
+        data = pickle.load(handle)
+
+    plt.figure()
+
+    # Original Data from Zoocalan 2007, Figure 5b
+    plt.plot(data['bins'], data['freq'], label='Original Data')
+
+    #TODO: Fit the data!
+

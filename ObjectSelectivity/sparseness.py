@@ -165,29 +165,24 @@ class LehkySparseness:
         # expectation and variance of "full" (unscaled) distribution of mean rates
         #   that will approximate Lehky after scaling ...
         Ef = El / Es
+        # Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
         Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
 
         # Prevent negative scale parameters and large values by preventing
         # bfb calculations from going negative or too small
-        # # ------------------------------------------------------------------------------
-        # epsilon = 0.001
-        #
-        # a = (El / Es)** 2
-        # b = Ef**2 / ala + epsilon
-        # c = (Ef**2 / ala + epsilon)* Es**2 - Vl
-        #
-        # coeff = np.array([a, b, c])
-        # r0, r1 = np.roots(coeff)
-        #
-        # print("Var scaled %0.4f, Solution %0.4f, %0.4f" %(Vs, r0, r1))
-        # Vs_min = max(r0, r1)
-        #
-        # if Vs < Vs_min:
-        #     Vs = Vs_min
-        #
-        #     # Recalculate the full variance again as this is the parameter that changes
-        #     # with the new Vs in the calculation of bfb and bfa
-        #     Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
+        # ------------------------------------------------------------------------------
+        epsilon = 0.1
+        Vs_max = (Vl - (Ef**2/ala+epsilon)*Es**2) / (Ef**2/ala+epsilon + (El/Es)**2)
+
+        print("V scaled %0.4f, Solution %0.4f" %(Vs, Vs_max))
+
+        if Vs > Vs_max:
+            print('********FIXING*********')
+            Vs = Vs_max
+
+            # Recalculate the full variance again as this is the parameter that changes
+            # with the new Vs in the calculation of bfb and bfa
+            Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
         # ----------------------------------------------------------------------------
 
         # # Debug Prints

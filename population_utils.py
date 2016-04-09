@@ -204,7 +204,7 @@ def plot_population_obj_preferences(it_population, axis=None):
                   verticalalignment='top')
 
 
-def plot_selectivity_vs_position_tolerance(it_population, axis=None):
+def plot_selectivity_vs_position_tolerance(it_population, axis=None, f_size=40):
     """  Plot population selectivity, activity fraction, verses  position tolerance
     :param axis:
     :param it_population:
@@ -227,7 +227,6 @@ def plot_selectivity_vs_position_tolerance(it_population, axis=None):
 
     plt.plot(selectivity, fit[0] * selectivity + fit[1], ':', color='green')
 
-    f_size = 40
     axis.set_ylabel('Position Tolerance (Radians)', fontsize=f_size)
     axis.set_xlabel('Selectivity (Activity Fraction)', fontsize=f_size)
     # axis.set_title('Position Tolerance vs Selectivity', fontsize=f_size + 10)
@@ -287,10 +286,9 @@ def plot_selectivity_vs_mean_response(it_population, axis=None, font_size=40):
         verticalalignment='top')
 
 
-def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None):
+def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_size=20):
 
     f = plt.figure()
-    font_size = 20
 
     ax1 = f.add_subplot(4, 2, 1)
     it_neuron.selectivity.plot_object_preferences(axis=ax1, font_size=16)

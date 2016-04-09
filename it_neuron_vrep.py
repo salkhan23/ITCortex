@@ -311,7 +311,10 @@ class Neuron:
             occ_fr * \
             rot_fr
 
-        joint_rate = self.clutter.firing_rate_modifier(isolated_rates, position_weights)
+        if len(isolated_rates) > 1:
+            joint_rate = self.clutter.firing_rate_modifier(isolated_rates, position_weights)
+        else:
+            joint_rate = isolated_rates
 
         # # Debug Code - print all Isolated fire rates
         # print("Static Isolated Fire Rates:")

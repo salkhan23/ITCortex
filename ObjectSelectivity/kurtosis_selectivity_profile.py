@@ -71,8 +71,15 @@ class KurtosisSparseness:
         self.a = self.__get_distribution_shape_parameter()
         self.b = self.__get_distribution_scale_parameter()
 
-        self.objects = {item: self.__get_object_preference(np.float(np.random.uniform(size=1)))
-                        for item in list_of_objects}
+        obj_preferences = gamma.rvs(self.a, loc=0, scale=self.b, size=len(list_of_objects))
+        obj_preferences = obj_preferences / self.get_max_firing_rate()
+
+        self.objects = {item: obj_preferences[item_idx]
+                        for item_idx, item in enumerate(list_of_objects)}
+
+        # TODO: Remove this code and function, above is a faster way to generate object preferences
+        # self.objects = {item: self.__get_object_preference(np.float(np.random.uniform(size=1)))
+        #                 for item in list_of_objects}
 
         self.activity_fraction_measured = \
             calculate_activity_fraction(np.array(self.objects.values()))
@@ -110,7 +117,7 @@ class KurtosisSparseness:
 
         :rtype : scale parameter.
         """
-        return np.float(gamma.rvs(4.6987, scale=0.3200, loc=0, size=1))
+        return np.float(gamma.rvs(37.4292, scale=0.062, loc=0, size=1))
 
     def __get_object_preference(self, cdf_loc):
         """

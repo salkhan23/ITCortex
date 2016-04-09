@@ -11,8 +11,9 @@ sys.path.append("..")
 
 from PositionTolerance import gaussian_position_profile as gpp
 from SizeTolerance import log_normal_size_profile as lnsp
-
 import it_neuron_vrep as it
+import population_utils as utils
+
 # Force reload (compile) IT cortex modules to pick changes not included in cached version.
 reload(gpp)
 reload(lnsp)
@@ -41,6 +42,87 @@ def get_average_selectivity_and_sparseness(r_mat):
         sparsenesses[o_idx] = calculate_kurtosis(rates)
 
     return np.nanmean(selectivities), np.mean(sparsenesses)
+
+
+def plot_selectivity_and_sparseness(r_mat, font_size=50):
+
+    f, ax_arr = plt.subplots(2, 1, sharex=True)
+
+    # Single Neuron selectivities
+    n_neurons = r_mat.shape[0]
+    n_objs = r_mat.shape[1]
+
+    selectivities = np.zeros(n_neurons)
+    sparsenesses = np.zeros(n_objs)
+
+    for n_idx in np.arange(n_neurons):
+        rates = r_mat[n_idx, :]
+        selectivities[n_idx] = calculate_kurtosis(rates)
+
+    for o_idx in np.arange(n_objs):
+        rates = r_mat[:, o_idx]
+        sparsenesses[o_idx] = calculate_kurtosis(rates)
+
+    # Plot selectivities ------------------------------------------------
+    ax_arr[0].hist(selectivities, bins=np.arange(0, 100, step=1))
+
+    ax_arr[0].set_ylabel('Frequency', fontsize=font_size)
+    # ax_arr[0].set_xlabel('Kurtosis', fontsize=font_size)
+    ax_arr[0].tick_params(axis='x', labelsize=font_size)
+    ax_arr[0].tick_params(axis='y', labelsize=font_size)
+    # ax_arr[0].set_xlim([0, 80])
+
+    ax_arr[0].annotate('Mean=%0.2f' % np.mean(selectivities),
+                       xy=(0.95, 0.9),
+                       xycoords='axes fraction',
+                       fontsize=font_size,
+                       horizontalalignment='right',
+                       verticalalignment='top')
+
+    ax_arr[0].annotate('N=%d' % len(selectivities),
+                       xy=(0.95, 0.75),
+                       xycoords='axes fraction',
+                       fontsize=font_size,
+                       horizontalalignment='right',
+                       verticalalignment='top')
+
+    ax_arr[0].annotate('Single Neuron Selectivity',
+                       xy=(0.7, 0.95),
+                       xycoords='axes fraction',
+                       fontsize=font_size,
+                       horizontalalignment='right',
+                       verticalalignment='top')
+
+    # Plot sparsenesses ------------------------------------------------
+    ax_arr[1].hist(sparsenesses, bins=np.arange(0, 100, step=1))
+
+    ax_arr[1].set_ylabel('Frequency', fontsize=font_size)
+    ax_arr[1].set_xlabel('Kurtosis', fontsize=font_size)
+    ax_arr[1].tick_params(axis='x', labelsize=font_size)
+    ax_arr[1].tick_params(axis='y', labelsize=font_size)
+
+    ax_arr[1].annotate('Mean=%0.2f' % np.mean(sparsenesses),
+                       xy=(0.95, 0.9),
+                       xycoords='axes fraction',
+                       fontsize=font_size,
+                       horizontalalignment='right',
+                       verticalalignment='top')
+
+    ax_arr[1].annotate('N=%d' % len(sparsenesses),
+                       xy=(0.95, 0.75),
+                       xycoords='axes fraction',
+                       fontsize=font_size,
+                       horizontalalignment='right',
+                       verticalalignment='top')
+
+    ax_arr[1].annotate('Population Sparseness',
+                       xy=(0.7, 0.95),
+                       xycoords='axes fraction',
+                       fontsize=font_size,
+                       horizontalalignment='right',
+                       verticalalignment='top')
+
+    ax_arr[1].set_xlim([0, 70])
 
 
 def get_scale_factors_from_model(n_samples):
@@ -165,7 +247,6 @@ class LehkySparseness:
         # expectation and variance of "full" (unscaled) distribution of mean rates
         #   that will approximate Lehky after scaling ...
         Ef = El / Es
-        # Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
         Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
 
         # Prevent negative scale parameters and large values by preventing
@@ -174,10 +255,9 @@ class LehkySparseness:
         epsilon = 0.1
         Vs_max = (Vl - (Ef**2/ala+epsilon)*Es**2) / (Ef**2/ala+epsilon + (El/Es)**2)
 
-        print("V scaled %0.4f, Solution %0.4f" %(Vs, Vs_max))
-
         if Vs > Vs_max:
             print('********FIXING*********')
+            print("V scaled %0.4f, Solution %0.4f" %(Vs, Vs_max))
             Vs = Vs_max
 
             # Recalculate the full variance again as this is the parameter that changes
@@ -186,18 +266,17 @@ class LehkySparseness:
         # ----------------------------------------------------------------------------
 
         # # Debug Prints
-        print("sample mean %0.4f, var %0.4f" %(Es, Vs))
-        print("Lehky mean %0.4f, var %0.4f" %(El, Vl))
-        print("Full mean %0.4f, var %0.4f" %(Ef, Vf))
+        # print("sample mean %0.4f, var %0.4f" %(Es, Vs))
+        # print("Lehky mean %0.4f, var %0.4f" %(El, Vl))
+        # print("Full mean %0.4f, var %0.4f" %(Ef, Vf))
 
         # shape and scale parameters for full distribution (keeping shape same as scaled one) ...
         self._afa = ala
         self._bfa = bla
-        #self._bfb = max((Vf - Ef**2/ala) / (Ef*bla*(1+ala)), 0.001)
         self._bfb = (Vf - Ef**2/ala) / (Ef*bla*(1+ala))
         self._afb = Ef / (self._afa*self._bfa*self._bfb)
 
-        print("Scale distribution Gamma parameters: a=%0.4f, b=%0.4f" %(self._afb, self._bfb))
+        #print("Scale distribution Gamma parameters: a=%0.4f, b=%0.4f" %(self._afb, self._bfb))
 
     def sample_rates_rates(self, n):
         """
@@ -276,82 +355,12 @@ if __name__ == '__main__':
     # print("Lehky: average neuron selectivity %0.4f, population sparseness %0.4f"
     #       % (np.mean(l_avg_selectivity_arr), np.mean(l_avg_sparseness_arr)))
 
-    # --------------------------------------------------------------
-    # Find scale distribution parameter
-    # --------------------------------------------------------------
-    n_runs = 100
-    neurons = 674
-    objects = 806
-
-    f_avg_selectivity_arr = np.zeros(n_runs)
-    f_avg_sparseness_arr = np.zeros(n_runs)
-
-    s_avg_selectivity_arr = np.zeros(n_runs)
-    s_avg_sparseness_arr = np.zeros(n_runs)
-
-    scale_a_arr = np.zeros(n_runs)
-    scale_b_arr = np.zeros(n_runs)
-
-    for r_idx in np.arange(n_runs):
-
-        # print ("Run %i" % r_idx)
-
-        # Scale Factors
-        # scale_factor_samples = np.random.rand(10000)
-        scale_factor_samples = get_scale_factors_from_model(1000)
-
-        # ------------------------------------------------------------------------
-        ls = LehkySparseness(scale_factor_samples)
-
-        # Store modified scale values these will be used in the larger model
-        scale_a_arr[r_idx] = ls.afb
-        scale_b_arr[r_idx] = ls.bfb
-
-        # Generate sample rates
-        rates_mat = ls.get_sample_profile_and_rates_mat(neurons, objects)
-
-        # Calculate average neuron selectivities and population sparseness
-        f_avg_selectivity_arr[r_idx], f_avg_sparseness_arr[r_idx] = \
-            get_average_selectivity_and_sparseness(rates_mat)
-
-        # Generate random scale factors and multiply them with rates and
-        # recalculate selectivity and sparseness
-        # scale_factors = np.random.rand(neurons)
-        scale_factors = get_scale_factors_from_model(neurons)
-
-        # Scale the rates - multiple a scale factor with all the firing rates of a neuron
-        scaled_rates = np.multiply(scale_factors, rates_mat.T)
-        scaled_rates = scaled_rates.T
-
-        # Calculate average neuron selectivities and population sparseness
-        s_avg_selectivity_arr[r_idx], s_avg_sparseness_arr[r_idx] = \
-            get_average_selectivity_and_sparseness(scaled_rates)
-
-    plt.figure()
-    plt.plot(np.arange(n_runs), f_avg_selectivity_arr, label="Neuron Selectivity")
-    plt.plot(np.arange(n_runs), f_avg_sparseness_arr, label="Population Sparseness")
-
-    plt.plot(np.arange(n_runs), s_avg_selectivity_arr, label="Scaled Neuron Selectivity")
-    plt.plot(np.arange(n_runs), s_avg_sparseness_arr, label="Scaled Population Sparseness")
-
-    plt.legend()
-    plt.xlabel("Run")
-
-    print("Full: average neuron selectivity %0.4f, population sparseness %0.4f"
-          % (np.mean(f_avg_selectivity_arr), np.mean(f_avg_sparseness_arr)))
-
-    print("Scaled: average neuron selectivity %0.4f, population sparseness %0.4f"
-          % (np.mean(s_avg_selectivity_arr), np.mean(s_avg_sparseness_arr)))
-
-    print("Average scale parameters a=%0.4f, b=%0.4f"
-          % (np.mean(scale_a_arr), np.mean(scale_b_arr)))
-
-    # # -------------------------------------------------------------------------
-    # # Validate larger model can reproduce selectivity and sparseness values
-    # # -------------------------------------------------------------------------
+    # # --------------------------------------------------------------
+    # # Find scale distribution parameter
+    # # --------------------------------------------------------------
+    # n_runs = 100
     # neurons = 674
     # objects = 806
-    # n_runs = 1
     #
     # f_avg_selectivity_arr = np.zeros(n_runs)
     # f_avg_sparseness_arr = np.zeros(n_runs)
@@ -359,65 +368,145 @@ if __name__ == '__main__':
     # s_avg_selectivity_arr = np.zeros(n_runs)
     # s_avg_sparseness_arr = np.zeros(n_runs)
     #
-    # # Stimulus Set
-    # list_of_objects = []
-    # for idx_n in np.arange(objects):
-    #     list_of_objects.append('random_' + str(idx_n))
-    #
-    # # Initialization
-    # it_cortex = []
-    # scaled_fire_rates = np.zeros(shape=(neurons, objects))
-    # full_fire_rates = np.zeros(shape=(neurons, objects))
+    # scale_a_arr = np.zeros(n_runs)
+    # scale_b_arr = np.zeros(n_runs)
     #
     # for r_idx in np.arange(n_runs):
     #
-    #     print ("Run %i" % r_idx)
+    #     # print ("Run %i" % r_idx)
     #
-    #     for idx_n in np.arange(neurons):
-    #         print("Processing neuron %d" % idx_n)
+    #     # Scale Factors
+    #     # scale_factor_samples = np.random.rand(10000)
+    #     scale_factor_samples = get_scale_factors_from_model(5000)
     #
-    #         neuron = it.Neuron(
-    #             list_of_objects,
-    #             selectivity_profile='Kurtosis',
-    #             position_profile='Gaussian',
-    #             size_profile='Lognormal',
-    #             # rotation_profile='Gaussian',
-    #             # dynamic_profile='Tamura',
-    #             # occlusion_profile='TwoInputSigmoid'
-    #         )
+    #     # ------------------------------------------------------------------------
+    #     ls = LehkySparseness(scale_factor_samples)
     #
-    #         it_cortex.append(neuron)
+    #     # Store modified scale values. These will be used in the larger model
+    #     scale_a_arr[r_idx] = ls.afb
+    #     scale_b_arr[r_idx] = ls.bfb
     #
-    #     # Get scaled firing rates
-    #     for idx_n in np.arange(neurons):
-    #         for idx_o in np.arange(objects):
+    #     # Generate sample rates
+    #     rates_mat = ls.get_sample_profile_and_rates_mat(neurons, objects)
     #
-    #             print("Processing neuron %d, obj %d" % (idx_n, idx_o))
+    #     # Calculate average neuron selectivities and population sparseness
+    #     f_avg_selectivity_arr[r_idx], f_avg_sparseness_arr[r_idx] = \
+    #         get_average_selectivity_and_sparseness(rates_mat)
     #
-    #             scaled_fire_rates[idx_n][idx_o] = it_cortex[idx_n].firing_rate([[
-    #                 list_of_objects[idx_o],
-    #                 0, 0,  # presented foveally
-    #                 7 * np.pi / 180,  # spanning 7 degrees
-    #                 1, 1, 1,
-    #                 1, 1, 1,
-    #                 1, 1, 1,
-    #                 1, 1
-    #             ]])
+    #     # Generate random scale factors and multiply them with rates and
+    #     # recalculate selectivity and sparseness
+    #     # scale_factors = np.random.rand(neurons)
+    #     scale_factors = get_scale_factors_from_model(neurons)
     #
-    #             # Calculate average neuron selectivities and population sparseness
-    #             s_avg_selectivity_arr[r_idx], s_avg_sparseness_arr[r_idx] = \
-    #                 get_average_selectivity_and_sparseness(scaled_fire_rates)
+    #     # Scale the rates - multiply a scale factor with all the firing rates of a neuron
+    #     scaled_rates = np.multiply(scale_factors, rates_mat.T)
+    #     scaled_rates = scaled_rates.T
     #
-    #             full_fire_rates[idx_n][idx_o] = \
-    #                 it_cortex[idx_n].selectivity.objects.get(list_of_objects[idx_o]) * \
-    #                 it_cortex[idx_n].max_fire_rate
+    #     # Calculate average neuron selectivities and population sparseness
+    #     s_avg_selectivity_arr[r_idx], s_avg_sparseness_arr[r_idx] = \
+    #         get_average_selectivity_and_sparseness(scaled_rates)
     #
-    #             # Calculate average neuron selectivities and population sparseness
-    #             f_avg_selectivity_arr[r_idx], f_avg_sparseness_arr[r_idx] = \
-    #                 get_average_selectivity_and_sparseness(full_fire_rates)
+    # plt.figure()
+    # plt.plot(np.arange(n_runs), f_avg_selectivity_arr, label="Neuron Selectivity")
+    # plt.plot(np.arange(n_runs), f_avg_sparseness_arr, label="Population Sparseness")
     #
-    # print("Full: average neuron selectivity %0.4f, population sparseness %0.4f"
-    #       % (np.mean(f_avg_selectivity_arr), np.mean(f_avg_sparseness_arr)))
+    # plt.plot(np.arange(n_runs), s_avg_selectivity_arr, label="Scaled Neuron Selectivity")
+    # plt.plot(np.arange(n_runs), s_avg_sparseness_arr, label="Scaled Population Sparseness")
     #
-    # print("Scaled: average neuron selectivity %0.4f, population sparseness %0.4f"
-    #       % (np.mean(s_avg_selectivity_arr), np.mean(s_avg_sparseness_arr)))
+    # plt.legend()
+    # plt.xlabel("Run")
+    #
+    # print("Full  : average selectivity %0.4f+%0.4f, sparseness %0.4f+0.4%f"
+    #       % (np.mean(f_avg_selectivity_arr), np.std(f_avg_selectivity_arr),
+    #          np.mean(f_avg_sparseness_arr), np.std(f_avg_sparseness_arr)))
+    #
+    # print("Scaled: average selectivity %0.4f+%0.4f, sparseness %0.4f+%0.4f"
+    #       % (np.mean(s_avg_selectivity_arr), np.std(s_avg_selectivity_arr),
+    #          np.mean(s_avg_sparseness_arr), np.std(s_avg_sparseness_arr)))
+    #
+    # print("Average scale parameters a=%0.4f+%0.4f, b=%0.4f+%0.4f"
+    #       % (np.mean(scale_a_arr), np.std(scale_a_arr),
+    #          np.mean(scale_b_arr), np.std(scale_b_arr)))
+
+    # -------------------------------------------------------------------------
+    # Validate larger model can reproduce selectivity and sparseness values
+    # -------------------------------------------------------------------------
+    neurons = 674
+    objects = 806
+    n_runs = 20
+
+    # Stimulus Set
+    list_of_objects = []
+    for idx_n in np.arange(objects):
+        list_of_objects.append('random_' + str(idx_n))
+
+    f_avg_selectivity_arr = np.zeros(n_runs)
+    f_avg_sparseness_arr = np.zeros(n_runs)
+
+    s_avg_selectivity_arr = np.zeros(n_runs)
+    s_avg_sparseness_arr = np.zeros(n_runs)
+
+    for r_idx in np.arange(n_runs):
+
+        print ("Run %i" % r_idx)
+
+        # Create Population ------------------------------------------------------------------
+        it_cortex = []
+        for idx_n in np.arange(neurons):
+
+            # print ("Creating neuron %i" % idx_n)
+            neuron = it.Neuron(
+                list_of_objects,
+                selectivity_profile='Kurtosis',
+                position_profile='Gaussian',
+                size_profile='Lognormal',
+                # rotation_profile='Gaussian',
+                # dynamic_profile='Tamura',
+                # occlusion_profile='TwoInputSigmoid'
+            )
+
+            it_cortex.append(neuron)
+
+        # Initialization
+        scaled_fire_rates = np.zeros(shape=(neurons, objects))
+        full_fire_rates = np.zeros(shape=(neurons, objects))
+
+        # Calculate full selectivity and sparseness ----------------------------------------
+        for idx_n in np.arange(neurons):
+            full_fire_rates[idx_n, :] = \
+                np.array(it_cortex[idx_n].selectivity.objects.values()) * \
+                it_cortex[idx_n].max_fire_rate
+
+        f_avg_selectivity_arr[r_idx], f_avg_sparseness_arr[r_idx] = \
+            get_average_selectivity_and_sparseness(full_fire_rates)
+
+        # Get scaled selectivity and sparseness --------------------------------------------
+        for idx_o in np.arange(objects):
+
+            ground_truth = [
+                list_of_objects[idx_o],
+                0, 0,  # presented foveally
+                7 * np.pi / 180,  # spanning 7 degrees
+                1, 1, 1,
+                1, 1, 1,
+                1, 1, 1,
+                1, 1
+            ]
+
+            for idx_n in np.arange(neurons):
+                scaled_fire_rates[idx_n, idx_o] = it_cortex[idx_n].firing_rate([ground_truth])
+
+        # Calculate average neuron selectivities and population sparseness
+        s_avg_selectivity_arr[r_idx], s_avg_sparseness_arr[r_idx] = \
+            get_average_selectivity_and_sparseness(scaled_fire_rates)
+
+    print("Full: average neuron selectivity %0.4f, and population sparseness %0.4f"
+          % (np.mean(f_avg_selectivity_arr), np.mean(f_avg_sparseness_arr)))
+
+    print("Scaled: average neuron selectivity %0.4f, population sparseness %0.4f"
+          % (np.mean(s_avg_selectivity_arr), np.mean(s_avg_sparseness_arr)))
+
+    # Plot the selectivities and sparseness distributions of the last run
+    plot_selectivity_and_sparseness(scaled_fire_rates)
+
+

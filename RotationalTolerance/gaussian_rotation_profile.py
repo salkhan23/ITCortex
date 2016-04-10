@@ -63,7 +63,7 @@ import matplotlib.pyplot as plt
 
 class GaussianRotationProfile:
 
-    def __init__(self, preferred_angle=(360 * np.pi / 180), spread=(360 * np.pi / 180)):
+    def __init__(self, preferred_angle=(360 * np.pi / 180), spread=None):
 
         self.type = 'gaussian'
 
@@ -73,11 +73,11 @@ class GaussianRotationProfile:
         else:
             self.preferred_angle = preferred_angle
 
-        # if input spread is outside range (> np.pi), generate spread
-        if spread > np.pi:
-            self.spread = self.__get_tuning_width()
-        else:
+        # # if input spread is outside range (> np.pi), generate spread
+        if spread is not None:
             self.spread = spread
+        else:
+            self.spread = self.__get_tuning_width()
 
     @staticmethod
     def __get_preferred_angle():
@@ -236,8 +236,8 @@ class GaussianRotationProfile:
 if __name__ == "__main__":
     plt.ion()
 
-    profile = GaussianRotationProfile()
-    profile.print_parameters()
+    # profile = GaussianRotationProfile()
+    # profile.print_parameters()
     # profile.plot_tuning_profile()
     # profile.plot_tuning_profile(mirror_symmetric=True)
     #
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     y = y / max(y)
     ax_arr[1].scatter(x_in, y, marker='o', label='Original Data', s=60)
 
-    profile = GaussianRotationProfile((117.85 * np.pi / 180), (13.36 * np.pi / 180))
+    profile = GaussianRotationProfile((116.31 * np.pi / 180), (13.07 * np.pi / 180))
     profile.print_parameters()
     profile.plot_tuning_profile(rotation_symmetry_period=2, axis=ax_arr[1], font_size=f_size)
     ax_arr[1].set_ylabel('')
@@ -318,9 +318,9 @@ if __name__ == "__main__":
     y = y / max(y)
 
     ax_arr[2].scatter(x_in, y, marker='o', label='Original Data', s=60)
-    profile = GaussianRotationProfile((-70.00 * np.pi / 180), (11 * np.pi / 180))
+    profile = GaussianRotationProfile((-26.62 * np.pi / 180), (364.79 * np.pi / 180))
     profile.print_parameters()
-    profile.plot_tuning_profile(rotation_symmetry_period=16, axis=ax_arr[2], font_size=f_size)
+    profile.plot_tuning_profile(rotation_symmetry_period=1, axis=ax_arr[2], font_size=f_size)
     ax_arr[2].set_ylabel('')
     ax_arr[2].set_xticks(np.arange(-180, 180, step=90))
     ax_arr[2].set_xlim([-179, 180])

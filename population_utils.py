@@ -295,7 +295,9 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
     ax1.grid()  # Turn the default grid off
     ax1.tick_params(axis='y', labelsize=font_size)
     ax1.set_xlabel('Ranked Objects', fontsize=font_size)
-    ax1.set_ylabel('FR (Spikes/s)', fontsize=font_size)
+    ax1.set_ylabel('FR (Hz)', fontsize=font_size)
+    ax1.xaxis.set_label_position('top')
+
     ax1.annotate(
         'A',
         xy=(0.05, 0.95),
@@ -306,7 +308,12 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
 
     ax2 = f.add_subplot(4, 2, 2)
     it_neuron.position.plot_position_tolerance_contours(axis=ax2, font_size=font_size)
+    ax2.yaxis.set_label_position('right')
     ax2.grid()  # Turn the default grid off
+    ax2.legend(loc='best')
+    ax2.xaxis.set_label_position('top')
+    ax2.set_xlabel('X', fontsize=font_size)
+    ax2.set_ylabel('Y', fontsize=font_size)
     ax2.annotate(
         'B',
         xy=(0.05, 0.95),
@@ -318,6 +325,7 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
     ax3 = f.add_subplot(4, 2, 3)
     it_neuron.size.plot_size_tolerance(axis=ax3, font_size=font_size)
     ax3.grid()  # Turn the default grid off
+    ax3.set_ylabel('FR (Hz)', fontsize=font_size)
     ax3.annotate(
         'C',
         xy=(0.05, 0.95),
@@ -332,7 +340,8 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         rotation_symmetry_period=1,
         mirror_symmetric=False,
         font_size=font_size)
-    ax4.grid()  # Turn the default grid off
+    ax4.set_ylabel('FR (Hz)', fontsize=font_size)
+    ax4.yaxis.set_label_position('right')
     ax4.annotate(
         'D',
         xy=(0.05, 0.95),
@@ -343,6 +352,7 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
 
     ax5 = f.add_subplot(4, 2, 5, projection='3d')
     it_neuron.occlusion.plot_complete_profile(axis=ax5, font_size=font_size)
+    ax5.set_zlabel('\nFR (Hz)', fontsize=font_size)
     ax5.grid()  # Turn the default grid off
     ax5.annotate(
         'E',
@@ -355,6 +365,9 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
     ax6 = f.add_subplot(4, 2, 6)
     it_neuron.clutter.plot_clutter_profile(axis=ax6, font_size=font_size)
     ax6.grid()
+    ax6.legend(loc='best')
+    ax6.yaxis.set_label_position('right')
+
     ax6.annotate(
         'F',
         xy=(0.05, 0.95),
@@ -366,6 +379,8 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
     ax7 = f.add_subplot(4, 2, 7)
     it.plot_neuron_dynamic_profile(it_neuron, axis=ax7, font_size=font_size)
     ax7.grid()  # Turn the default grid off
+    ax7.set_ylabel('FR (Hz)', fontsize=font_size)
+    ax7.legend(loc='best')
     ax7.annotate(
         'G',
         xy=(0.05, 0.95),
@@ -378,9 +393,11 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         ax8 = f.add_subplot(4, 2, 8)
         ax8.plot(np.arange(0, net_fire_rates.shape[0] * dt, step=dt), net_fire_rates)
         ax8.set_xlabel("Time(s)", fontsize=font_size)
-        ax8.set_ylabel("FR (Spikes/s)", fontsize=font_size)
+        ax8.set_ylabel("FR (Hz)", fontsize=font_size)
+        ax8.yaxis.set_label_position('right')
         ax8.tick_params(axis='x', labelsize=font_size)
         ax8.tick_params(axis='y', labelsize=font_size)
+
         ax8.annotate(
             'H',
             xy=(0.05, 0.95),

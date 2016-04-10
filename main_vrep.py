@@ -974,7 +974,7 @@ def main():
             # (since we clear it after reading). At the moment value is arbitrarily chosen. It
             # should be slightly higher then the max execution time of the child script. This can
             # be seen in the vrep scene data printed out every step.
-            time.sleep(1.75)
+            time.sleep(2.0)
 
             if t_current_ms == 0:
                 # Because object handles need to be sent to the child script and the fact that

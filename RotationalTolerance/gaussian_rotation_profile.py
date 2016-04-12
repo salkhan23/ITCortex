@@ -96,7 +96,7 @@ class GaussianRotationProfile:
 
         :return : rotation tuning width.
         """
-        return np.float(np.random.normal(loc=(30 * np.pi / 180), scale=(50 * np.pi / 180)))
+        return np.float(np.random.normal(loc=(30 * np.pi / 180), scale=(15 * np.pi / 180)))
 
     @staticmethod
     def adjust_angles(angles, mu, period):

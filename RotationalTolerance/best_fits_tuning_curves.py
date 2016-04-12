@@ -101,6 +101,95 @@ def main(angles_org, firing_rates_org, initial_est, fig_title=''):
            % (params_err_std_dev[0], params_err_std_dev[1], params_err_std_dev[2]))
 
 
+def single_gaussian_fit(angles_org, firing_rates_org, initial_est, axis=None, font_size=50):
+
+    if axis is None:
+        fig, axis = plt.subplots(1)
+
+    axis.set_xlabel('Angle(Deg)', fontsize=font_size)
+    axis.set_ylabel('Normalized Firing Rate (spikes/s)', fontsize=font_size)
+    axis.scatter(angles_org, firing_rates_org, label='Original Data', s=60)
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+    axis.set_ylim([0,1.1])
+    axis.set_xticks([-180,-90,0,90,180])
+    axis.set_xlim((-179, 180))
+
+    angles_arr = np.arange(-180, 180, step=1)
+
+    # -------------------------------------------------------------------------------------------
+    # Single Gaussian Curve Fit
+    # -------------------------------------------------------------------------------------------
+    params_fit, params_cov_mat = curve_fit(
+        single_gaussian,
+        angles_org,
+        firing_rates_org,
+        p0=initial_est[0, :])
+
+    # Standard deviation of fit parameters:
+    # REF: (1) http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-
+    # parameters-using-the-optimize-leastsq-method-i
+    # (2) http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+    params_err_std_dev = np.sqrt(np.diag(params_cov_mat))
+
+    axis.plot(
+        angles_arr,
+        single_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]),
+        linewidth=2,
+        color='green',
+        label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f$'
+              % (params_fit[0], params_fit[1], params_fit[2]))
+
+    print ("1 Gaussian Fit - standard deviation of errors in parameters:" +
+           "\n\tmu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
+           % (params_err_std_dev[0], params_err_std_dev[1], params_err_std_dev[2]))
+
+
+def double_gaussian_fit(angles_org, firing_rates_org, initial_est, axis=None, font_size=50):
+
+    if axis is None:
+        fig, axis = plt.subplots(1)
+
+    axis.set_xlabel('Angle(Deg)', fontsize=font_size)
+    axis.set_ylabel('Normalized Firing Rate', fontsize=font_size)
+    axis.scatter(angles_org, firing_rates_org, label='Original Data', s=60)
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+    axis.set_ylim([0,1.1])
+    axis.set_xticks([-180,-90,0,90,180])
+    axis.set_xlim((-179, 180))
+
+    angles_arr = np.arange(-180, 180, step=1)
+
+    # -------------------------------------------------------------------------------------------
+    # Single Gaussian Curve Fit
+    # -------------------------------------------------------------------------------------------
+    params_fit, params_cov_mat = curve_fit(
+        pseudo_symmetric_gaussian,
+        angles_org,
+        firing_rates_org,
+        p0=initial_est[0, :])
+
+    # Standard deviation of fit parameters:
+    # REF: (1) http://stackoverflow.com/questions/14581358/getting-standard-errors-on-fitted-
+    # parameters-using-the-optimize-leastsq-method-i
+    # (2) http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+    params_err_std_dev = np.sqrt(np.diag(params_cov_mat))
+
+    axis.plot(
+        angles_arr,
+        pseudo_symmetric_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]),
+        linewidth=2,
+        color='green',
+        label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f$'
+              % (params_fit[0], params_fit[1], params_fit[2]))
+
+    print ("1 Gaussian Fit - standard deviation of errors in parameters:" +
+           "\n\tmu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
+           % (params_err_std_dev[0], params_err_std_dev[1], params_err_std_dev[2]))
+
+
+
 
 if __name__ == "__main__":
     plt.ion()
@@ -110,44 +199,91 @@ if __name__ == "__main__":
         data = pickle.load(handle)
 
     # # -------------------------------------------------------------------------------------------
-    title = 'Rotation Tuning - Fig 5a, Logothesis, Pauls & Poggio -1995'
+    # title = 'Rotation Tuning - Fig 5a, Logothesis, Pauls & Poggio -1995'
+    #
+    # x = data['fig5ax']
+    # y = data['fig5ay']
+    # y = y/max(y)
+    #
+    # InitialEst = -255 * np.ones(shape=(4, 3))
+    # InitialEst[0, :] = [100, 20, 1.00]
+    #
+    # print title
+    # main(x, y, InitialEst, title)
+    # plt.legend()
 
+    # # ------------------------------------------------------------------------------
+    # title = 'Fig 5c, logothesis, Pauls & poggio -1995'
+    # x = data['fig5cx']
+    # y = data['fig5cy']
+    # y = y/max(y)
+    #
+    # InitialEst = -255 * np.ones(shape=(4, 3))
+    # InitialEst[0, :] = [120,  30, 1.00]
+    #
+    # print title
+    # main(x, y, InitialEst, title)
+    # plt.legend()
+    #
+    # # -------------------------------------------------------------------------------------------
+    # title = 'Fig 5e, logothesis, Pauls & poggio -1995'
+    # x = data['fig5ex']
+    # y = data['fig5ey']
+    # y = y/max(y)
+    #
+    # InitialEst = -255 * np.ones(shape=(4, 3))
+    # InitialEst[0, :] = [-70, 100, 1.00]
+    #
+    # print title
+    # main(x, y, InitialEst, title)
+    # plt.legend()
+
+    # ---------------------------------------------------------------------------------------
+    f, ax_arr = plt.subplots(1, 3, sharey=True)
+    font_size = 50
+
+    title = 'Rotation Tuning - Fig 5a, Logothesis, Pauls & Poggio -1995'
     x = data['fig5ax']
     y = data['fig5ay']
     y = y/max(y)
 
     InitialEst = -255 * np.ones(shape=(4, 3))
-    InitialEst[0, :] = [100, 20, 1.00]
+    InitialEst[0, :] = [103.14, 26.55, 1.00]
 
     print title
-    main(x, y, InitialEst, title)
-    plt.legend()
+    single_gaussian_fit(x, y, InitialEst, ax_arr[0])
+    ax_arr[0].set_xlabel('')
 
-    # ------------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------------------
     title = 'Fig 5c, logothesis, Pauls & poggio -1995'
     x = data['fig5cx']
     y = data['fig5cy']
     y = y/max(y)
 
     InitialEst = -255 * np.ones(shape=(4, 3))
-    InitialEst[0, :] = [120,  30, 1.00]
+    InitialEst[0, :] = [116.31,  30, 1.00]
 
     print title
-    main(x, y, InitialEst, title)
-    plt.legend()
+    double_gaussian_fit(x, y, InitialEst, ax_arr[1])
+    ax_arr[1].set_ylabel('')
 
-    # -------------------------------------------------------------------------------------------
+    # # -------------------------------------------------------------------------------------------
     title = 'Fig 5e, logothesis, Pauls & poggio -1995'
     x = data['fig5ex']
     y = data['fig5ey']
     y = y/max(y)
 
     InitialEst = -255 * np.ones(shape=(4, 3))
-    InitialEst[0, :] = [-70, 100, 1.00]
+    InitialEst[0, :] = [-26.62, 364, 1.00]
 
     print title
     main(x, y, InitialEst, title)
-    plt.legend()
+    single_gaussian_fit(x, y, InitialEst, ax_arr[2])
+    ax_arr[2].set_xlabel('')
+    ax_arr[2].set_ylabel('')
+
+
+
 
 
 

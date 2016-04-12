@@ -36,6 +36,7 @@ class AveragingClutterProfile:
         """
 
         self.type = 'position weighted average'
+        self.d = max(0, self._deviation_from_average())
 
     def print_parameters(self):
         print("Profile: %s" % self.type)
@@ -63,7 +64,7 @@ class AveragingClutterProfile:
         else:
             clutter_rate = 0
 
-        return np.max([0, clutter_rate + self._deviation_from_average()])
+        return clutter_rate + self.d
 
     def plot_clutter_profile(self, axis=None, font_size=34, num_objs=2, num_samples=100):
         """

@@ -23,7 +23,7 @@ def get_best_fit_gamma(input_data):
              (3) Log likelihood ratio of best fit
              :param input_data:
     """
-    alpha_arr = np.arange(start=0.1, stop=5, step=0.1)
+    alpha_arr = np.arange(start=0.1, stop=10, step=0.1)
     scale_arr = np.arange(start=0.1, stop=10, step=0.1)
 
     llrs = np.ones(shape=(alpha_arr.shape[0], scale_arr.shape[0])) * -10000.0
@@ -58,7 +58,7 @@ def get_best_fit_lognormal(input_data):
 
     for count, shape in enumerate(shape_arr):
         for jj, scale in enumerate(scale_arr):
-            prob = ss.lognorm.pdf(input_data, s=shape, scale=scale)
+            prob = ss.lognorm.pdf(input_data, s=shape, scale=scale, loc=0)
             llrs[count][jj] = np.log(prob).sum()
 
     max_shape_idx, max_scale_idx = np.unravel_index(llrs.argmax(), llrs.shape)

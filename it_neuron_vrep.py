@@ -228,11 +228,11 @@ class Neuron:
         if self.dynamics is not None and self.dynamics.type == 'tamura':
 
             if ground_truth_list:
-                default_rate = self._get_static_firing_rate(
+                default_rate, scales = self._get_static_firing_rate(
                     self.selectivity.objects,
                     ground_truth_list)
 
-                early_rate = self._get_static_firing_rate(
+                early_rate, early_scales = self._get_static_firing_rate(
                     self.dynamics.early_obj_pref,
                     ground_truth_list)
 
@@ -241,11 +241,11 @@ class Neuron:
         else:
 
             if ground_truth_list:
-                rate = self._get_static_firing_rate(
+                rate, scales = self._get_static_firing_rate(
                     self.selectivity.objects,
                     ground_truth_list)
 
-        return np.float(rate)
+        return np.float(rate), scales
 
     def _get_static_firing_rate(
             self,
@@ -331,7 +331,16 @@ class Neuron:
         # print ("static clutter rate %0.2f" % np.sum(joint_rate, axis=0))
         # raw_input('Continue?')
 
-        return joint_rate
+        scales = np.zeros((len(objects), 7))
+        scales[:,0] = isolated_rates
+        scales[:,1] = obj_pref_list
+        scales[:,2] = position_weights
+        scales[:,3] = size_fr
+        scales[:,4] = rot_fr
+        scales[:,5] = occ_fr
+        scales[:,6] = size_arr
+
+        return joint_rate, scales
 
 
 def plot_neuron_dynamic_profile(

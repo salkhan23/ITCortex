@@ -767,6 +767,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
     """
     ground_truth_list = []
     objects_in_frame = []   # list of all Vrep Objects found in the frame
+    max_dimensions = []
 
     for vrep_obj in objects:
         # Get real world coordinates of object in vision sensor reference frame
@@ -818,6 +819,9 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
             distance = np.sqrt(x**2 + y**2 + camera_cartesian[-1]**2)
             size = (np.pi * vrep_obj.max_dimension) / \
                    (2 * ar * distance * np.tan(projection_angle / 2))
+            # print('distance ' + str(distance) + ' size ' + str(size))
+
+            max_dimensions.append(vrep_obj.max_dimension)
 
             # Get object orientation
             rot_alpha, rot_beta, rot_gamma = get_object_rotations(
@@ -873,15 +877,15 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
         # Replace x coordinate
         ground_truth_list[o_idx][1] = x
         ground_truth_list[o_idx][2] = y
-        ground_truth_list[o_idx][3] = sizes_array[o_idx]
+        # ground_truth_list[o_idx][3] = sizes_array[o_idx] #TODO Salman: the fluctuations are from this
 
-    return ground_truth_list
+    return ground_truth_list, max_dimensions
 
 
 def main():
 
     t_step_ms = 5       # 5ms
-    t_stop_ms = 5 * 1000  # 2 seconds
+    t_stop_ms = 5 * 1000  # 5 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 
     population_size = 100
@@ -889,6 +893,9 @@ def main():
     rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
     # noinspection PyBroadException
+    scales = []
+    objects = []
+    max_dimensions = []
     try:
 
         # SETUP VREP  ---------------------------------------------------------------------------
@@ -974,7 +981,7 @@ def main():
             # (since we clear it after reading). At the moment value is arbitrarily chosen. It
             # should be slightly higher then the max execution time of the child script. This can
             # be seen in the vrep scene data printed out every step.
-            time.sleep(2.0)
+            time.sleep(1.0)
 
             if t_current_ms == 0:
                 # Because object handles need to be sent to the child script and the fact that
@@ -987,17 +994,19 @@ def main():
 
             # raw_input("Continue with step %d ?" % t_current_ms)
 
-            ground_truth = get_ground_truth(
+            ground_truth, max_dimensions_t = get_ground_truth(
                 client_id,
                 objects_array,
                 vs_handle,
                 p_mat,
                 aspect_ratio,
                 alpha_rad)
+            max_dimensions.append(max_dimensions_t)
 
             if ground_truth:
                 # Print the Ground Truth
                 print("Time=%dms, Number of objects %d" % (t_current_ms, len(ground_truth)))
+                objects_t = []
                 for entry in ground_truth:
                     print ("\t %s, %0.2f, %0.2f, %0.2f, %0.2f, %d, %s, %0.2f, %d, %s, "
                            "%0.2f, %d, %s, %0.2f, %0.2f"
@@ -1005,11 +1014,23 @@ def main():
                               entry[4], entry[5], entry[6], entry[7], entry[8],
                               entry[9], entry[10], entry[11], entry[12], entry[13],
                               entry[14]))
+                    objects_t.append(entry[0])
+                objects.append(objects_t)
 
             # Get IT cortex firing rates
+            scales_t = np.zeros((population_size, 20, 7))
             for n_idx, neuron in enumerate(it_cortex):
-                rates_vs_time_arr[t_current_ms / t_step_ms, n_idx] = \
+                # print('NEURON ' + str(n_idx))
+                rates_vs_time_arr[t_current_ms / t_step_ms, n_idx], neuron_scales = \
                     neuron.firing_rate(ground_truth)
+                # print(neuron_scales.shape)
+                padded = np.zeros((20,7)) #this is to work around raggedness
+                padded[:neuron_scales.shape[0],:] = neuron_scales
+                scales_t[n_idx,:,:] = padded
+                # scales_t.append(neuron_scales)
+                # print('len scales_t' + str(len(scales_t)))
+            scales.append(scales_t)
+            # print('len scales' + str(len(scales)))
 
             t_current_ms += t_step_ms
 
@@ -1045,13 +1066,13 @@ def main():
             print("Failed to stop simulation.")
         vrep.simxFinish(client_id)
 
-        return it_cortex, rates_vs_time_arr
+        return it_cortex, rates_vs_time_arr, scales, objects, max_dimensions
 
 
 if __name__ == "__main__":
     plt.ion()
 
-    population, rates_array = main()
+    population, rates_array, scales, objects, max_dimensions = main()
 
     # Population Plots -------------------------------------------------------------------------
     # # Plot the selectivity distribution of the population

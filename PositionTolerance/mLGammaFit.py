@@ -76,7 +76,7 @@ plt.plot(alphaArray, logLikelihood, label = 'mean based on best fit line, scale 
 plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood), 'r+', linewidth=3)
 
 ''' -----------------------------------------------------------------------------------'''
-''' Gamma Fit, mode based on best fit line, scale = mean/alpha '''
+''' Gamma Fit, mode based on best fit line, scale = mode/(alpha-1) '''
 alphaArray = np.arange(start=0.01, stop=20, step=0.01)
 logLikelihood = []
 

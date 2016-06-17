@@ -222,6 +222,7 @@ class Neuron:
         :param ground_truth_list: see method _get_static_firing_rate for format.
         """
         rate = 0
+        scales = 0
         default_rate = 0
         early_rate = 0
 
@@ -332,13 +333,13 @@ class Neuron:
         # raw_input('Continue?')
 
         scales = np.zeros((len(objects), 7))
-        scales[:,0] = isolated_rates
-        scales[:,1] = obj_pref_list
-        scales[:,2] = position_weights
-        scales[:,3] = size_fr
-        scales[:,4] = rot_fr
-        scales[:,5] = occ_fr
-        scales[:,6] = size_arr
+        scales[:, 0] = isolated_rates
+        scales[:, 1] = obj_pref_list
+        scales[:, 2] = position_weights
+        scales[:, 3] = size_fr
+        scales[:, 4] = rot_fr
+        scales[:, 5] = occ_fr
+        scales[:, 6] = size_arr
 
         return joint_rate, scales
 

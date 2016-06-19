@@ -16,47 +16,55 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import pickle
 
-with open('Neilson2006.pkl', 'rb') as fid:
-    data = pickle.load(fid)
-
 
 def exponential(x, a):
     return a * np.exp(-a * x)
 
 
-if __name__ == "__main__":
-    plt.ion()
+def fit_and_plot_diagnostic_variance_ratio_distribution(axis=None, font_size=40):
 
-    ''' PDF of Diagnostic variance '''
+    with open('Neilson2006.pkl', 'rb') as fid:
+        data = pickle.load(fid)
+
+    # PDF of Diagnostic variance
     ratio = data['diagVariance']
     ratio /= 100
 
     hist, bins = np.histogram(ratio, bins=np.arange(1, step=0.01), density=True)
-
     # Clean up zeros
     idxs = np.nonzero(hist)
     hist = hist[idxs]
     bins = bins[idxs]
 
-    plt.figure('Diagnostic Variance Distribution')
-    axis = plt.gca()
+    if axis is None:
+        f, axis = plt.subplots(1)
+
     axis.scatter(bins, hist, label='Original Data', s=60)
 
     # Fit the pdf
     p_opt, p_cov = curve_fit(exponential, bins, hist)
-    axis.plot(bins, exponential(bins, *p_opt),
-              label='Exponential %0.2f*exp(-%0.2fx)' % (p_opt[0], p_opt[0]))
 
-    font_size = 30
-    axis.set_xlabel("Ratio", fontsize=font_size)
+    axis.plot(bins,
+              exponential(bins, *p_opt),
+              label=r'$p(x) = %0.2f \exp(-%0.2fx) $' % (p_opt[0], p_opt[0]),
+              color='g',
+              linewidth=2)
+
+    axis.set_xlabel("R", fontsize=font_size)
     axis.set_ylabel("Frequency", fontsize=font_size)
-    axis.set_title("Distribution of Diagnostic to Total Variance Ratio across IT",
-                   fontsize=font_size)
+
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
 
-    axis.set_xlim([0, 1])
+    axis.set_xlim([0, 0.8])
     axis.set_ylim([0, np.max(hist) * 1.1])
 
+    axis.set_yticks(np.arange(2, 10, step=2))
+
     axis.legend(loc='best', fontsize=font_size)
-    axis.grid()
+    # axis.grid()
+
+
+if __name__ == "__main__":
+    plt.ion()
+    fit_and_plot_diagnostic_variance_ratio_distribution()

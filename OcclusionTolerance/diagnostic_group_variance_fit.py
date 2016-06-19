@@ -39,7 +39,11 @@ def fit_and_plot_diagnostic_variance_ratio_distribution(axis=None, font_size=40)
     if axis is None:
         f, axis = plt.subplots(1)
 
-    axis.scatter(bins, hist, label='Original Data', s=60)
+    axis.scatter(
+        bins,
+        hist,
+        # label='Original Data',
+        s=60)
 
     # Fit the pdf
     p_opt, p_cov = curve_fit(exponential, bins, hist)

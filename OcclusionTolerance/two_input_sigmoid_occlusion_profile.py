@@ -290,12 +290,13 @@ class TwoInputSigmoidOcclusionProfile:
 
         return fire_rates
 
-    def plot_complete_profile(self, axis=None, font_size=20):
+    def plot_complete_profile(self, axis=None, font_size=20, print_parameters=True):
         """
 
-        :param font_size:   Font size on graph. Default = 20
-        :param axis     :   Plotting axis. Default = None, will create a new figure.
-                            Axis must be an axis with a projection of type 3d
+        :param print_parameters :
+        :param font_size        :   Font size on graph. Default = 20
+        :param axis             :   Plotting axis. Default = None, will create a new figure.
+                                    Axis must be an axis with a projection of type 3d
         """
 
         if axis is None:
@@ -320,49 +321,64 @@ class TwoInputSigmoidOcclusionProfile:
         axis.set_ylim([0, 1])
         axis.set_zlim([0, 1])
 
+        axis.set_xticks(np.arange(0, 1.1, step=0.5))
+        axis.set_yticks(np.arange(0.5, 1.1, step=0.5))
+        axis.set_zticks(np.arange(0.5, 1.1, step=0.5))
+
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
         axis.tick_params(axis='z', labelsize=font_size)
 
         axis.set_xlabel("\n" + r"$v_{nd}$", fontsize=font_size + 10, fontweight='bold', color='b')
         axis.set_ylabel("\n" + r"$v_d$", fontsize=font_size + 10, fontweight='bold', color='b')
-        axis.set_zlabel("\n\n" + "FR (spikes/s)", fontsize=font_size)
+        # axis.set_zlabel("\n\n" + "FR (spikes/s)", fontsize=font_size)
+        axis.set_zlabel("\n\n" + "Normalized Firing Rate (spikes/s)", fontsize=font_size)
         # axis.set_title("Complete Tuning Curve", fontsize=font_size + 10)
 
-        label = r"$w_n=%0.2f,$" % self.w_vector[0] + "\n" \
-                + r'$w_{nd}=%0.2f$' % self.w_vector[1] + '\n' \
-                + r'$R=%0.2f$' % self.ratio
+        if print_parameters:
+            label = r"$w_n=%0.2f,$" % self.w_vector[0] + "\n" \
+                    + r'$w_{nd}=%0.2f$' % self.w_vector[1] + '\n' \
+                    + r'$R=%0.2f$' % self.ratio
 
-        axis.text(1.3, 0, 0.5, label, fontsize=font_size)
+            axis.text(1.3, 0, 0.9, label, fontsize=font_size)
 
-    def plot_combined_axis_tuning(self, axis=None):
-        font_size = 20
+
+    def plot_combined_axis_profile(self, axis=None, font_size=20, print_parameters=True):
 
         if axis is None:
             f, axis = plt.subplots()
 
         vis_levels = np.linspace(0, 1, num=100)
-        axis.plot(vis_levels,
-                  self.firing_rate_modifier(vis_levels, np.ones_like(vis_levels) * -1),
-                  linewidth=2, label='Best fit sigmoid')
+        axis.plot(
+            vis_levels,
+            self.firing_rate_modifier(vis_levels, np.ones_like(vis_levels) * -1),
+            linewidth=2,
+            color='green')
 
         axis.set_xlim([0, 1.1])
         axis.set_ylim([0, 1.1])
+
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
-        #axis.grid()
 
-        axis.set_xlabel("Visibility Combined", fontsize=font_size)
-        axis.set_ylabel("Normalized fire rate (spikes/s)", fontsize=font_size)
-        axis.set_title("Tuning along equal visibilities axis",
-                       fontsize=font_size + 10)
+        axis.set_yticks(np.arange(0.2, 1.1, step=0.2))
+        # axis.grid()
 
-        axis.annotate('w_c=%0.2f, bias=%0.2f' % (self.w_combine, self.bias),
-                      xy=(0.40, 0.95),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+        axis.set_xlabel(r"$v_c$", fontsize=font_size)
+        axis.set_ylabel("Normalized Firing Rate (spikes/s)", fontsize=font_size)
+
+        if print_parameters:
+            axis.annotate(
+                r'$w_c=%0.2f,$' % self.w_combine + "\n" + r'$b=%0.2f$' % self.bias,
+                xy=(0.40, 0.95),
+                xycoords='axes fraction',
+                fontsize=font_size,
+                horizontalalignment='right',
+                verticalalignment='top',
+            )
+
+            # axis.set_title("Tuning along equal visibilities axis", fontsize=font_size + 10)
+            # axis.legend(fontsize=font_size, loc=4)
 
 
 if __name__ == "__main__":
@@ -384,7 +400,7 @@ if __name__ == "__main__":
     profile.plot_complete_profile(axis=ax1)
 
     ax2 = fig.add_subplot(1, 2, 2)
-    profile.plot_combined_axis_tuning(axis=ax2)
+    profile.plot_combined_axis_profile(axis=ax2)
 
     # Test fire rates -----------------------------------------------------------------------
     # (1) single only combined visibilities available

@@ -97,83 +97,6 @@ def diff_between_meas_and_tgt_d_to_total_var_ratio_2(wc, wd, b, d_to_t_var_ratio
         - d_to_t_var_ratio
 
 
-def plot_tuning_curve_along_combined_axis(w_c, b, axis=None, font_size=20):
-
-    if axis is None:
-        f, axis = plt.subplots(projection='3d')
-
-    vis_levels = np.linspace(0, 1, num=100)
-    axis.plot(vis_levels,
-              sigmoid(vis_levels, w_c, b),
-              linewidth=2, color='green')
-
-    axis.set_xlim([0, 1.1])
-    axis.set_ylim([0, 1.1])
-    axis.tick_params(axis='x', labelsize=font_size)
-    axis.tick_params(axis='y', labelsize=font_size)
-    #axis.grid()
-
-    axis.set_xlabel(r"$v_c$", fontsize=font_size)
-    axis.set_ylabel("FR (spikes/s)", fontsize=font_size)
-    # axis.set_title("Tuning along equal visibilities axis",
-    #                fontsize=font_size + 10)
-
-    # axis.legend(fontsize=font_size, loc=4)
-
-    axis.annotate(r'$w_c=%0.2f,$' % w_c + "\n" + r'$b=%0.2f$' % b,
-                  xy=(0.40, 0.95),
-                  xycoords='axes fraction',
-                  fontsize=font_size,
-                  horizontalalignment='right',
-                  verticalalignment='top')
-
-
-def plot_full_tuning_curve(w_n, w_d, b, axis=None, font_size=20):
-
-    if axis is None:
-        f, axis = plt.subplots(projection='3d')
-
-    vis_arr = np.arange(0, 1, step=0.1)
-    vis_arr = np.reshape(vis_arr, (vis_arr.shape[0], 1))
-
-    fire_rates = np.zeros(shape=(vis_arr.shape[0], vis_arr.shape[0]))
-
-    for r_idx in np.arange(vis_arr.shape[0]):
-        for c_idx in np.arange(vis_arr.shape[0]):
-
-            x = np.array([vis_arr[r_idx], vis_arr[c_idx]])
-            w = np.array([[w_n], [w_d]])
-
-            fire_rates[r_idx][c_idx] = sigmoid(x.T, w, b)
-
-    yy, xx = np.meshgrid(vis_arr, vis_arr)
-    axis.plot_wireframe(xx, yy, fire_rates)
-
-    axis.set_xlabel("Nondiagnostic visibility", fontsize=font_size)
-    axis.set_ylabel("Diagnostic Visibility", fontsize=font_size)
-    axis.set_zlabel("Normalize fire rate (spikes/s)", fontsize=font_size)
-
-    axis.set_xlim([1, 0])
-    axis.set_ylim([0, 1])
-    axis.set_zlim([0, 1])
-
-    axis.tick_params(axis='x', labelsize=font_size)
-    axis.tick_params(axis='y', labelsize=font_size)
-    axis.tick_params(axis='z', labelsize=font_size)
-    axis.set_title("Complete Tuning Curve", fontsize=font_size + 10)
-
-    x2, y2, _ = proj3d.proj_transform(1.25, 0.15, 1.0, axis.get_proj())
-    axis.annotate("w_n=%0.2f, w_d=%0.2f" % (w_n, w_d),
-                  xy=(x2, y2),
-                  xytext=(-20, 20),
-                  fontsize=font_size,
-                  textcoords='offset points')
-
-    x = np.arange(0, 1, step=0.1)
-    z = np.zeros_like(x)
-    axis.plot(x, x, z, label="Combined visibility axis", color='red', linewidth=2)
-
-
 def optimization_equations(w, w_d, b, desired_ratio):
     """
     Function(s) to solve using nonlinear numerical optimization.
@@ -228,55 +151,57 @@ def main(visibilities, fire_rates, ratio, title=''):
 
     # Find optimal w_c and bias that fit the data -------------------------------------------
     p_opt, p_cov = so.curve_fit(sigmoid, visibilities, fire_rates)
-    w_combined = p_opt[0]
-    bias = p_opt[1]
+    w_combined, bias = p_opt
     # print("Data fit parameters: w_c=%0.2f, b=%0.2f: standard error of parameter fits %s"
     #        % (w_combined, bias, np.sqrt(np.diag(p_cov))))
 
-    # find w_d and w_nd
+    # Find w_d and w_nd
     neuron = occlusion_profile.TwoInputSigmoidOcclusionProfile(ratio, w_combined, bias)
 
-    font_size = 50
+    # Plot the figures -----------------------------------------
     f = plt.figure()
+    font_size = 50
+
     if title:
         f.suptitle(title + ". [R=%0.2f]" % ratio, fontsize=font_size + 10)
 
     ax1 = f.add_subplot(1, 2, 1)
-    plot_tuning_curve_along_combined_axis(w_combined, bias, ax1, font_size=font_size)
-    ax1.scatter(visibilities, fire_rates,
-                s=60, color='blue', label="Original data")
-    ax1.set_ylabel("Normalized Firing Rate (spikes/s)", fontsize=font_size)
+    neuron.plot_combined_axis_profile(axis=ax1, font_size=font_size)
 
-    ax1.legend(fontsize=24)
+    ax1.scatter(
+        visibilities,
+        fire_rates,
+        s=60,
+        color='blue',
+        # label="Original data"
+    )
+
+    ax1.legend(fontsize=font_size, loc='best')
 
     ax2 = f.add_subplot(1, 2, 2, projection='3d')
     neuron.plot_complete_profile(axis=ax2, font_size=font_size)
 
-    # To plot the combined visibility axis on the 3D plot
-    # we assume combined visibility and diagnostic and nondiagnostic visibility levels are related
-    # by v_c = np.sqrt(vnd**2 + vd**2) / sqrt(2). We vnd=1 and vd=1, vc=1 and this function
-    # monotonously increases with visibility as required by our logistic function
-    vis_combined = np.linspace(0, 1, num=100)
+    # To plot the combined visibility axis on the 3D plot, we assume combined visibility and
+    # diagnostic and nondiagnostic visibility levels are related
+    # by v_c = np.sqrt(vnd**2 + vd**2) / sqrt(2). When vnd=1 and vd=1, vc=1 and this function
+    # monotonously increases with visibility as required by our logistic function.
+    # Additionally along the combined visibility axis we assume v_nd = v_nd
+    vis_d = np.linspace(0, 1, num=100)
+    vis_c = np.sqrt(vis_d**2 + vis_d**2) / np.sqrt(2)
 
-    # Along the combined axis vd = v_nd hence
-    #     v_c = np.sqrt(2) * vd / np.sqrt(2) = vd
-
-    # Additionally the tuning profile is normalized to its maximum value by neuron, so scale the
-    # sigmoid as well.
-
-    ax2.plot(vis_combined,
-             vis_combined,
-             sigmoid(vis_combined, w_combined, bias) / sigmoid(1, w_combined, bias),
-             linewidth=3, label='Best fit sigmoid', color='green')
-
-    ax2.set_xticks(np.arange(0, 1.1, step=0.5))
-    ax2.set_yticks(np.arange(0.5, 1.1, step=0.5))
-    ax2.set_zticks(np.arange(0, 1.1, step=0.5))
+    ax2.plot(
+        vis_d,
+        vis_d,
+        neuron.firing_rate_modifier(vis_c, np.ones_like(vis_c) * -1),
+        color='green',
+        linewidth=3,
+    )
 
     return w_combined, bias
 
 
 def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title=''):
+    # TODO: Fix me
 
     # Fit the original diagnostic and nondiagnostic data -----------------------------------
     # fit the diagnostic tuning curve
@@ -295,16 +220,15 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title='
     # Plot the original data
     font_size = 34
     fig = plt.figure()
+
     if title:
         fig.suptitle(title + ". [Diagnostic group to total variance ratio=%0.2f]"
                      % d_to_t_var_ratio,
                      fontsize=font_size + 10)
 
     ax = fig.add_subplot(122, projection='3d')
-
     ax.scatter(visibilities, np.zeros_like(r_nondiagnostic), r_nondiagnostic,
                marker='+', linewidth=2, s=60, color='red', label="Original Nondiagnostic Data")
-
     ax.scatter(np.zeros_like(r_diagnostic), visibilities, r_diagnostic,
                marker='+', linewidth=2, s=60, color='blue', label="Original Diagnostic Data")
 
@@ -319,7 +243,7 @@ def main2(visibilities, r_nondiagnostic, r_diagnostic, d_to_t_var_ratio, title='
         factor=0.5,  # w_d increases rapidly without this factor adjustment)
     )
 
-    plot_full_tuning_curve(w_nondiagnostic, w_diagnostic, bias, axis=ax)
+    # plot_full_tuning_curve(w_nondiagnostic, w_diagnostic, bias, axis=ax)
 
     return w_combined, bias
 
@@ -350,8 +274,7 @@ if __name__ == "__main__":
                                 ratio=0.3,
                                 # title='Kovacs 1995 - Object %d' % obj
                                 )
-        raw_input()
-
+        raw_input("Continue with next Figure?")
 
         w_combined_arr.append(weight_c)
         bias_arr.append(bias_c)

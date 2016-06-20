@@ -158,7 +158,14 @@ class GaussianPositionProfile:
         axis.set_xlim([x_start, x_stop])
         axis.set_ylim([y_start, y_stop])
 
-        axis.scatter(0, 0, 1, color='black', marker='+', linewidth=12, label='Gaze Center')
+        axis.scatter(
+            0, 0,
+            color='black',
+            marker='+',
+            s=100,
+            label='Gaze Centre',
+            linewidth=4
+        )
 
         axis.set_ylabel('Y (Radians)', fontsize=font_size)
         axis.set_xlabel('X(Radians)', fontsize=font_size)
@@ -169,9 +176,15 @@ class GaussianPositionProfile:
         # If more details are required use a higher contour value.
         if 1 != n_contours:
             axis.scatter(
-                self.rf_center[0], self.rf_center[1], color='green', marker='o',
-                linewidth=4,
-                label='Rf Center\n(%0.2f, %0.2f)' % (self.rf_center[0], self.rf_center[1]))
+                self.rf_center[0],
+                self.rf_center[1],
+                color='green',
+                label='Rf Centre\n(%0.2f, %0.2f)' % (self.rf_center[0], self.rf_center[1]),
+                marker='o',
+                edgecolor='green',
+                s=100
+            )
+
             # axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance,
             #                fontsize=font_size)
 
@@ -183,8 +196,7 @@ class GaussianPositionProfile:
                 horizontalalignment='right',
                 verticalalignment='top')
 
-            axis.grid()
-            axis.legend(fontsize=font_size - 5, loc='best', scatterpoints=1)
+            axis.legend(fontsize=font_size, loc='best', scatterpoints=1)
 
 if __name__ == "__main__":
     plt.ion()

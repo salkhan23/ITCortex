@@ -300,7 +300,7 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
 
     ax1.annotate(
         'A',
-        xy=(0.05, 0.95),
+        xy=(0.10, 0.95),
         xycoords='axes fraction',
         fontsize=30,
         horizontalalignment='right',
@@ -363,7 +363,7 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
     ax6 = f.add_subplot(3, 2, 6)
     it_neuron.clutter.plot_clutter_profile(axis=ax6, font_size=font_size)
     ax6.grid()
-    ax6.legend(loc='best', fontsize=font_size)
+    ax6.legend(loc=9, fontsize=font_size)
     ax6.yaxis.set_label_position('right')
 
     ax6.annotate(

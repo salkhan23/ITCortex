@@ -34,7 +34,7 @@ if __name__ == "__main__":
     neuron = occlusion_profile.TwoInputSigmoidOcclusionProfile(ratio, w_combined, bias)
 
     # Plot the figure
-    font_size = 30
+    font_size = 40
     f = plt.figure()
 
     # 1D logistic fit ---------------------------------------------------------------
@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     ax1.annotate(
         r'$w_c=%0.2f,$' % w_combined + "\n" + r'$b=%0.2f$' % bias,
-        xy=(0.40, 0.95),
+        xy=(0.60, 0.95),
         xycoords='axes fraction',
         fontsize=font_size,
         horizontalalignment='right',
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     # 2D Logistic Fit
     ax3 = f.add_subplot(133, projection='3d')
-    neuron.plot_complete_profile(axis=ax3, font_size=font_size, print_parameters=True)
+    neuron.plot_complete_profile(axis=ax3, font_size=font_size)
     # To plot the combined visibility axis on the 3D plot
     # we assume combined visibility and diagnostic and nondiagnostic visibility levels are related
     # by v_c = np.sqrt(vnd**2 + vd**2) / sqrt(2). We vnd=1 and vd=1, vc=1 and this function

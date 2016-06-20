@@ -50,7 +50,7 @@ def fit_and_plot_diagnostic_variance_ratio_distribution(axis=None, font_size=40)
 
     axis.plot(bins,
               exponential(bins, *p_opt),
-              label=r'$p(x) = %0.2f \exp(-%0.2fx) $' % (p_opt[0], p_opt[0]),
+              label=r'$\lambda=%0.2f $' % p_opt[0],
               color='g',
               linewidth=2)
 
@@ -64,6 +64,7 @@ def fit_and_plot_diagnostic_variance_ratio_distribution(axis=None, font_size=40)
     axis.set_ylim([0, np.max(hist) * 1.1])
 
     axis.set_yticks(np.arange(2, 10, step=2))
+    axis.set_xticks(np.arange(0, 0.9, step=0.2))
 
     axis.legend(loc='best', fontsize=font_size)
     # axis.grid()

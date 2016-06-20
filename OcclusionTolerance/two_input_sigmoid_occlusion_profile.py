@@ -329,8 +329,8 @@ class TwoInputSigmoidOcclusionProfile:
         axis.tick_params(axis='y', labelsize=font_size)
         axis.tick_params(axis='z', labelsize=font_size)
 
-        axis.set_xlabel("\n" + r"$v_{nd}$", fontsize=font_size + 10, fontweight='bold', color='b')
-        axis.set_ylabel("\n" + r"$v_d$", fontsize=font_size + 10, fontweight='bold', color='b')
+        axis.set_xlabel("\n" + r"$v_{nd}$", fontsize=font_size + 10, fontweight='bold')
+        axis.set_ylabel("\n" + r"$v_d$", fontsize=font_size + 10, fontweight='bold')
         # axis.set_zlabel("\n\n" + "FR (spikes/s)", fontsize=font_size)
         axis.set_zlabel("\n\n" + "Normalized Firing Rate (spikes/s)", fontsize=font_size)
         # axis.set_title("Complete Tuning Curve", fontsize=font_size + 10)
@@ -340,7 +340,7 @@ class TwoInputSigmoidOcclusionProfile:
                     + r'$w_{nd}=%0.2f$' % self.w_vector[1] + '\n' \
                     + r'$R=%0.2f$' % self.ratio
 
-            axis.text(1.3, 0, 0.9, label, fontsize=font_size)
+            axis.text(1.3, 0, 0.95, label, fontsize=font_size)
 
 
     def plot_combined_axis_profile(self, axis=None, font_size=20, print_parameters=True):

@@ -264,8 +264,7 @@ if __name__ == "__main__":
              color='green',
              marker='o',
              markersize=10,
-             markeredgecolor='green',
-             markerfacecolor='none',
+
              markeredgewidth=2
              )
 

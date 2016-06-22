@@ -118,7 +118,7 @@ class LogNormalSizeProfile:
         print("Preferred Stimulus Size      = %0.4f (Radians)" % self.pref_size)
         print("Size bandwidth               = %0.4f octaves" % self.size_bw)
 
-    def plot_size_tolerance(self, axis=None, font_size=34):
+    def plot_size_tolerance(self, axis=None, font_size=34, print_parameters=True):
 
         x = np.linspace(0, self.max_pref_stim_size * 1.2, num=100)
 
@@ -130,19 +130,20 @@ class LogNormalSizeProfile:
         axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
         # axis.set_title("Size Tolerance", fontsize=font_size + 10)
 
-        axis.annotate(r'$\sigma_{ST}=%0.2f$' % self.size_bw,
-                      xy=(0.95, 0.85),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+        if print_parameters:
+            axis.annotate(r'$\sigma_{ST}=%0.2f$' % self.size_bw,
+                          xy=(0.95, 0.85),
+                          xycoords='axes fraction',
+                          fontsize=font_size,
+                          horizontalalignment='right',
+                          verticalalignment='top')
 
-        axis.annotate(r'$\mu_s=%0.2f$' % self.pref_size,
-                      xy=(0.95, 0.75),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+            axis.annotate(r'$\mu_s=%0.2f$' % self.pref_size,
+                          xy=(0.95, 0.75),
+                          xycoords='axes fraction',
+                          fontsize=font_size,
+                          horizontalalignment='right',
+                          verticalalignment='top')
 
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)

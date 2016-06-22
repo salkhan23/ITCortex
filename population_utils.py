@@ -206,6 +206,7 @@ def plot_population_obj_preferences(it_population, axis=None):
 
 def plot_selectivity_vs_position_tolerance(it_population, axis=None, f_size=40):
     """  Plot population selectivity, activity fraction, verses  position tolerance
+    :param f_size:
     :param axis:
     :param it_population:
     """
@@ -286,18 +287,30 @@ def plot_selectivity_vs_mean_response(it_population, axis=None, font_size=40):
         verticalalignment='top')
 
 
-def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_size=20):
+def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_size=30):
+    """
+    Once the figure is generated:
+        [1] Get tick labels for selectivity and abbreviate
+        [2] Zoom in on the figure B.
+        [3] Remove overlap of X,Y ticks in figure B and C.
+
+    :param it_neuron:
+    :param dt:
+    :param net_fire_rates:
+    :param font_size:
+    :return:
+    """
 
     f = plt.figure()
 
     ax1 = f.add_subplot(3, 2, 1)
-    it_neuron.selectivity.plot_object_preferences(axis=ax1, font_size=16)
+    it_neuron.selectivity.plot_object_preferences(
+        axis=ax1, font_size=font_size, print_parameters=False)
     ax1.grid()  # Turn the default grid off
     ax1.tick_params(axis='y', labelsize=font_size)
     ax1.set_xlabel('Ranked Objects', fontsize=font_size)
     ax1.set_ylabel('FR (Hz)', fontsize=font_size)
     ax1.xaxis.set_label_position('top')
-
     ax1.annotate(
         'A',
         xy=(0.10, 0.95),
@@ -305,9 +318,12 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         fontsize=30,
         horizontalalignment='right',
         verticalalignment='top')
+    labels = [item.get_text() for item in f.axes[0].get_xticklabels()]
+    ax1.set_xticklabels(labels, rotation=45)
 
     ax2 = f.add_subplot(3, 2, 2)
-    it_neuron.position.plot_position_tolerance_contours(axis=ax2, font_size=font_size)
+    it_neuron.position.plot_position_tolerance_contours(
+        axis=ax2, font_size=font_size, print_parameters=False)
     ax2.yaxis.set_label_position('right')
     ax2.xaxis.set_label_position('top')
     ax2.set_xlabel('X', fontsize=font_size)
@@ -319,9 +335,12 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         fontsize=30,
         horizontalalignment='right',
         verticalalignment='top')
+    # legend below figure
+    ax2.legend(
+        bbox_to_anchor=[0.5, -0.35], fontsize=font_size - 5, ncol=2, loc='center', scatterpoints=1)
 
     ax3 = f.add_subplot(3, 2, 3)
-    it_neuron.size.plot_size_tolerance(axis=ax3, font_size=font_size)
+    it_neuron.size.plot_size_tolerance(axis=ax3, font_size=font_size, print_parameters=False)
     ax3.grid()  # Turn the default grid off
     ax3.set_ylabel('FR (Hz)', fontsize=font_size)
     ax3.annotate(
@@ -337,7 +356,9 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         axis=ax4,
         rotation_symmetry_period=1,
         mirror_symmetric=False,
-        font_size=font_size)
+        font_size=font_size,
+        print_parameters=False,
+    )
     ax4.set_ylabel('FR (Hz)', fontsize=font_size)
     ax4.yaxis.set_label_position('right')
     ax4.annotate(
@@ -349,7 +370,8 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         verticalalignment='top')
 
     ax5 = f.add_subplot(3, 2, 5, projection='3d')
-    it_neuron.occlusion.plot_complete_profile(axis=ax5, font_size=font_size)
+    it_neuron.occlusion.plot_complete_profile(
+        axis=ax5, font_size=font_size, print_parameters=False)
     ax5.set_zlabel('\nFR (Hz)', fontsize=font_size)
     ax5.grid()  # Turn the default grid off
     ax5.annotate(
@@ -361,10 +383,10 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         verticalalignment='top')
 
     ax6 = f.add_subplot(3, 2, 6)
-    it_neuron.clutter.plot_clutter_profile(axis=ax6, font_size=font_size)
+    it_neuron.clutter.plot_clutter_profile(axis=ax6, font_size=font_size, print_parameters=False)
     ax6.grid()
-    ax6.legend(loc=9, fontsize=font_size)
     ax6.yaxis.set_label_position('right')
+    ax6.legend(bbox_to_anchor=[0.3, 0.95], fontsize=font_size - 5)
 
     ax6.annotate(
         'F',
@@ -373,6 +395,10 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         fontsize=30,
         horizontalalignment='right',
         verticalalignment='top')
+    ax6.set_xticks(np.arange(0.5, 2.1, step=0.5))
+    ax6.set_xlabel("Sum Isolated Responses (Hz)")
+    ax6.set_ylabel("Joint FR (Hz)")
+
     #
     # ax7 = f.add_subplot(4, 2, 7)
     # it.plot_neuron_dynamic_profile(it_neuron, axis=ax7, font_size=font_size)

@@ -159,7 +159,7 @@ class KurtosisSparseness:
         for obj, rate in lst:
             print ("\t%s : %0.4f" % (obj.ljust(max_name_length), rate))
 
-    def plot_object_preferences(self, axis=None, font_size=34):
+    def plot_object_preferences(self, axis=None, font_size=34, print_parameters=True):
         """ Plot Neurons Object Preferences
         :param axis: axis to plot in. [default=None]
         """
@@ -182,21 +182,22 @@ class KurtosisSparseness:
 
         max_fire = self.get_max_firing_rate()
 
-        axis.annotate(r'$SI_K=%0.2f$' % (self.kurtosis_measured),
-                      xy=(0.95, 0.9),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+        if print_parameters:
+            axis.annotate(r'$SI_K=%0.2f$' % (self.kurtosis_measured),
+                          xy=(0.95, 0.9),
+                          xycoords='axes fraction',
+                          fontsize=font_size,
+                          horizontalalignment='right',
+                          verticalalignment='top')
 
-        axis.annotate(r'$SI_{AF}=%0.2f$' % self.activity_fraction_measured,
-                      xy=(0.95, 0.75),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+            axis.annotate(r'$SI_{AF}=%0.2f$' % self.activity_fraction_measured,
+                          xy=(0.95, 0.75),
+                          xycoords='axes fraction',
+                          fontsize=font_size,
+                          horizontalalignment='right',
+                          verticalalignment='top')
 
-        axis.tick_params(axis='x', labelsize=font_size - 5)
+        axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
 
 

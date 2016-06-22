@@ -66,11 +66,13 @@ class AveragingClutterProfile:
 
         return clutter_rate + self.d
 
-    def plot_clutter_profile(self, axis=None, font_size=34, num_objs=2, num_samples=100):
+    def plot_clutter_profile(
+            self, axis=None, font_size=34, num_objs=2, num_samples=100, print_parameters=True):
         """
         Plots the clutter profile of the neuron if it were seeing two and three objects at random
         places within its receptive field
 
+        :param print_parameters:
         :param num_samples: number of sample points to consider. Default=100
         :param num_objs: number of objects in the neurons receptive field.Default=2.
         :param font_size: graph font size. Default=34
@@ -97,9 +99,9 @@ class AveragingClutterProfile:
         axis.scatter(sum_isolated_responses, clutter_rates, s=60)
 
         x = np.linspace(0, np.max(sum_isolated_responses), 100)
-        axis.plot(x, x / num_objs, label="Average", linewidth=2)
-        axis.plot(x, x, label="Sum", linewidth=2)
-        axis.legend(fontsize=font_size - 5)
+        axis.plot(x, x / num_objs, label="Avg", linewidth=2)
+        axis.plot(x, x, label="Sum", linewidth=2, linestyle='--')
+        axis.legend(fontsize=font_size - 5, loc='best')
 
         axis.set_xlabel('Sum Isolated Responses (spikes/s)', fontsize=font_size)
         axis.set_ylabel('Joint FR', fontsize=font_size)
@@ -110,12 +112,13 @@ class AveragingClutterProfile:
         axis.set_xlim([0, num_objs])
         axis.set_ylim([0, num_objs])
 
-        axis.annotate('%d objects' % num_objs,
-                      xy=(0.25, 0.9),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+        if print_parameters:
+            axis.annotate('%d objects' % num_objs,
+                          xy=(0.25, 0.9),
+                          xycoords='axes fraction',
+                          fontsize=font_size,
+                          horizontalalignment='right',
+                          verticalalignment='top')
 
 
 if __name__ == "__main__":

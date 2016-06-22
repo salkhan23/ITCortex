@@ -120,7 +120,8 @@ class GaussianPositionProfile:
                                          y_stop=np.pi / 2,
                                          axis=None,
                                          n_contours=6,
-                                         font_size=34):
+                                         font_size=34,
+                                         print_parameters=True):
         """
         Contour Plots of the spatial receptive field of the neuron.
 
@@ -162,7 +163,7 @@ class GaussianPositionProfile:
             0, 0,
             color='black',
             marker='+',
-            s=100,
+            s=150,
             label='Gaze Centre',
             linewidth=4
         )
@@ -179,24 +180,25 @@ class GaussianPositionProfile:
                 self.rf_center[0],
                 self.rf_center[1],
                 color='green',
-                label='Rf Centre\n(%0.2f, %0.2f)' % (self.rf_center[0], self.rf_center[1]),
+                label='RF Centre',
                 marker='o',
                 edgecolor='green',
-                s=100
+                s=150
             )
 
             # axis.set_title('Positional Tolerance = %0.2f (Rad)' % self.position_tolerance,
             #                fontsize=font_size)
 
-            axis.annotate(
-                r'$\sigma_{PT}=%0.2f$' % self.position_tolerance,
-                xy=(0.95, 0.2),
-                xycoords='axes fraction',
-                fontsize=font_size,
-                horizontalalignment='right',
-                verticalalignment='top')
+            if print_parameters:
+                axis.annotate(
+                    r'$\sigma_{PT}=%0.2f$' % self.position_tolerance,
+                    xy=(0.95, 0.2),
+                    xycoords='axes fraction',
+                    fontsize=font_size,
+                    horizontalalignment='right',
+                    verticalalignment='top')
 
-            axis.legend(fontsize=font_size, loc='best', scatterpoints=1)
+            axis.legend(fontsize=font_size - 5, loc='best', scatterpoints=1)
 
 if __name__ == "__main__":
     plt.ion()

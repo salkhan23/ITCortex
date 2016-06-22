@@ -170,7 +170,8 @@ class GaussianRotationProfile:
                             rotation_symmetry_period=1,
                             mirror_symmetric=False,
                             axis=None,
-                            font_size=20):
+                            font_size=20,
+                            print_parameters=True):
 
         if axis is None:
             f, axis = plt.subplots()
@@ -194,39 +195,22 @@ class GaussianRotationProfile:
         axis.tick_params(axis='x', labelsize=font_size)
         axis.tick_params(axis='y', labelsize=font_size)
 
-        axis.annotate(r'$\mu_r = %0.2f,\ \sigma_{RT}= %0.2f$'
-                      % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
-                      xy=(0.95, 0.9),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
+        if print_parameters:
+            axis.annotate(r'$\mu_r = %0.2f,\ \sigma_{RT}= %0.2f$'
+                          % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
+                          xy=(0.95, 0.9),
+                          xycoords='axes fraction',
+                          fontsize=font_size,
+                          horizontalalignment='right',
+                          verticalalignment='top')
 
-        axis.annotate(r'$f_{sym} = %0.2f$'
-                      % rotation_symmetry_period,
-                      xy=(0.95, 0.80),
-                      xycoords='axes fraction',
-                      fontsize=font_size,
-                      horizontalalignment='right',
-                      verticalalignment='top')
-
-        # axis.annotate('Preferred Angle=%d, Spread=%d'
-        #               % (self.preferred_angle * 180 / np.pi, self.spread * 180 / np.pi),
-        #               (0, 0),
-        #               (10, -50),
-        #               xycoords='axes fraction',
-        #               textcoords='offset points',
-        #               va='top',
-        #               fontsize=font_size)
-        #
-        # axis.annotate('Sym Freq=%0.2f, Mirror Sym=%s'
-        #               % (rotation_symmetry_period, mirror_symmetric),
-        #               (0, 0),
-        #               (10, -70),
-        #               xycoords='axes fraction',
-        #               textcoords='offset points',
-        #               va='top',
-        #               fontsize=font_size,)
+            axis.annotate(r'$f_{sym} = %0.2f$'
+                          % rotation_symmetry_period,
+                          xy=(0.95, 0.80),
+                          xycoords='axes fraction',
+                          fontsize=font_size,
+                          horizontalalignment='right',
+                          verticalalignment='top')
 
     def print_parameters(self):
         print("Profile            = %s" % self.type)

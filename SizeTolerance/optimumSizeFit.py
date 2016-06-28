@@ -48,7 +48,7 @@ def get_lognormal_fit(size_arr, saturation_size, include_saturation_points=True)
             # 1-cdf(x) which we use
             if include_saturation_points:
                 above_sat_pnts = size_arr[size_arr >= saturation_size]
-                prob_above_sat = ss.lognorm.sf(cutoff, s=s, loc=0, scale=scale)
+                prob_above_sat = ss.lognorm.sf(saturation_size, s=s, loc=0, scale=scale)
                 prob = np.ones(shape=(len(above_sat_pnts))) * prob_above_sat
 
                 llrs[s_idx][scale_idx] += np.log(prob).sum()
@@ -86,7 +86,7 @@ def get_gamma_fit(size_arr, saturation_size, include_saturation_points=True):
             # we use
             if include_saturation_points:
                 above_sat_pnts = size_arr[size_arr >= saturation_size]
-                prob_above_sat = ss.gamma.sf(cutoff, a=alpha, scale=scale)
+                prob_above_sat = ss.gamma.sf(saturation_size, a=alpha, scale=scale)
                 prob = np.ones(shape=(len(above_sat_pnts))) * prob_above_sat
 
                 llrs[alpha_idx][scale_idx] += np.log(prob).sum()
@@ -124,7 +124,7 @@ def get_levy_fit(size_arr, saturation_size, include_saturation_points=True):
             # we use
             if include_saturation_points:
                 above_sat_pnts = size_arr[size_arr >= saturation_size]
-                prob_above_sat = ss.levy.sf(cutoff, loc=loc, scale=scale)
+                prob_above_sat = ss.levy.sf(saturation_size, loc=loc, scale=scale)
                 prob = np.ones(shape=(len(above_sat_pnts))) * prob_above_sat
 
                 llrs[loc_idx][scale_idx] += np.log(prob).sum()
@@ -133,6 +133,34 @@ def get_levy_fit(size_arr, saturation_size, include_saturation_points=True):
     max_loc_idx, max_scale_idx = np.unravel_index(llrs.argmax(), llrs.shape)
 
     return loc_arr[max_loc_idx], scale_arr[max_scale_idx], llrs[max_loc_idx][max_scale_idx]
+
+
+def plot_histogram(size_arr, cut_off, axis=None):
+
+    if axis is None:
+        f, axis = plt.subplots()
+
+    reg_pnts = size_arr[size_arr < cut_off]
+    above_cutoff_points = size_arr[size_arr >= cut_off]
+
+    result = axis.hist(
+        [reg_pnts, above_cutoff_points],
+        bins=np.arange(0, 31, step=2),
+        normed=True,
+        stacked=True,
+        rwidth=1,
+    )
+
+    axis.set_xlim([0, 31])
+    axis.set_xticks(np.arange(0, 31, step=2))
+
+    # Hatch the above saturation bars - this is done manually. The last two bars correspond to
+    # above saturation points
+    # result[2] = patches, [1] index's the patches in the second histogram (not that this is the
+    # complete histogram). Its integral (height*width) sums to 1. [-2:] extracts the last two bins
+    above_sat_bins = result[2][1][-2:]
+    for b in above_sat_bins:
+        b.set_hatch('/')
 
 
 if __name__ == "__main__":
@@ -187,28 +215,8 @@ if __name__ == "__main__":
 
     # ---------------------------------------------------------------
     # Plot the histogram we try to fit
-    # ---------------------------------------------------------------
-    reg_pnts = opt_sizes[opt_sizes < cutoff]
-    above_cutoff_points = opt_sizes[opt_sizes >= cutoff]
-
-    result = plt.hist(
-        [reg_pnts, above_cutoff_points],
-        bins=np.arange(0, 31, step=2),
-        normed=True,
-        stacked=True,
-        rwidth=1,
-    )
-
-    plt.xlim([0, 31])
-    plt.xticks(np.arange(0, 31, step=2))
-
-    # Hatch the above saturation bars - this is done manually. The last two bars correspond to
-    # above saturation points
-    # result[2] = patches, [1] index's the patches in the second histogram (not that this is the
-    # complete histogram). Its integral (height*width) sums to 1. [-2:] extracts the last two bins
-    above_sat_bins = result[2][1][-2:]
-    for b in above_sat_bins:
-        b.set_hatch('/')
+    # # ---------------------------------------------------------------
+    plot_histogram(opt_sizes, cutoff)
 
     # ---------------------------------------------------------------
     # Best Fit Log normal Distribution

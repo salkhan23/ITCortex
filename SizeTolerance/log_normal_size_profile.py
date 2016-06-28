@@ -4,7 +4,7 @@ import scipy.stats as ss
 
 
 class LogNormalSizeProfile:
-    def __init__(self, pol_tol):
+    def __init__(self, pol_tol, pref_size = None, size_bw=None):
         """
         Generate a lognormal size tuning profile for a neuron. Reference Ito-95.
 
@@ -24,9 +24,15 @@ class LogNormalSizeProfile:
 
         # Get parameters for the Lognormal distribution. Preferred size is limited to the max
         # and min supported size inside the function
-        self.pref_size = self.__get_preferred_size()
+        if pref_size is None:
+            self.pref_size = self.__get_preferred_size()
+        else:
+            self.pref_size = pref_size
 
-        self.size_bw = self.__get_size_bandwidth()
+        if size_bw is None:
+            self.size_bw = self.__get_size_bandwidth()
+        else:
+            self.size_bw = size_bw
 
         # Internal parameters - Needed for calculating the firing rate
         self.set_params(self.pref_size, self.size_bw)
@@ -126,7 +132,7 @@ class LogNormalSizeProfile:
             f, axis = plt.subplots()
 
         axis.plot(x, self.firing_rate_modifier(x), linewidth=2)
-        axis.set_xlabel('Size', fontsize=font_size)
+        axis.set_xlabel('Size (Rads)', fontsize=font_size)
         axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
         # axis.set_title("Size Tolerance", fontsize=font_size + 10)
 

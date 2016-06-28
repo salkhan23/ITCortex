@@ -14,9 +14,9 @@ def corrected_rotation(x_arr, mu):
 
     :rtype :
     """
-    if x_arr < (mu-180):
+    if x_arr < (mu - 180):
         x_arr += 360
-    elif x_arr > mu+180:
+    elif x_arr > mu + 180:
         x_arr -= 360
 
     return x_arr
@@ -26,7 +26,7 @@ def single_gaussian(angles, mu, sigma, amp):
 
     x_corrected = np.array([corrected_rotation(angle, mu) for angle in angles])
 
-    return amp * np.exp(-(x_corrected - mu)**2/(2.0 * sigma**2))
+    return amp * np.exp(-(x_corrected - mu)**2 / (2.0 * sigma**2))
 
 
 def pseudo_symmetric_gaussian(
@@ -34,7 +34,7 @@ def pseudo_symmetric_gaussian(
         mu1, sigma1, amp):
 
     s = single_gaussian(angles, mu1, sigma1, amp)
-    s += single_gaussian(angles, mu1+180, sigma1, amp)
+    s += single_gaussian(angles, mu1 + 180, sigma1, amp)
 
     return s
 
@@ -108,11 +108,11 @@ def single_gaussian_fit(angles_org, firing_rates_org, initial_est, axis=None, fo
 
     axis.set_xlabel('Angle(Deg)', fontsize=font_size)
     axis.set_ylabel('Normalized Firing Rate (spikes/s)', fontsize=font_size)
-    axis.scatter(angles_org, firing_rates_org, label='Original Data', s=60)
+
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
-    axis.set_ylim([0,1.1])
-    axis.set_xticks([-180,-90,0,90,180])
+
+    axis.set_xticks([-180, -90, 0, 90, 180])
     axis.set_xlim((-179, 180))
 
     angles_arr = np.arange(-180, 180, step=1)
@@ -134,11 +134,14 @@ def single_gaussian_fit(angles_org, firing_rates_org, initial_est, axis=None, fo
 
     axis.plot(
         angles_arr,
-        single_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]),
+        single_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]) / params_fit[2],
         linewidth=2,
         color='green',
         label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f$'
               % (params_fit[0], params_fit[1], params_fit[2]))
+
+    # Normalize by the amplitude of fitting gaussian
+    axis.scatter(angles_org, firing_rates_org / params_fit[2], label='Original Data', s=60)
 
     print ("1 Gaussian Fit - standard deviation of errors in parameters:" +
            "\n\tmu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
@@ -152,11 +155,11 @@ def double_gaussian_fit(angles_org, firing_rates_org, initial_est, axis=None, fo
 
     axis.set_xlabel('Angle(Deg)', fontsize=font_size)
     axis.set_ylabel('Normalized Firing Rate', fontsize=font_size)
-    axis.scatter(angles_org, firing_rates_org, label='Original Data', s=60)
+
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
-    axis.set_ylim([0,1.1])
-    axis.set_xticks([-180,-90,0,90,180])
+
+    axis.set_xticks([-180, -90, 0, 90, 180])
     axis.set_xlim((-179, 180))
 
     angles_arr = np.arange(-180, 180, step=1)
@@ -178,17 +181,18 @@ def double_gaussian_fit(angles_org, firing_rates_org, initial_est, axis=None, fo
 
     axis.plot(
         angles_arr,
-        pseudo_symmetric_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]),
+        pseudo_symmetric_gaussian(angles_arr, params_fit[0], params_fit[1], params_fit[2]) / params_fit[2],
         linewidth=2,
         color='green',
         label=r'$1\ Gaussian:\ \mu_1=%0.2f,\ \sigma_1=%0.2f,\ Amp_1=%0.2f$'
               % (params_fit[0], params_fit[1], params_fit[2]))
 
+    # Normalize by the amplitude of fitting gaussian
+    axis.scatter(angles_org, firing_rates_org / params_fit[2], label='Original Data', s=60)
+
     print ("1 Gaussian Fit - standard deviation of errors in parameters:" +
            "\n\tmu_1=%0.4f, sigma_1=%0.4f, Amp_1=%0.4f"
            % (params_err_std_dev[0], params_err_std_dev[1], params_err_std_dev[2]))
-
-
 
 
 if __name__ == "__main__":
@@ -240,12 +244,11 @@ if __name__ == "__main__":
 
     # ---------------------------------------------------------------------------------------
     f, ax_arr = plt.subplots(1, 3, sharey=True)
-    font_size = 50
+    f_size = 50
 
     title = 'Rotation Tuning - Fig 5a, Logothesis, Pauls & Poggio -1995'
     x = data['fig5ax']
     y = data['fig5ay']
-    y = y/max(y)
 
     InitialEst = -255 * np.ones(shape=(4, 3))
     InitialEst[0, :] = [103.14, 26.55, 1.00]
@@ -258,7 +261,6 @@ if __name__ == "__main__":
     title = 'Fig 5c, logothesis, Pauls & poggio -1995'
     x = data['fig5cx']
     y = data['fig5cy']
-    y = y/max(y)
 
     InitialEst = -255 * np.ones(shape=(4, 3))
     InitialEst[0, :] = [116.31,  30, 1.00]
@@ -267,20 +269,20 @@ if __name__ == "__main__":
     double_gaussian_fit(x, y, InitialEst, ax_arr[1])
     ax_arr[1].set_ylabel('')
 
-    # # -------------------------------------------------------------------------------------------
+    # -------------------------------------------------------------------------------------------
     title = 'Fig 5e, logothesis, Pauls & poggio -1995'
     x = data['fig5ex']
     y = data['fig5ey']
-    y = y/max(y)
 
     InitialEst = -255 * np.ones(shape=(4, 3))
     InitialEst[0, :] = [-26.62, 364, 1.00]
 
     print title
-    main(x, y, InitialEst, title)
     single_gaussian_fit(x, y, InitialEst, ax_arr[2])
     ax_arr[2].set_xlabel('')
     ax_arr[2].set_ylabel('')
+
+    ax_arr[0].set_ylim([0, 1.4])
 
 
 

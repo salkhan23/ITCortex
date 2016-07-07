@@ -135,7 +135,7 @@ def get_levy_fit(size_arr, saturation_size, include_saturation_points=True):
     return loc_arr[max_loc_idx], scale_arr[max_scale_idx], llrs[max_loc_idx][max_scale_idx]
 
 
-def plot_histogram(size_arr, cut_off, axis=None):
+def plot_histogram(size_arr, cut_off, bins, axis=None):
 
     if axis is None:
         f, axis = plt.subplots()
@@ -145,7 +145,7 @@ def plot_histogram(size_arr, cut_off, axis=None):
 
     result = axis.hist(
         [reg_pnts, above_cutoff_points],
-        bins=np.arange(0, 31, step=2),
+        bins,
         normed=True,
         stacked=True,
         rwidth=1,

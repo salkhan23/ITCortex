@@ -4,7 +4,7 @@ import pickle
 import scipy.stats as ss
 
 import log_normal_size_profile as size_profile
-import optimumSizeFit as pref_size_dist
+import optimumSizeFit as sizeFit
 
 
 if __name__ == "__main__":
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     ax4 = plt.subplot2grid((2, 6), (1, 0), colspan=3)
     ax5 = plt.subplot2grid((2, 6), (1, 3), colspan=3)
 
-    f_size = 40
+    f_size = 35
 
     # Get the Data
     with open("Ito95Data.pkl", 'rb') as fid:
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         size_bw=1.35
     )
 
-    x_rad = np.linspace(0, neuron.max_pref_stim_size, num=100)
+    x_rad = np.linspace(0.001, neuron.max_pref_stim_size, num=100)
     x_deg = x_rad * 180 / np.pi
 
     ax1.plot(
@@ -68,6 +68,15 @@ if __name__ == "__main__":
     ax1.tick_params(axis='x', labelsize=f_size)
     ax1.tick_params(axis='y', labelsize=f_size)
 
+    ax1.annotate(
+        'A',
+        xy=(0.1, 0.95),
+        xycoords='axes fraction',
+        fontsize=30,
+        horizontalalignment='right',
+        verticalalignment='top'
+    )
+
     # -----------------------------------------------------------------------------------
     # Neuron 2 - Figure 4D of Ito et. al - 1995
     # pref_size = 26.1, size_bwBw > 5octaves
@@ -85,7 +94,7 @@ if __name__ == "__main__":
     # These provide a better fit to the data, the original values from the paper are prefSize=26.1
     # and  sizeBw > 5 octaves. The difference in response at 26.1 and 13.1 is very small.
 
-    x_rad = np.linspace(0, neuron2.max_pref_stim_size, num=100)
+    x_rad = np.linspace(0.0001, neuron2.max_pref_stim_size, num=100)
     x_deg = x_rad * 180 / np.pi
 
     ax2.plot(
@@ -95,7 +104,7 @@ if __name__ == "__main__":
 
     ax2.set_xlim([0, np.log2(max(x_deg))])
     ax2.set_xticks(np.arange(1, 7))
-    ax2.set_xlabel(r'$log_2(Stimulus\ Size)\ [Degrees]$', fontsize=f_size)
+    ax2.set_xlabel(r'$log_2(Stimulus\ Size)$' + ' (Deg)', fontsize=f_size)
 
     ax2.set_ylim([0, 1.1])
     ax2.yaxis.set_visible(False)
@@ -110,6 +119,15 @@ if __name__ == "__main__":
         linewidth=3,
         linestyle='--',
         label='Max. size')
+
+    ax2.annotate(
+        'B',
+        xy=(0.1, 0.95),
+        xycoords='axes fraction',
+        fontsize=30,
+        horizontalalignment='right',
+        verticalalignment='top'
+    )
 
     # -----------------------------------------------------------------------------------
     # Neuron 3 - Figure 5D of Ito et. al - 1995
@@ -131,7 +149,7 @@ if __name__ == "__main__":
         size_bw=2.5
     )
 
-    x_rad = np.linspace(0, neuron3.max_pref_stim_size, num=100)
+    x_rad = np.linspace(0.0001, neuron3.max_pref_stim_size, num=100)
     x_deg = x_rad * 180 / np.pi
 
     ax3.plot(
@@ -156,21 +174,32 @@ if __name__ == "__main__":
     ax3.tick_params(axis='x', labelsize=f_size)
     ax3.tick_params(axis='y', labelsize=f_size)
 
+    ax3.annotate(
+        'C',
+        xy=(0.1, 0.95),
+        xycoords='axes fraction',
+        fontsize=30,
+        horizontalalignment='right',
+        verticalalignment='top'
+    )
+
     # -----------------------------------------------------------------------------------
     # Optimum Size Distribution
     # -----------------------------------------------------------------------------------
+    print("Optimum Size Fits " + "*" * 20)
+
     opt_sizes = data["optSize"]
-    opt_size_rf_size = data["optSizeRfSize"]
+    cutoff = 26.0  # See optimum Size Fit for an explanation.
 
-    cutoff = 26.0
-
-    pref_size_dist.plot_histogram(opt_sizes, cutoff, axis=ax4)
+    sizeFit.plot_histogram(opt_sizes, cutoff, bins=np.arange(0, 31, step=2), axis=ax4)
 
     # Lognormal Fit
-    lognorm_s, lognorm_scale, lognorm_llr = pref_size_dist.get_lognormal_fit(opt_sizes, cutoff)
-    label = 'Lognormal ' + r"$\mu=%0.2f,\sigma=%0.2f$" % (np.log(lognorm_scale), lognorm_s)
+    lognorm_s, lognorm_scale, lognorm_llv = sizeFit.get_lognormal_fit(opt_sizes, cutoff)
+    label = 'Lognorm'  # + r"$\mu=%0.2f,\sigma=%0.2f$" % (np.log(lognorm_scale), lognorm_s)
+    print label + ": mu=%0.2f, sigma=%0.2f, LLV=%0.2f" \
+                  % (np.log(lognorm_scale), lognorm_s, lognorm_llv)
 
-    x_arr = np.arange(30, step=0.5)
+    x_arr = np.arange(30, step=1)
     ax4.plot(
         x_arr,
         ss.lognorm.pdf(x_arr, s=lognorm_s, loc=0, scale=lognorm_scale),
@@ -183,38 +212,144 @@ if __name__ == "__main__":
     )
 
     # Gamma Fit
-    gamma_alpha, gamma_scale, gamma_llr = pref_size_dist.get_gamma_fit(opt_sizes, cutoff)
-    label = 'Gamma ' + r'$\alpha=%0.2f,\theta=%0.2f$' % (gamma_alpha, gamma_scale)
+    gamma_alpha, gamma_scale, gamma_llv = sizeFit.get_gamma_fit(opt_sizes, cutoff)
+    label = 'Gamma '  # + r'$\alpha=%0.2f,\theta=%0.2f$' % (gamma_alpha, gamma_scale)
+    print label + ": alpha=%0.2f, theta=%0.2f, LLV=%0.2f" % (gamma_alpha, gamma_scale, gamma_llv)
 
     ax4.plot(
         x_arr,
         ss.gamma.pdf(x_arr, a=gamma_alpha, scale=gamma_scale),
         linewidth=3,
         label=label,
-        color='green',
+        color='black',
         marker='o',
         markersize=10,
-        markeredgecolor='green',
+        markeredgecolor='black',
         markerfacecolor='none',
         markeredgewidth=2,
     )
 
     # Levey Fit
-    levy_loc, levy_scale, levy_llr = pref_size_dist.get_levy_fit(opt_sizes, cutoff)
+    levy_loc, levy_scale, levy_llv = sizeFit.get_levy_fit(opt_sizes, cutoff)
 
-    label = 'Levy ' + r'$\mu=%0.2f, c=%0.2f$' % (levy_loc, levy_scale)
+    label = 'Levy '  # + r'$\mu=%0.2f, c=%0.2f$' % (levy_loc, levy_scale)
+    print label + ': mu=%0.2f, c=%0.2f, LLV=%0.2f' % (levy_loc, levy_scale, levy_llv)
 
-    ax4.plot(x_arr,
-             ss.levy.pdf(x_arr, loc=levy_loc, scale=levy_scale),
-             linewidth=3,
-             label=label,
-             color='magenta',
-             marker='^',
-             markersize=10,
-             markeredgecolor='magenta',
-             markerfacecolor='none',
-             markeredgewidth=2
-             )
+    ax4.plot(
+        x_arr,
+        ss.levy.pdf(x_arr, loc=levy_loc, scale=levy_scale),
+        linewidth=3,
+        label=label,
+        color='magenta',
+        marker='^',
+        markersize=10,
+        markeredgecolor='magenta',
+        markerfacecolor='none',
+        markeredgewidth=2
+    )
 
-    ax4.legend(fontsize=f_size-10)
+    ax4.set_ylabel("Frequency", fontsize=f_size)
+    ax4.set_xlabel("Preferred Size (Deg)", fontsize=f_size)
 
+    ax4.set_xticks(np.arange(4, 30, step=4))
+
+    ax4.tick_params(axis='x', labelsize=f_size)
+    ax4.tick_params(axis='y', labelsize=f_size)
+
+    ax4.legend(
+        fontsize=f_size - 5,
+        ncol=3,
+        bbox_to_anchor=[1, -0.35],
+        loc='center')
+
+    ax4.annotate(
+        'D',
+        xy=(0.1, 0.95),
+        xycoords='axes fraction',
+        fontsize=30,
+        horizontalalignment='right',
+        verticalalignment='top'
+    )
+
+    # -----------------------------------------------------------------------------------
+    # Size Bandwidth Distribution
+    # -----------------------------------------------------------------------------------
+    print("Size Bandwidth Fits " + "*" * 20)
+
+    size_bw_dist = data["sizeDist"]
+    size_bw_rf_size = data["sizeDistRfSize"]
+
+    cutoff = 4
+    sizeFit.plot_histogram(size_bw_dist, cutoff, bins=np.arange(0, 5, step=0.5), axis=ax5)
+
+    # Lognormal Fit
+    lognorm_s, lognorm_scale, lognorm_llv = sizeFit.get_lognormal_fit(size_bw_dist, cutoff)
+    label = 'Lognorm'  # + r"$\mu=%0.2f,\sigma=%0.2f$" % (np.log(lognorm_scale), lognorm_s)
+    print label + ": mu=%0.2f, sigma=%0.2f, LLV=%0.2f" \
+                  % (np.log(lognorm_scale), lognorm_s, lognorm_llv)
+
+    x_arr = np.arange(5, step=0.25)
+    ax5.plot(
+        x_arr,
+        ss.lognorm.pdf(x_arr, s=lognorm_s, loc=0, scale=lognorm_scale),
+        linewidth=3,
+        label=label,
+        color='red',
+        marker='+',
+        markersize=10,
+        markeredgewidth=2
+    )
+
+    # Gamma Fit
+    gamma_alpha, gamma_scale, gamma_llv = sizeFit.get_gamma_fit(size_bw_dist, cutoff)
+    label = 'Gamma:'  # + r'$\alpha=%0.2f,\theta=%0.2f$' % (gamma_alpha, gamma_scale)
+    print label + ": alpha=%0.2f, theta=%0.2f, LLV=%0.2f" % (gamma_alpha, gamma_scale, gamma_llv)
+
+    ax5.plot(
+        x_arr,
+        ss.gamma.pdf(x_arr, a=gamma_alpha, scale=gamma_scale),
+        linewidth=3,
+        label=label,
+        color='black',
+        marker='o',
+        markersize=10,
+        markeredgecolor='black',
+        markerfacecolor='none',
+        markeredgewidth=2,
+    )
+
+    # Levey Fit
+    levy_loc, levy_scale, levy_llv = sizeFit.get_levy_fit(size_bw_dist, cutoff)
+
+    label = 'Levy'  # + r'$\mu=%0.2f, c=%0.2f$' % (levy_loc, levy_scale)
+    print label + ': mu=%0.2f, c=%0.2f, LLV=%0.2f' % (levy_loc, levy_scale, levy_llv)
+
+    ax5.plot(
+        x_arr,
+        ss.levy.pdf(x_arr, loc=levy_loc, scale=levy_scale),
+        linewidth=3,
+        label=label,
+        color='magenta',
+        marker='^',
+        markersize=10,
+        markeredgecolor='magenta',
+        markerfacecolor='none',
+        markeredgewidth=2
+    )
+
+    ax5.set_xticks(np.arange(1, 5, step=1))
+    ax5.set_xlim([0.5, 5])
+
+    ax5.set_xlabel("Size BW (Octaves)", fontsize=f_size)
+
+    ax5.tick_params(axis='x', labelsize=f_size)
+    ax5.tick_params(axis='y', labelsize=f_size)
+
+    ax5.annotate(
+        'E',
+        xy=(0.1, 0.95),
+        xycoords='axes fraction',
+        fontsize=30,
+        horizontalalignment='right',
+        verticalalignment='top'
+    )

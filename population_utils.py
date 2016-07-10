@@ -433,50 +433,37 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
     return f
 
 
-def plot_population_fire_rates(rates_array, dt=0.005, font_size=20):
+def plot_net_fire_rates(rates_array, dt=0.005, axis=None, font_size=30, n_idx=None):
+    """
+    PLot the net firing rates of a neuron of specified or net firing rates of all
+    neurons if n_idx is not specified
 
-    markers = ['+', '.', '*', '^', 'o', '8', 'd', 's']
+    :param rates_array:
+    :param dt:
+    :param axis:
+    :param font_size:
+    :param n_idx:
+    :return:
+    """
+    if axis is None:
+        f, axis = plt.subplots()
 
-    # Get maximum_fire_rate
-    max_fire_rate = np.max(rates_array)
+    t_arr = np.arange(0, rates_array.shape[0] * dt, step=dt)
 
-    population_size = rates_array.shape[1]
+    if n_idx is None:
+        for n_idx in np.arange(rates_array.shape[1]):
+            plt.plot(t_arr, rates_array[:, n_idx])
+    else:
+        plt.plot(t_arr, rates_array[:, n_idx])
 
-    quotient, remainder = divmod(population_size, len(markers))
+    axis.set_xlabel('Time(s)', fontsize=font_size)
+    axis.set_xticks(np.arange(1, max(t_arr) + 1))
+    axis.set_ylabel("Fire Rate (spikes/s)", fontsize=font_size)
 
-    t_stop = rates_array.shape[0] * dt
-    time = np.arange(0, t_stop, dt)
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
 
-    n_subplots = quotient
-
-    if 0 != remainder:
-        n_subplots += 1
-
-    fig_rates_vs_time, ax_array = plt.subplots(n_subplots, sharex=True)
-    fig_rates_vs_time.subplots_adjust(hspace=0.0)
-
-    for neuron_idx in np.arange(population_size):
-        marker_idx = neuron_idx % len(markers)
-        subplot_idx = neuron_idx / len(markers)
-
-        ax_array[subplot_idx].plot(time, rates_array[:, neuron_idx],
-                                   marker=markers[marker_idx], label='N%i' % neuron_idx)
-
-        # Set the limits for all subplots
-        for ax in ax_array:
-                ax.legend(fontsize='5')
-                ax.set_ylim(0, max_fire_rate)
-                ax.yaxis.set_ticks(np.arange(20, max_fire_rate, step=20))
-
-    # Set the limits for the last subplot
-    ax_array[-1].set_xlabel("Time (s)", fontsize=font_size)
-    ax_array[-1].tick_params(axis='x', labelsize=font_size)
-
-    # Set the y label on the middle subplot
-    ax_array[n_subplots / 2].set_ylabel("Fire Rates", fontsize=font_size)
-
-    fig_rates_vs_time.suptitle("Population (N=%d) Firing Rates " % population_size,
-                               fontsize=font_size + 10)
+    axis.set_title("Population Firing Rates", fontsize=font_size)
 
 
 def plot_receptive_field_centers(it_population, axis=None, font_size=40):
@@ -586,4 +573,5 @@ def plot_neuron_scales_factors(n_idx, neurons_arr, scales_arr, dt, t_stop, obj_i
     axis.tick_params(axis='y', labelsize=font_size)
 
     neuron_object_list = neurons_arr[n_idx].selectivity.get_ranked_object_list()
-    axis.set_title("Object %s, Rank=%d" % (neuron_object_list[obj_idx][0], obj_idx))
+    axis.set_title("Object %s, Rank=%d" % (neuron_object_list[obj_idx][0], obj_idx),
+                   fontsize=font_size)

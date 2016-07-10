@@ -907,7 +907,7 @@ def main():
         # Pass the handles of all parent objects, to get rotation symmetries for
         set_object_handles_for_rotation_symmetries(objects_array, client_id)
 
-        print ("%d objects of in scene." % len(objects_array))
+        print ("%d objects in scene." % len(objects_array))
         # print_objects(objects_array)
 
         # Get IT Cortex Robot Vision sensor parameters
@@ -981,7 +981,7 @@ def main():
             # (since we clear it after reading). At the moment value is arbitrarily chosen. It
             # should be slightly higher then the max execution time of the child script. This can
             # be seen in the vrep scene data printed out every step.
-            time.sleep(1.0)
+            time.sleep(2.0)
 
             if t_current_ms == 0:
                 # Because object handles need to be sent to the child script and the fact that
@@ -1018,17 +1018,38 @@ def main():
                 objects.append(objects_t)
 
             # Get IT cortex firing rates
-            scales_t = np.zeros((population_size, 20, 7))
+            scales_t = np.zeros((population_size, len(objects_array), 7))
+
             for n_idx, neuron in enumerate(it_cortex):
                 # print('NEURON ' + str(n_idx))
+
                 rates_vs_time_arr[t_current_ms / t_step_ms, n_idx], neuron_scales = \
                     neuron.firing_rate(ground_truth)
-                # print(neuron_scales.shape)
-                padded = np.zeros((20,7)) #this is to work around raggedness
-                padded[:neuron_scales.shape[0],:] = neuron_scales
-                scales_t[n_idx,:,:] = padded
+
+                # Scales for each neuron are stored in terms of their ranked objects list
+                ordered_scales = np.zeros((len(objects_array), 7))
+                neuron_ranked_obj_list = neuron.selectivity.get_ranked_object_list()
+
+                for per_seen_obj_scales in neuron_scales:
+
+                    # neuron_scale[:][1] = object preference. Use this to get the index of the object
+                    # in the ranked object list
+                    for obj_idx, obj in enumerate(neuron_ranked_obj_list):
+
+                        if obj[1] == per_seen_obj_scales[1]:
+                            break
+
+                        # Raise an exception if the object was not found in the neurons object
+                        # list
+                        if obj_idx == len(objects_array) - 1:
+                            raise Exception("Object index not found!")
+
+                    ordered_scales[obj_idx, :] = per_seen_obj_scales
+
+                scales_t[n_idx,:,:] = ordered_scales
                 # scales_t.append(neuron_scales)
                 # print('len scales_t' + str(len(scales_t)))
+
             scales.append(scales_t)
             # print('len scales' + str(len(scales)))
 

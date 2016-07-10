@@ -521,3 +521,69 @@ def plot_receptive_field_centers(it_population, axis=None, font_size=40):
                  fontsize=font_size,
                  horizontalalignment='right',
                  verticalalignment='top')
+
+
+def plot_neuron_scales_factors(n_idx, neurons_arr, scales_arr, dt, t_stop, obj_idx=0,
+                               axis=None, font_size=30):
+    """
+    Plot the scale factors of a specified neuron and object
+    :param n_idx:
+    :param neurons_arr:
+    :param scales_arr:
+    :param dt:
+    :param t_stop:
+    :param obj_idx:
+    :param axis:
+    :param font_size:
+    :return:
+    """
+    if axis is None:
+        f, axis = plt.subplots()
+
+    # Extract the rates/ scale factors for the specified neuron
+    neuron_scales_factors = []
+    for scales_per_run in scales_arr:
+        neuron_scales_factors.append(scales_per_run[n_idx])
+
+    # From it_neuron_vrep.py
+    # scales[:, 0] = isolated_rates
+    # scales[:, 1] = obj_pref_list
+    # scales[:, 2] = position_weights
+    # scales[:, 3] = size_fr
+    # scales[:, 4] = rot_fr
+    # scales[:, 5] = occ_fr
+    # scales[:, 6] = size_arr
+
+    isolated_rates = []
+    position_scales = []
+    size_scales = []
+    rot_scales = []
+    occ_scales = []
+
+    for scales_per_run in neuron_scales_factors:
+        isolated_rates.append(scales_per_run[obj_idx][0])
+        position_scales.append(scales_per_run[obj_idx][2])
+        size_scales.append(scales_per_run[obj_idx][3])
+        rot_scales.append(scales_per_run[obj_idx][4])
+        occ_scales.append(scales_per_run[obj_idx][5])
+
+    t_arr = np.arange(0, t_stop, step=dt)
+
+    axis.plot(t_arr, np.array(isolated_rates),
+              label=r'$r_{iso}/r_{obj}$', linewidth=3, color='black')
+
+    axis.plot(t_arr, position_scales, label=r'$r_{pos}$', linewidth=2, color='blue')
+    axis.plot(t_arr, size_scales, label=r'$r_{size}$', linewidth=2, color='green')
+    axis.plot(t_arr, rot_scales, label=r'$r_{rot}$', linewidth=2, color='red', )
+    axis.plot(t_arr, occ_scales, label=r'$r_{occ}$', linewidth=2, color='magenta')
+
+    axis.legend(fontsize=font_size)
+    axis.set_xlabel('Time(s)', fontsize=font_size)
+    axis.set_xticks(np.arange(1, t_stop + 1))
+    axis.set_ylabel("Fire Rate (spikes/s)", fontsize=font_size)
+
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+
+    neuron_object_list = neurons_arr[n_idx].selectivity.get_ranked_object_list()
+    axis.set_title("Object %s, Rank=%d" % (neuron_object_list[obj_idx][0], obj_idx))

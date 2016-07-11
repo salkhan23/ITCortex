@@ -386,10 +386,10 @@ def plot_neuron_dynamic_profile(
     for ii, time in enumerate(time_arr):
 
         if ii < time_arr.shape[0] / 2:
-            rates[ii] = it_neuron.firing_rate([ground_truth])
+            rates[ii], scales = it_neuron.firing_rate([ground_truth])
             stimulus[ii] = 10
         else:
-            rates[ii] = it_neuron.firing_rate([])
+            rates[ii], scales = it_neuron.firing_rate([])
             stimulus[ii] = 0
 
     if axis is None:
@@ -472,7 +472,7 @@ def main(it_cortex):
                     1.0, 1.0)
     print ("Ground Truth: ", ground_truth)
 
-    print ("Neurons response %0.4f" % it_cortex[0].firing_rate(ground_truth))
+    print ("Neurons response %0.4f" % it_cortex[0].firing_rate(ground_truth)[0])
 
     # Example 2
     title = "Test 2 -  Response to multiple items"
@@ -497,7 +497,7 @@ def main(it_cortex):
     print ("Ground Truth:")
     for entry in ground_truth:
         print entry
-    print ("Neurons response %0.4f" % it_cortex[0].firing_rate(ground_truth))
+    print ("Neurons response %0.4f" % it_cortex[0].firing_rate(ground_truth)[0])
 
     # Example 3 dynamic firing rates only.
     title = "Test 3 - Test Dynamic Response"
@@ -535,7 +535,7 @@ def main(it_cortex):
             if ground_truth:
                 ground_truth_present[ii] = 1
 
-            rates_arr[ii] = it_cortex[0].firing_rate(ground_truth)
+            rates_arr[ii], scales = it_cortex[0].firing_rate(ground_truth)
 
         plt.figure("Dynamic Firing Rate of Neuron 0")
         plt.plot(np.arange(steps * time_step, step=time_step), rates_arr)

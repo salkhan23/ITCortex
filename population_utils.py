@@ -454,7 +454,7 @@ def plot_net_fire_rates(rates_array, dt=0.005, axis=None, font_size=30, n_idx=No
         for n_idx in np.arange(rates_array.shape[1]):
             plt.plot(t_arr, rates_array[:, n_idx])
     else:
-        plt.plot(t_arr, rates_array[:, n_idx])
+        plt.plot(t_arr, rates_array[:, n_idx], label=r"$r_{net}$", linewidth=2)
 
     axis.set_xlabel('Time(s)', fontsize=font_size)
     axis.set_xticks(np.arange(1, max(t_arr) + 1))
@@ -557,7 +557,7 @@ def plot_neuron_scales_factors(n_idx, neurons_arr, scales_arr, dt, t_stop, obj_i
     t_arr = np.arange(0, t_stop, step=dt)
 
     axis.plot(t_arr, np.array(isolated_rates),
-              label=r'$r_{iso}/r_{obj}$', linewidth=3, color='black')
+              label=r'$r_{iso}$', linewidth=3, color='black')
 
     axis.plot(t_arr, position_scales, label=r'$r_{pos}$', linewidth=2, color='blue')
     axis.plot(t_arr, size_scales, label=r'$r_{size}$', linewidth=2, color='green')

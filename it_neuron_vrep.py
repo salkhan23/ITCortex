@@ -329,6 +329,7 @@ class Neuron:
         #               rot_fr[ii],
         #               occ_fr[ii]))
         #
+        # print joint_rate
         # print ("static clutter rate %0.2f" % np.sum(joint_rate, axis=0))
         # raw_input('Continue?')
 
@@ -339,7 +340,7 @@ class Neuron:
         scales[:, 3] = size_fr
         scales[:, 4] = rot_fr
         scales[:, 5] = occ_fr
-        scales[:, 6] = size_arr
+        scales[:, 6] = joint_rate
 
         return joint_rate, scales
 

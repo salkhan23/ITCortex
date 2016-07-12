@@ -86,7 +86,7 @@ class TamuraDynamics:
         """
         self.dt = dt
 
-        self.n = 1  # do not change this. Code will not if not =1
+        self.n = 1  # do not change this. Code will not work if not =1
         assert self.n == 1
 
         self.type = 'tamura'
@@ -117,16 +117,21 @@ class TamuraDynamics:
         self.early_tau = np.maximum(.005, .017 + .005 * np.random.randn(self.n))
         self.late_tau = .05 + .01 * np.random.randn(self.n)
         early_gain = 1.5 / 0.39
-        late_gain = 1
+        # late_gain = 1
+        late_transient_gain = .2
+        late_sustained_gain = 1
 
         # these are templates that must be multiplied by 1/tau for each neuron ...
         self.early_A = np.array([[-1, 0], [1, -1]])
         self.early_B = np.array([1, 0])
-        self.late_A = -1
-        self.late_B = 1
+        # self.late_A = -1
+        # self.late_B = 1
+        self.late_A =  np.array([[-1, 0], [1, -1]])
+        self.late_B =  np.array([1, 0])
 
         self.early_C = np.array([early_gain, -early_gain])
-        self.late_C = late_gain
+        # self.late_C = late_gain
+        self.late_C = np.array([late_sustained_gain+late_transient_gain, -late_transient_gain])
 
         # state of LTI (linear time-invariant) dynamical systems
         self.early_x = np.zeros((2, self.n))

@@ -44,6 +44,7 @@ def integrate(dt, a, b, c, x, u):
     dxdt = np.dot(a, x) + np.dot(b, u)
     x = x + dxdt * dt
     y = np.dot(c, x)
+
     return x, y
 
 
@@ -115,11 +116,11 @@ class TamuraDynamics:
 
         # state-space LTI dynamics (early response is band-pass and late response is low-pass)
         self.early_tau = np.maximum(.005, .017 + .005 * np.random.randn(self.n))
-        self.late_tau = .05 + .01 * np.random.randn(self.n)
+        self.late_tau = .2 + .1 * np.random.randn(self.n)
         early_gain = 1.5 / 0.39
         # late_gain = 1
-        late_transient_gain = .2
-        late_sustained_gain = 1
+        late_transient_gain = 2.0
+        late_sustained_gain = 0.8
 
         # these are templates that must be multiplied by 1/tau for each neuron ...
         self.early_A = np.array([[-1, 0], [1, -1]])
@@ -131,11 +132,11 @@ class TamuraDynamics:
 
         self.early_C = np.array([early_gain, -early_gain])
         # self.late_C = late_gain
-        self.late_C = np.array([late_sustained_gain+late_transient_gain, -late_transient_gain])
+        self.late_C = np.array([late_sustained_gain + late_transient_gain, - late_transient_gain])
 
         # state of LTI (linear time-invariant) dynamical systems
         self.early_x = np.zeros((2, self.n))
-        self.late_x = np.zeros(self.n)
+        self.late_x = np.zeros((2, self.n))
 
     def _get_lagged_rates(self, latencies):
         # get appropriately lagged rates for input to LTI dynamics
@@ -169,15 +170,15 @@ class TamuraDynamics:
             late_a = 1 / self.late_tau[ii] * self.late_A
             late_b = 1 / self.late_tau[ii] * self.late_B
 
-            self.late_x[ii], late_y = integrate(
+            self.late_x[:, ii], late_y = integrate(
                 self.dt,
                 late_a,
                 late_b,
                 self.late_C,
-                self.late_x[ii],
+                self.late_x[:, ii],
                 late_u[ii])
 
-            y[ii] = np.maximum(0, early_y) + late_y
+            y[ii] = np.maximum(0, early_y) + np.maximum(0, late_y)
 
         return y
 
@@ -308,7 +309,7 @@ if __name__ == '__main__':
     d.print_parameters()
 
     # plot latency vs. static rate for each neuron ...
-    d.plot_latencies_verses_rate_profile()
+    #d.plot_latencies_verses_rate_profile()
 
     # run some neurons with square-pulse input ...
     steps = 200
@@ -329,9 +330,9 @@ if __name__ == '__main__':
     plt.plot(time, dynamic_rates.T, linewidth=2)
     plt.xlabel('Time (s)', fontsize=font_size)
     plt.ylabel('Spike Rate (spikes / s)', fontsize=font_size)
-
-    plt.plot(time, early_fire_rates.T, label='Early fire rate', linewidth=2)
-    plt.plot(time, late_fire_rates.T, label='Late fire rate', linewidth=2)
+    #
+    # plt.plot(time, early_fire_rates.T, label='Early fire rate', linewidth=2)
+    # plt.plot(time, late_fire_rates.T, label='Late fire rate', linewidth=2)
 
     plt.tick_params(axis='x', labelsize=font_size)
     plt.tick_params(axis='y', labelsize=font_size)

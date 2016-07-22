@@ -123,7 +123,37 @@ class TamuraDynamics:
         self.late_tau = self._get_late_tau()
 
         # Late transient gain and late sustained gain
-        # TODO
+        ranked_objs_list = self.get_ranked_object_list(self.late_obj_dict)
+
+        self.late_transient_gain, self.late_sustained_gain = self._get_late_gains(
+            ranked_objs_list[0][1], max_fire_rate)
+
+        # setup the C parameters
+        self.early_C = np.array([self.early_gain, -self.early_gain])
+        # self.late_C = late_gain
+        self.late_C = np.array(
+            [self.late_sustained_gain + self.late_transient_gain, - self.late_transient_gain])
+
+
+
+
+
+
+        # Latencies of the model
+        # parameters of exponential functions to map static rate to latency for each neuron
+        self.min_latencies = .09 + .01 * np.random.rand(self.n)
+        self.max_latencies = np.minimum(max_latency,
+                                        self.min_latencies + np.random.gamma(5, .02, self.n))
+
+        self.tau_latencies = np.random.gamma(2, 20, self.n)
+
+        # matrices for storing recent input history, to allow variable-latency responses
+        self.late_additional_latency = 20
+        latency_steps = max_latency / dt + 1 + self.late_additional_latency
+        self.early_memory = np.zeros((self.n, latency_steps))
+        self.late_memory = np.zeros((self.n, latency_steps))
+        self.memory_index = 0
+
 
         # # Print the two dictionaries
         # for k, v in obj_dict.items():
@@ -220,14 +250,14 @@ class TamuraDynamics:
 
         # clear_out the system
         self.early_x[:, 0] = 0
-        plt.plot(time_arr, lti_out_arr, linestyle='--')
+        # plt.plot(time_arr, lti_out_arr, linestyle='--')
 
         # Integrate the output of the LTI system to get early_gain
         area_lti = np.trapz(lti_out_arr, dx=self.dt)
         area_desired = np.trapz(input_arr, dx=self.dt)
 
         early_gain = area_desired / area_lti
-        print("Early_gain", early_gain)
+        #print("Early_gain", early_gain)
 
         # # Debug make sure everything is making sense
         # lti_out_arr = np.zeros_like(input_arr)
@@ -272,6 +302,157 @@ class TamuraDynamics:
 
         return t
 
+    def _get_late_gains(self, r_obj, max_fr):
+        """
+
+        :param r_obj: late object preference
+        :param max_fr:
+        :return:
+        """
+
+        # First get the Ratio of late gains
+        ratio = self._get_late_gains_ratio()
+
+        # Use the same technique as done to find early gain
+
+        # Recall that the late LTE system uses two gains. These are needed in the calculation of
+        # late_c. However, we do not have actual values for them for now just set transient gain
+        # to  1 and the sustained gain to 1 / ratio
+        transient_gain = 1.0
+        sustained_gain = 1.0 / ratio
+
+        avg_rate = r_obj * max_fr
+
+        time_arr = np.arange(0, 0.140, step=self.dt)
+        input_arr = np.ones_like(time_arr) * avg_rate
+
+        late_a = 1 / self.late_tau * self.late_A
+        late_b = 1 / self.late_tau * self.late_B
+
+        # We have to determine this, for now just use a default value
+        late_c = np.array([sustained_gain + transient_gain, - transient_gain])
+
+        lti_out_arr = np.zeros_like(input_arr)
+        for u_idx, u in enumerate(input_arr):
+            self.late_x[:, 0], y = integrate(
+                self.dt,
+                late_a,
+                late_b,
+                late_c,
+                self.late_x[:, 0],
+                u
+            )
+
+            lti_out_arr[u_idx] = np.maximum(0, y)
+
+        # clear_out the system
+        self.late_x[:, 0] = 0
+        #plt.plot(time_arr, lti_out_arr, linestyle='--')
+
+        # Integrate the output of the LTI system to get early_gain
+        area_lti = np.trapz(lti_out_arr, dx=self.dt)
+        area_desired = np.trapz(input_arr, dx=self.dt)
+
+        transient_gain = area_desired / area_lti
+        sustained_gain = transient_gain / ratio
+        #print("transient_gain %0.4f, sustain gain %0.4f"  %(transient_gain, sustained_gain))
+
+        # # Debug make sure everything is making sense
+        # lti_out_arr = np.zeros_like(input_arr)
+        #
+        # late_c = np.array([sustained_gain + transient_gain, - transient_gain])
+        #
+        # for u_idx, u in enumerate(input_arr):
+        #     self.late_x[:, 0], y = integrate(
+        #         self.dt,
+        #         late_a,
+        #         late_b,
+        #         late_c,
+        #         self.late_x[:, 0],
+        #         u
+        #     )
+        #
+        #     lti_out_arr[u_idx] = np.maximum(0, y)
+        #
+        # # clear_out the system
+        # self.late_x[:, 0] = 0
+        # plt.plot(time_arr, lti_out_arr)
+        #
+        # print("Area Under LTI system %0.4f" % np.trapz(lti_out_arr, dx=self.dt))
+        # print("Desired area %0.4f" % area_desired)
+
+        return transient_gain, sustained_gain
+
+    def _get_late_gains_ratio(self):
+        """
+        This is the ratio of transient late gain to sustained late gain. It is extracted from
+        fitting various dynamic profiles in the Tamura paper
+
+        We found the mean and standard deviation from the data and use a normal distribution
+        to model the ratio
+
+        mean = 1.675
+        standard deviation = 5.723
+
+        :return:
+        """
+        return np.random.normal(loc=1.675, scale=5.723)
+
+    def _get_lagged_rates(self, latencies):
+        # get appropriately lagged rates for input to LTI dynamics
+        latency_steps = np.rint(latencies / self.dt).astype('int')
+
+        early_indices = self._get_index(latency_steps)
+        late_indices = self._get_index(latency_steps + self.late_additional_latency)
+
+        # early_u = self.early_memory[range(self.n), early_indices][0]
+        # late_u = self.late_memory[range(self.n), late_indices][0]
+        early_u = self.early_memory[range(self.n), early_indices]
+        late_u = self.late_memory[range(self.n), late_indices]
+
+        return early_u, late_u
+
+    def _get_index(self, latency_steps):
+        index = self.memory_index - np.minimum(latency_steps, self.early_memory.shape[1])
+        index[index < 0] = index[index < 0] + self.early_memory.shape[1]
+        return index
+
+    def _get_latencies(self, static_rates):
+        # latency varies with response strength
+        return self.min_latencies + \
+               (self.max_latencies - self.min_latencies) * np.exp(
+                   -static_rates / self.tau_latencies)
+
+    def _step_dynamics(self, early_u, late_u):
+        # run a single step of the LTI dynamics for each neuron
+        y = np.zeros(self.n)
+
+        for ii in range(self.n):
+            early_a = 1 / self.early_tau * self.early_A
+            early_b = 1 / self.early_tau * self.early_B
+            self.early_x[:, ii], early_y = integrate(
+                self.dt,
+                early_a,
+                early_b,
+                self.early_C,
+                self.early_x[:, ii],
+                early_u[ii])
+
+            late_a = 1 / self.late_tau * self.late_A
+            late_b = 1 / self.late_tau * self.late_B
+
+            self.late_x[:, ii], late_y = integrate(
+                self.dt,
+                late_a,
+                late_b,
+                self.late_C,
+                self.late_x[:, ii],
+                late_u[ii])
+
+            y[ii] = np.maximum(0, early_y) + np.maximum(0, late_y)
+
+        return y
+
     @staticmethod
     def get_ranked_object_list(obj_dict):
         """ Return neurons rank list of objects and rate modification factors """
@@ -281,6 +462,34 @@ class TamuraDynamics:
         """ Print parameters of the profile """
         print("Profile                              = %s" % self.type)
         print("transience                           = %0.2f" % self.transience)
+
+        print("Early tau                            = %0.2f" % self.early_tau)
+        print("Early gain                           = %0.2f" % self.early_gain)
+
+        print("Late tau                             = %0.2f" % self.late_tau)
+        print("Late transient gain                  = %0.2f" % self.late_transient_gain)
+        print("Late sustained gain                  = %0.2f" % self.late_sustained_gain)
+
+    def get_dynamic_rates(self, early_rates, late_rates):
+        """
+        :param early_rates: Static rates for versions of the neurons with early selectivity
+        :param late_rates: Static rates for versions of the neurons with late selectivity
+        :return: Spike rates with latency and early and late dynamics
+        """
+
+        self.early_memory[:, self.memory_index] = early_rates
+        self.late_memory[:, self.memory_index] = late_rates
+
+        latencies = self._get_latencies(early_rates)
+
+        early_u, late_u = self._get_lagged_rates(latencies)
+
+        self.memory_index += 1
+        if self.memory_index == self.early_memory.shape[1]:
+            self.memory_index = 0
+
+        return self._step_dynamics(early_u, late_u)
+
 
 
 if __name__ == '__main__':
@@ -319,29 +528,29 @@ if __name__ == '__main__':
     # plot latency vs. static rate for each neuron ...
     # d.plot_latencies_verses_rate_profile()
 
-    # # run some neurons with square-pulse input ...
-    # steps = 200
-    # early_fire_rates = np.zeros((1, steps))
-    # early_fire_rates[:, 20:100] = 50
-    # late_fire_rates = early_fire_rates / 2
-    # early_fire_rates = early_fire_rates * np.random.rand(1, 1)
-    # late_fire_rates = late_fire_rates * np.random.rand(1, 1)
+    # run some neurons with square-pulse input ...
+    steps = 200
+    early_fire_rates = np.zeros((1, steps))
+    early_fire_rates[:, 20:100] = 50
+    late_fire_rates = early_fire_rates / 2
+    early_fire_rates = early_fire_rates * np.random.rand(1, 1)
+    late_fire_rates = late_fire_rates * np.random.rand(1, 1)
+
+    time = time_step * np.array(range(steps))
+    dynamic_rates = np.zeros_like(early_fire_rates)
+    for i in range(steps):
+         dynamic_rates[:, i] = d.get_dynamic_rates(early_fire_rates[:, i], late_fire_rates[:, i])
+
+    font_size = 34
+
+    plt.figure("Dynamic fire rates")
+    plt.plot(time, dynamic_rates.T, linewidth=2)
+    plt.xlabel('Time (s)', fontsize=font_size)
+    plt.ylabel('Spike Rate (spikes / s)', fontsize=font_size)
     #
-    # time = time_step * np.array(range(steps))
-    # dynamic_rates = np.zeros_like(early_fire_rates)
-    # for i in range(steps):
-    #     dynamic_rates[:, i] = d.get_dynamic_rates(early_fire_rates[:, i], late_fire_rates[:, i])
-    #
-    # font_size = 34
-    #
-    # plt.figure("Dynamic fire rates")
-    # plt.plot(time, dynamic_rates.T, linewidth=2)
-    # plt.xlabel('Time (s)', fontsize=font_size)
-    # plt.ylabel('Spike Rate (spikes / s)', fontsize=font_size)
-    # #
-    # # plt.plot(time, early_fire_rates.T, label='Early fire rate', linewidth=2)
-    # # plt.plot(time, late_fire_rates.T, label='Late fire rate', linewidth=2)
-    #
-    # plt.tick_params(axis='x', labelsize=font_size)
-    # plt.tick_params(axis='y', labelsize=font_size)
-    # plt.legend()
+    # plt.plot(time, early_fire_rates.T, label='Early fire rate', linewidth=2)
+    # plt.plot(time, late_fire_rates.T, label='Late fire rate', linewidth=2)
+
+    plt.tick_params(axis='x', labelsize=font_size)
+    plt.tick_params(axis='y', labelsize=font_size)
+    plt.legend()

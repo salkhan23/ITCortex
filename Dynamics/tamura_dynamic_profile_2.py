@@ -134,11 +134,6 @@ class TamuraDynamics:
         self.late_C = np.array(
             [self.late_sustained_gain + self.late_transient_gain, - self.late_transient_gain])
 
-
-
-
-
-
         # Latencies of the model
         # parameters of exponential functions to map static rate to latency for each neuron
         self.min_latencies = .09 + .01 * np.random.rand(self.n)
@@ -148,12 +143,11 @@ class TamuraDynamics:
         self.tau_latencies = np.random.gamma(2, 20, self.n)
 
         # matrices for storing recent input history, to allow variable-latency responses
-        self.late_additional_latency = 20
+        self.late_additional_latency = 30
         latency_steps = max_latency / dt + 1 + self.late_additional_latency
         self.early_memory = np.zeros((self.n, latency_steps))
         self.late_memory = np.zeros((self.n, latency_steps))
         self.memory_index = 0
-
 
         # # Print the two dictionaries
         # for k, v in obj_dict.items():
@@ -257,7 +251,7 @@ class TamuraDynamics:
         area_desired = np.trapz(input_arr, dx=self.dt)
 
         early_gain = area_desired / area_lti
-        #print("Early_gain", early_gain)
+        # print("Early_gain", early_gain)
 
         # # Debug make sure everything is making sense
         # lti_out_arr = np.zeros_like(input_arr)
@@ -347,7 +341,7 @@ class TamuraDynamics:
 
         # clear_out the system
         self.late_x[:, 0] = 0
-        #plt.plot(time_arr, lti_out_arr, linestyle='--')
+        # plt.plot(time_arr, lti_out_arr, linestyle='--')
 
         # Integrate the output of the LTI system to get early_gain
         area_lti = np.trapz(lti_out_arr, dx=self.dt)
@@ -355,7 +349,7 @@ class TamuraDynamics:
 
         transient_gain = area_desired / area_lti
         sustained_gain = transient_gain / ratio
-        #print("transient_gain %0.4f, sustain gain %0.4f"  %(transient_gain, sustained_gain))
+        # print("transient_gain %0.4f, sustain gain %0.4f"  %(transient_gain, sustained_gain))
 
         # # Debug make sure everything is making sense
         # lti_out_arr = np.zeros_like(input_arr)
@@ -383,7 +377,8 @@ class TamuraDynamics:
 
         return transient_gain, sustained_gain
 
-    def _get_late_gains_ratio(self):
+    @staticmethod
+    def _get_late_gains_ratio():
         """
         This is the ratio of transient late gain to sustained late gain. It is extracted from
         fitting various dynamic profiles in the Tamura paper
@@ -420,8 +415,8 @@ class TamuraDynamics:
     def _get_latencies(self, static_rates):
         # latency varies with response strength
         return self.min_latencies + \
-               (self.max_latencies - self.min_latencies) * np.exp(
-                   -static_rates / self.tau_latencies)
+            (self.max_latencies - self.min_latencies) * np.exp(
+                -static_rates / self.tau_latencies)
 
     def _step_dynamics(self, early_u, late_u):
         # run a single step of the LTI dynamics for each neuron
@@ -491,7 +486,6 @@ class TamuraDynamics:
         return self._step_dynamics(early_u, late_u)
 
 
-
 if __name__ == '__main__':
     plt.ion()
 
@@ -539,7 +533,7 @@ if __name__ == '__main__':
     time = time_step * np.array(range(steps))
     dynamic_rates = np.zeros_like(early_fire_rates)
     for i in range(steps):
-         dynamic_rates[:, i] = d.get_dynamic_rates(early_fire_rates[:, i], late_fire_rates[:, i])
+        dynamic_rates[:, i] = d.get_dynamic_rates(early_fire_rates[:, i], late_fire_rates[:, i])
 
     font_size = 34
 

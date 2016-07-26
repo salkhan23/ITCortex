@@ -144,18 +144,19 @@ class TamuraDynamics:
 
         # matrices for storing recent input history, to allow variable-latency responses
         self.late_additional_latency = 30
-        latency_steps = max_latency / dt + 1 + self.late_additional_latency
+        latency_steps = int(max_latency / dt) + 1 + self.late_additional_latency
         self.early_memory = np.zeros((self.n, latency_steps))
         self.late_memory = np.zeros((self.n, latency_steps))
         self.memory_index = 0
 
-        # # Print the two dictionaries
-        # for k, v in obj_dict.items():
-        #     print k, v
-        #
-        # print("-" * 20)
-        # for k, v in self.late_obj_dict.items():
-        #     print k, v
+        print("Early Tau %0.2f, Early Gain%0.2f, Late Tau %0.2f, Late Transient Gain %0.2f, "
+              "Late sustained_gain %0.2f" % (
+            self.early_tau,
+            self.early_gain,
+            self.late_tau,
+            self.late_transient_gain,
+            self.late_sustained_gain,
+        ))
 
     @staticmethod
     def _get_transience():
@@ -200,7 +201,7 @@ class TamuraDynamics:
         :return:
         """
         t = 0
-        while t <= 0:
+        while t <= 0.0001:
             t = np.random.normal(loc=0.0198, scale=0.0053)
 
         return t
@@ -291,7 +292,7 @@ class TamuraDynamics:
         :return:
         """
         t = 0
-        while t <= 0:
+        while t <= 0.0001:
             t = np.random.normal(loc=0.3525, scale=0.67)
 
         return t
@@ -343,13 +344,24 @@ class TamuraDynamics:
         self.late_x[:, 0] = 0
         # plt.plot(time_arr, lti_out_arr, linestyle='--')
 
-        # Integrate the output of the LTI system to get early_gain
+        # Integrate the output of the LTI system to get transient gain and sustained gain
+        # values that would result in the same average fire rate as desired.
         area_lti = np.trapz(lti_out_arr, dx=self.dt)
         area_desired = np.trapz(input_arr, dx=self.dt)
 
-        transient_gain = area_desired / area_lti
-        sustained_gain = transient_gain / ratio
-        # print("transient_gain %0.4f, sustain gain %0.4f"  %(transient_gain, sustained_gain))
+        # Guard against ridiculous gains, this happens for the case when late_tau is
+        # large and the area under the LTI curve for the 140ms window is too small.
+        # in this case just use the initial randomly selected gain values.
+        if area_lti > 0.001:
+            transient_gain = area_desired / area_lti
+            sustained_gain = transient_gain / ratio
+
+        # print("Area_lti curve(140ms) %0.4f, transient_gain %0.4f, sustain gain %0.4f"
+        #       % (area_lti, transient_gain, sustained_gain))
+
+        if np.isnan(transient_gain) or np.isnan(sustained_gain):
+            raise Exception("invalid late_transient_gain %0.2f or late sustained_gain %0.2f"
+                            % (transient_gain, sustained_gain))
 
         # # Debug make sure everything is making sense
         # lti_out_arr = np.zeros_like(input_arr)

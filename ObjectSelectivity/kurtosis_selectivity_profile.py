@@ -167,6 +167,13 @@ class KurtosisSparseness:
         objects, rate = zip(*lst)
         x = np.arange(len(rate))
 
+        max_fire = self.get_max_firing_rate()
+
+        # Scale up the rates
+        print "rates before", rate
+        rate = np.array(rate) * max_fire
+        print "rates after", rate
+
         if axis is None:
             fig_obj_pref, axis = plt.subplots()
 
@@ -178,9 +185,7 @@ class KurtosisSparseness:
         axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
         axis.grid()
 
-        axis.set_ylim([0, 1])
-
-        max_fire = self.get_max_firing_rate()
+        axis.set_ylim([0, 1.1*max_fire])
 
         if print_parameters:
             axis.annotate(r'$SI_K=%0.2f$' % (self.kurtosis_measured),

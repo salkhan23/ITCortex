@@ -287,7 +287,7 @@ def plot_selectivity_vs_mean_response(it_population, axis=None, font_size=40):
         verticalalignment='top')
 
 
-def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_size=30):
+def plot_neuron_tuning_profiles(it_neuron, font_size=30):
     """
     Once the figure is generated:
         [1] Get tick labels for selectivity and abbreviate
@@ -295,8 +295,6 @@ def plot_neuron_tuning_profiles(it_neuron, dt=0.005, net_fire_rates=None, font_s
         [3] Remove overlap of X,Y ticks in figure B and C.
 
     :param it_neuron:
-    :param dt:
-    :param net_fire_rates:
     :param font_size:
     :return:
     """
@@ -575,3 +573,49 @@ def plot_neuron_scales_factors(n_idx, neurons_arr, scales_arr, dt, t_stop, obj_i
     neuron_object_list = neurons_arr[n_idx].selectivity.get_ranked_object_list()
     axis.set_title("Object %s, Rank=%d" % (neuron_object_list[obj_idx][0], obj_idx),
                    fontsize=font_size)
+
+
+def get_poisson_spikes(dt, rates):
+    """
+    Poisson approximation via Bernoulli process.
+
+    :param dt: Size of time step (s; should be ~1ms)
+    :param rates: List of neuron spike rates (spikes / s)
+    :return: List of random spike events (0 = no spike; 1 = spike)
+    """
+    assert len(rates.shape) == 1
+    # noinspection PyArgumentList
+    return np.random.rand(len(rates)) < (dt * rates)
+
+def get_spikes_raster(rates_array, n_idx=None, dt=0.005, axis=None, font_size=40):
+    """
+
+    :param rates_array:
+    :param n_idx:
+    :param dt:
+    :return:
+    """
+
+    if axis is None:
+        f, axis = plt.subplots()
+
+    t_arr = np.arange(0, rates_array.shape[0]*dt, step=dt)
+
+    for n_idx, rates in enumerate(rates_array.T):
+
+        spikes = get_poisson_spikes(dt, rates) * n_idx
+
+        # Find non-zero indices
+        non_zero_indices = np.nonzero(spikes)[0]
+        axis.scatter(t_arr[non_zero_indices], spikes[non_zero_indices], marker='s', s=60)
+
+    axis.set_xlabel('Time (s)', fontsize=font_size)
+    axis.set_ylabel('neuron #', fontsize=font_size)
+
+    axis.set_xlim([0, rates_array.shape[0]*dt])
+    axis.set_ylim([0, rates_array.shape[1]])
+
+    axis.tick_params(axis='x', labelsize=font_size)
+    axis.tick_params(axis='y', labelsize=font_size)
+
+

@@ -178,10 +178,13 @@ class Neuron:
         if dynamic_profile is None:
             self.dynamics = None
         elif dynamic_profile.lower() == 'tamura':
-            from Dynamics import tamura_dynamic_profile as td
+            from Dynamics import tamura_dynamic_profile_2 as td
             reload(td)
 
-            self.dynamics = td.TamuraDynamics(sim_time_step_s, self.selectivity.objects)
+            self.dynamics = td.TamuraDynamics(
+                sim_time_step_s,
+                self.selectivity.objects,
+                self.max_fire_rate)
         else:
             raise Exception("Invalid dynamic profile %s", dynamic_profile)
 
@@ -224,23 +227,22 @@ class Neuron:
         rate = 0
         scales = 0
         default_rate = 0
-        early_rate = 0
+        late_rate = 0
 
         if self.dynamics is not None and self.dynamics.type == 'tamura':
 
             if ground_truth_list:
+                late_rate, late_scales = self._get_static_firing_rate(
+                    self.dynamics.late_obj_dict,
+                    ground_truth_list)
+
                 default_rate, scales = self._get_static_firing_rate(
                     self.selectivity.objects,
                     ground_truth_list)
 
-                early_rate, early_scales = self._get_static_firing_rate(
-                    self.dynamics.early_obj_pref,
-                    ground_truth_list)
-
-            rate = self.dynamics.get_dynamic_rates(early_rate, default_rate)
+            rate = self.dynamics.get_dynamic_rates(default_rate, late_rate)
 
         else:
-
             if ground_truth_list:
                 rate, scales = self._get_static_firing_rate(
                     self.selectivity.objects,
@@ -384,10 +386,9 @@ def plot_neuron_dynamic_profile(
     stimulus = np.zeros(shape=time_arr.shape[0])
 
     for ii, time in enumerate(time_arr):
-
         if ii < time_arr.shape[0] / 2:
             rates[ii], scales = it_neuron.firing_rate([ground_truth])
-            stimulus[ii] = 10
+            stimulus[ii] = 10 # this is not actually used
         else:
             rates[ii], scales = it_neuron.firing_rate([])
             stimulus[ii] = 0
@@ -395,43 +396,43 @@ def plot_neuron_dynamic_profile(
     if axis is None:
         f, axis = plt.subplots()
 
-    axis.plot(time_arr, rates, linewidth=2)
-    axis.plot(time_arr, stimulus, linewidth=2, color='black', label="Input")
+    axis.plot(time_arr /1000.0, rates, linewidth=2)
+   # axis.plot(time_arr, stimulus, linewidth=2, color='black', label="Input")
 
     # axis.set_title("Dynamic Firing Rate Profile", fontsize=font_size)
     axis.set_ylabel('FR (Spikes/s)', fontsize=font_size)
-    axis.set_xlabel('Time (ms)', fontsize=font_size)
+    axis.set_xlabel('Time (s)', fontsize=font_size)
 
     axis.tick_params(axis='x', labelsize=font_size)
     axis.tick_params(axis='y', labelsize=font_size)
 
-    axis.grid()
-    axis.legend(fontsize=font_size, loc='best')
+    #axis.grid()
+   # axis.legend(fontsize=font_size, loc='best')
 
-    axis.annotate(r'$SI_{K\_early}=%0.2f,\ SI_{K\_late}=%0.2f$' %
-                  (it_neuron.dynamics.early_kurtosis_measured,
-                   it_neuron.selectivity.kurtosis_measured),
-                  xy=(0.7, 0.90),
-                  xycoords='axes fraction',
-                  fontsize=font_size,
-                  horizontalalignment='right',
-                  verticalalignment='top')
-
-    # axis.annotate(r'$SI_{K/_late}=%0.2f$' % it_neuron.selectivity.kurtosis_measured,
+    # axis.annotate(r'$SI_{K\_early}=%0.2f,\ SI_{K\_late}=%0.2f$' %
+    #               (it_neuron.dynamics.early_kurtosis_measured,
+    #                it_neuron.selectivity.kurtosis_measured),
+    #               xy=(0.7, 0.90),
+    #               xycoords='axes fraction',
+    #               fontsize=font_size,
+    #               horizontalalignment='right',
+    #               verticalalignment='top')
+    #
+    # # axis.annotate(r'$SI_{K/_late}=%0.2f$' % it_neuron.selectivity.kurtosis_measured,
+    # #               xy=(0.7, 0.75),
+    # #               xycoords='axes fraction',
+    # #               fontsize=font_size,
+    # #               horizontalalignment='right',
+    # #               verticalalignment='top')
+    #
+    # axis.annotate(r'$L_{early}=%0.2f,\ L_{late}=%0.2f$'
+    #               % (it_neuron.dynamics.early_tau * 1000 * time_step_ms,
+    #                  it_neuron.dynamics.late_tau * 1000 * time_step_ms),
     #               xy=(0.7, 0.75),
     #               xycoords='axes fraction',
     #               fontsize=font_size,
     #               horizontalalignment='right',
     #               verticalalignment='top')
-
-    axis.annotate(r'$L_{early}=%0.2f,\ L_{late}=%0.2f$'
-                  % (it_neuron.dynamics.early_tau * 1000 * time_step_ms,
-                     it_neuron.dynamics.late_tau * 1000 * time_step_ms),
-                  xy=(0.7, 0.75),
-                  xycoords='axes fraction',
-                  fontsize=font_size,
-                  horizontalalignment='right',
-                  verticalalignment='top')
 
     # axis.annotate(r'$Latency_{late}=%0.2f$'
     #               % (it_neuron.dynamics.late_tau * 1000 * time_step_ms),

@@ -119,20 +119,17 @@ class TamuraDynamics:
         ranked_objs_list = self.get_ranked_object_list(obj_dict)
         self.early_gain = self._get_early_gain(ranked_objs_list[0][1], max_fire_rate)
 
-        # Late Tau
-        self.late_tau = self._get_late_tau()
-
-        # Late transient gain and late sustained gain
+        # Late gain and late tau
         ranked_objs_list = self.get_ranked_object_list(self.late_obj_dict)
 
-        self.late_transient_gain, self.late_sustained_gain = self._get_late_gains(
+        self.late_gain, self.late_tau = self._get_late_gain_n_tau(
             ranked_objs_list[0][1], max_fire_rate)
 
         # setup the C parameters
         self.early_C = np.array([self.early_gain, -self.early_gain])
         # self.late_C = late_gain
         self.late_C = np.array(
-            [self.late_sustained_gain + self.late_transient_gain, - self.late_transient_gain])
+            [self.late_gain, - self.late_gain])
 
         # Latencies of the model
         # parameters of exponential functions to map static rate to latency for each neuron
@@ -143,20 +140,21 @@ class TamuraDynamics:
         self.tau_latencies = np.random.gamma(2, 20, self.n)
 
         # matrices for storing recent input history, to allow variable-latency responses
-        self.late_additional_latency = 30
+        self.late_additional_latency = self.get_late_additional_latency()
+
         latency_steps = int(max_latency / dt) + 1 + self.late_additional_latency
         self.early_memory = np.zeros((self.n, latency_steps))
         self.late_memory = np.zeros((self.n, latency_steps))
         self.memory_index = 0
 
-        print("Early Tau %0.2f, Early Gain%0.2f, Late Tau %0.2f, Late Transient Gain %0.2f, "
-              "Late sustained_gain %0.2f" % (
-            self.early_tau,
-            self.early_gain,
-            self.late_tau,
-            self.late_transient_gain,
-            self.late_sustained_gain,
-        ))
+        print("Early Tau %0.2f, Early Gain %0.2f, Late Tau %0.2f, Late Gain %0.2f, "
+              "Add Latency %0.2f" % (self.early_tau,
+                                     self.early_gain,
+                                     self.late_tau,
+                                     self.late_gain,
+                                     self.late_additional_latency
+                                     )
+              )
 
     @staticmethod
     def _get_transience():
@@ -192,17 +190,17 @@ class TamuraDynamics:
     @staticmethod
     def _get_early_tau():
         """
-        The rise/fall of the early LTI system. Its distribution is found by fitting multiple
-        dynamic profiles  in Figure 3 and 4 of Tamura 2001.
+        The rise/fall of the early LTI system. Its distribution is found by manually fitting 
+        the responses of the neurons most preferred object in Figure 3 and 4 of Tamura 2001. 
 
         See dynamics_profile_fits.txt and tamura_profile_fits.py
-        mean = 0.0198, std = 0.0053
+        mean = 0.027, std = 0.0067
 
         :return:
         """
         t = 0
         while t <= 0.0001:
-            t = np.random.normal(loc=0.0198, scale=0.0053)
+            t = np.random.normal(loc=0.027, scale=0.0067)
 
         return t
 
@@ -283,127 +281,115 @@ class TamuraDynamics:
     @staticmethod
     def _get_late_tau():
         """
-        The rise/fall of the late LTI system. Its distribution is found by fitting multiple
-        dynamic profiles  in Figure 3 and 4 of Tamura 2001.
+        The rise/fall of the late LTI system. Its distribution is found by manually fitting 
+        the responses of the neurons most preferred object in Figure 3 and 4 of Tamura 2001. 
 
         See dynamics_profile_fits.txt and tamura_profile_fits.py
-        mean = 0.3525, std = 0.67
+        mean = 0.0881, std = 0.0041
 
         :return:
         """
         t = 0
         while t <= 0.0001:
-            t = np.random.normal(loc=0.3525, scale=0.67)
+            t = np.random.normal(loc=0.0881, scale=0.0041)
 
         return t
 
-    def _get_late_gains(self, r_obj, max_fr):
+    def _get_late_gain_n_tau(self, r_obj, max_fr):
         """
 
         :param r_obj: late object preference
         :param max_fr:
         :return:
         """
-
-        # First get the Ratio of late gains
-        ratio = self._get_late_gains_ratio()
-
-        # Use the same technique as done to find early gain
-
-        # Recall that the late LTE system uses two gains. These are needed in the calculation of
-        # late_c. However, we do not have actual values for them for now just set transient gain
-        # to  1 and the sustained gain to 1 / ratio
-        transient_gain = 1.0
-        sustained_gain = 1.0 / ratio
-
         avg_rate = r_obj * max_fr
 
         time_arr = np.arange(0, 0.140, step=self.dt)
         input_arr = np.ones_like(time_arr) * avg_rate
-
-        late_a = 1 / self.late_tau * self.late_A
-        late_b = 1 / self.late_tau * self.late_B
-
-        # We have to determine this, for now just use a default value
-        late_c = np.array([sustained_gain + transient_gain, - transient_gain])
-
-        lti_out_arr = np.zeros_like(input_arr)
-        for u_idx, u in enumerate(input_arr):
-            self.late_x[:, 0], y = integrate(
-                self.dt,
-                late_a,
-                late_b,
-                late_c,
-                self.late_x[:, 0],
-                u
-            )
-
-            lti_out_arr[u_idx] = np.maximum(0, y)
-
-        # clear_out the system
-        self.late_x[:, 0] = 0
-        # plt.plot(time_arr, lti_out_arr, linestyle='--')
-
-        # Integrate the output of the LTI system to get transient gain and sustained gain
-        # values that would result in the same average fire rate as desired.
-        area_lti = np.trapz(lti_out_arr, dx=self.dt)
         area_desired = np.trapz(input_arr, dx=self.dt)
 
-        # Guard against ridiculous gains, this happens for the case when late_tau is
-        # large and the area under the LTI curve for the 140ms window is too small.
-        # in this case just use the initial randomly selected gain values.
-        if area_lti > 0.001:
-            transient_gain = area_desired / area_lti
-            sustained_gain = transient_gain / ratio
+        area_lti = 0
 
-        # print("Area_lti curve(140ms) %0.4f, transient_gain %0.4f, sustain gain %0.4f"
-        #       % (area_lti, transient_gain, sustained_gain))
+        late_gain = 0
+        late_tau = 0.08  # doesnt matter
 
-        if np.isnan(transient_gain) or np.isnan(sustained_gain):
-            raise Exception("invalid late_transient_gain %0.2f or late sustained_gain %0.2f"
-                            % (transient_gain, sustained_gain))
+        if area_desired >= 0.001:
+            iteration = 0
+            while area_lti <= 0.001:
+                print("Iteration %i" % iteration)
+                iteration = iteration + 1
+                if iteration > 100:
+                    print self.get_ranked_object_list(self.late_obj_dict)
+                    raise Exception("Unable to generate late gains Desired LTI system area =%0.4f"
+                                    % area_desired)
+                # Use the same technique as we use to find the early gain, the area  in the
+                # [0 - 140]ms window should equal to the average firing rate of the neuron
+                #  = r_obj * max_fr. Here r_obj should be the late r_obj
 
-        # # Debug make sure everything is making sense
-        # lti_out_arr = np.zeros_like(input_arr)
-        #
-        # late_c = np.array([sustained_gain + transient_gain, - transient_gain])
-        #
-        # for u_idx, u in enumerate(input_arr):
-        #     self.late_x[:, 0], y = integrate(
-        #         self.dt,
-        #         late_a,
-        #         late_b,
-        #         late_c,
-        #         self.late_x[:, 0],
-        #         u
-        #     )
-        #
-        #     lti_out_arr[u_idx] = np.maximum(0, y)
-        #
-        # # clear_out the system
-        # self.late_x[:, 0] = 0
-        # plt.plot(time_arr, lti_out_arr)
-        #
-        # print("Area Under LTI system %0.4f" % np.trapz(lti_out_arr, dx=self.dt))
-        # print("Desired area %0.4f" % area_desired)
+                # First get the ratio of late gains
+                late_tau = self._get_late_tau()
 
-        return transient_gain, sustained_gain
+                late_gain = 1.0
+                late_a = 1 / late_tau * self.late_A
+                late_b = 1 / late_tau * self.late_B
+
+                # We have to determine this, for now just use a default value
+                late_c = np.array([late_gain, - late_gain])
+
+                lti_out_arr = np.zeros_like(input_arr)
+                for u_idx, u in enumerate(input_arr):
+                    self.late_x[:, 0], y = integrate(
+                        self.dt,
+                        late_a,
+                        late_b,
+                        late_c,
+                        self.late_x[:, 0],
+                        u
+                    )
+
+                    lti_out_arr[u_idx] = np.maximum(0, y)
+
+                # clear_out the system
+                self.late_x[:, 0] = 0
+                # plt.plot(time_arr, lti_out_arr, linestyle='--')
+
+                # Integrate the output of the LTI system to get late gain. Values that would
+                # result in the same average fire rate as desired.
+                area_lti = np.trapz(lti_out_arr, dx=self.dt)
+                print("Area under LTI system %0.4f, Desired_area=%0.4f" % (area_lti, area_desired))
+
+            late_gain = area_desired / area_lti
+            # print("late_gain %0.4f" % late_gain)
+
+            # Debug make sure everything is making sense
+            # lti_out_arr = np.zeros_like(input_arr)
+            # late_c = np.array([late_gain, - late_gain])
+            #
+            # for u_idx, u in enumerate(input_arr):
+            #     self.late_x[:, 0], y = integrate(
+            #         self.dt,
+            #         late_a,
+            #         late_b,
+            #         late_c,
+            #         self.late_x[:, 0],
+            #         u
+            #     )
+            #
+            #     lti_out_arr[u_idx] = np.maximum(0, y)
+            #
+            # # clear_out the system
+            # self.late_x[:, 0] = 0
+            # plt.plot(time_arr, lti_out_arr)
+            #
+            # print("Area Under LTI system %0.4f" % np.trapz(lti_out_arr, dx=self.dt))
+            # print("Desired area %0.4f" % area_desired)
+
+        return late_gain, late_tau
 
     @staticmethod
-    def _get_late_gains_ratio():
-        """
-        This is the ratio of transient late gain to sustained late gain. It is extracted from
-        fitting various dynamic profiles in the Tamura paper
-
-        We found the mean and standard deviation from the data and use a normal distribution
-        to model the ratio
-
-        mean = 1.675
-        standard deviation = 5.723
-
-        :return:
-        """
-        return np.random.normal(loc=1.675, scale=5.723)
+    def get_late_additional_latency():
+        delay = np.random.normal(loc=27, scale=4.24)
+        return int(delay)
 
     def _get_lagged_rates(self, latencies):
         # get appropriately lagged rates for input to LTI dynamics
@@ -474,8 +460,9 @@ class TamuraDynamics:
         print("Early gain                           = %0.2f" % self.early_gain)
 
         print("Late tau                             = %0.2f" % self.late_tau)
-        print("Late transient gain                  = %0.2f" % self.late_transient_gain)
-        print("Late sustained gain                  = %0.2f" % self.late_sustained_gain)
+        print("Late Gain                            = %0.2f" % self.late_gain)
+
+        print("Late Additional Latency              = %0.2f" % self.late_additional_latency)
 
     def get_dynamic_rates(self, early_rates, late_rates):
         """

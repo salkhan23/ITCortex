@@ -25,7 +25,7 @@ def integrate(dt, a, b, c, x, u):
 
 
 def dynamics_profile(
-        x_arr, early_tau, late_tau, early_gain, late_transient_gain, late_sustained_gain, latency):
+        x_arr, early_tau, late_tau, early_gain, late_gain, latency):
     """
 
     :param latency:
@@ -33,14 +33,14 @@ def dynamics_profile(
     :param early_tau:
     :param late_tau:
     :param early_gain:
-    :param late_transient_gain:
+    :param late_gain:
     :param late_sustained_gain:
     :return:
     """
-    # print early_tau, late_tau, early_gain, late_transient_gain, late_sustained_gain, latency
+    # print early_tau, late_tau, early_gain, late_gain, latency
 
     dt = 0.005
-    avg_fire_rate = 11.3 # This if from the paper
+    avg_fire_rate = 51.3
 
     if not isinstance(x_arr, (list, np.ndarray)):
         x_arr = np.array([x_arr])
@@ -59,7 +59,7 @@ def dynamics_profile(
     late_B = np.array([1, 0])
 
     early_C = np.array([early_gain, -early_gain])
-    late_C = np.array([late_sustained_gain + late_transient_gain, - late_transient_gain])
+    late_C = np.array([late_gain, - late_gain])
 
     early_x = np.zeros((2, 1))
     late_x = np.zeros((2, 1))
@@ -104,7 +104,6 @@ def dynamics_profile(
     # plt.plot(time_arr, early_dynamics, label='Early LTI system')
     # plt.plot(time_arr, late_dynamics, label='Late LTI system')
 
-
     # Return the dynamic rate for each x(time) value
     out_arr = np.zeros_like(x_arr)
     for x_idx, x in enumerate(x_arr):
@@ -117,16 +116,21 @@ def dynamics_profile(
 
 if __name__ == '__main__':
     plt.ion()
-    plt.figure()
+    # plt.figure()
 
     with open("tamura2001Updated.pkl", 'rb') as fid:
         list_of_neurons = pickle.load(fid)
 
-    # TODO: make this a for loop
-    neuron = list_of_neurons[9]
+    neuron = list_of_neurons[1]
+    # Most preferred object for neuron in fig 3 at list_of_neurons[4]
+    # most preferred object for neuron in fig 4 at list_of_neurons[1]
+    # TODO: don't forget to update the average firing rate  in dynamics_profile function
 
-    # Fix small type in results
+    # Fix a small typo in retrieved dictionary
     list_of_neurons[6]["avg_rate"] = list_of_neurons[6]["avg rate"]
+
+    for n_idx, n in enumerate(list_of_neurons):
+        print n_idx, n["avg_rate"]
 
     # Find the first index where the rate is greater than 20
     cutoff_idx = 0
@@ -144,23 +148,24 @@ if __name__ == '__main__':
 
     plt.scatter(meas_time, meas_rate)
 
-    p0 = [0.017, 0.25, 4.55, 9.6, -4.5, 20]
+    p0 = [0.05, 0.25, 4.38, 2, 27]
     coeffs, matcov = so.curve_fit(dynamics_profile, meas_time, meas_rate, p0=p0)
     print coeffs
     print "standard error of fit:"
     print np.sqrt(np.diag(matcov))
 
     # Create a profile with the best fit params
+    # coeffs = [0.02, 0.09, 4.38, 2.72, 0,20]
     t_arr = np.arange(0, 0.8, 0.005)
     out_rates = dynamics_profile(
-        t_arr, coeffs[0], coeffs[1], coeffs[2], coeffs[3], coeffs[4], coeffs[5])
+        t_arr, coeffs[0], coeffs[1], coeffs[2], coeffs[3], coeffs[4])
 
     plt.plot(
         t_arr,
         out_rates,
-        label=r'$\tau_{early}=%0.2f,\ \tau_{late}=%0.2f,\ g_{early}=%0.2f,\ g_{late\_trans}=%0.2f,'
-              r'\ g_{late\_sustained}=%0.2f,\ addLatency=%0.2f$'
-              % (coeffs[0], coeffs[1], coeffs[2], coeffs[3], coeffs[4], coeffs[5])
+        label=r'$\tau_{early}=%0.2f,\ \tau_{late}=%0.2f,\ g_{early}=%0.2f,\ g_{late}=%0.2f,'
+              r'\ addLatency=%0.2f$'
+              % (coeffs[0], coeffs[1], coeffs[2], coeffs[3], coeffs[4])
     )
 
     plt.legend()

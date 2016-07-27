@@ -1055,25 +1055,6 @@ def main():
 
             t_current_ms += t_step_ms
 
-        # Plot firing rates ---------------------------------------------------------------------
-        font_size = 40
-
-        if np.count_nonzero(rates_vs_time_arr):
-            print("Plotting Results...")
-
-            # Also plot all neurons on a single plot
-            plt.figure()
-            for n_idx in np.arange(population_size):
-                plt.plot(np.arange(t_stop_ms, step=t_step_ms) / 1000.0,
-                         rates_vs_time_arr[:, n_idx])
-
-            # plt.title("Population (N=%d) Firing Rates " % len(it_cortex), fontsize=font_size)
-            plt.xlabel("Time(s)", fontsize=font_size)
-            plt.ylabel("Firing Rates (spikes/s)", fontsize=font_size)
-
-            plt.tick_params(axis='x', labelsize=font_size)
-            plt.tick_params(axis='y', labelsize=font_size)
-
     except Exception:
         traceback.print_exc()
 
@@ -1086,6 +1067,13 @@ def main():
         if result != vrep.simx_return_ok:
             print("Failed to stop simulation.")
         vrep.simxFinish(client_id)
+
+        # Plot results if present
+        if np.count_nonzero(rates_vs_time_arr):
+            print("Plotting Results...")
+
+            utils.plot_net_fire_rates(rates_vs_time_arr)
+            utils.get_spikes_raster(rates_vs_time_arr)
 
         return it_cortex, rates_vs_time_arr, scales, objects, max_dimensions
 

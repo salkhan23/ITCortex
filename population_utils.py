@@ -508,7 +508,7 @@ def plot_receptive_field_centers(it_population, axis=None, font_size=40):
                  verticalalignment='top')
 
 
-def plot_neuron_scales_factors(n_idx, neurons_arr, scales_arr, dt, t_stop, obj_idx=0,
+def plot_neuron_scales_factors(n_idx, neurons_arr, scales_arr, dt, obj_idx=0,
                                axis=None, font_size=30):
     """
     Plot the scale factors of a specified neuron and object
@@ -552,6 +552,7 @@ def plot_neuron_scales_factors(n_idx, neurons_arr, scales_arr, dt, t_stop, obj_i
         rot_scales.append(scales_per_run[obj_idx][4])
         occ_scales.append(scales_per_run[obj_idx][5])
 
+    t_stop = dt * len(scales_arr)
     t_arr = np.arange(0, t_stop, step=dt)
 
     axis.plot(t_arr, np.array(isolated_rates),

@@ -564,6 +564,12 @@ def get_object_visibility_levels(objects_list, c_id):
             warnings.warn("Failed to send object handles for occlusion. Error %d" % res)
 
         # Read occlusion data from child script
+        # occlusion data consists of a stream of
+        # [ obj_handle, visibility, number_of_visible_pixels, size_percentage]
+        # Here size percentage = min (size_x, size_y)
+        # size x = (max_x_pixel - min_x_pixel) / total_x pixels
+        # size y is similarly defined.
+        # total pixels comes from the size of the retrieved image (currently set to 64)
         res, occlusion_data = vrep.simxReadStringStream(
             c_id,
             "occlusionData",
@@ -596,9 +602,10 @@ def get_object_visibility_levels(objects_list, c_id):
             # handle followed by its visibility level and finally the number of pixels that are
             # visible.
 
-            # Objects of interest sent down from VRep can either be a parent object or diagnostic
-            #  part of an object.
+            # Objects of interest sent down from VREP can either be a parent object or diagnostic
+            # part of an object.
             retrieved_data = np.reshape(occlusion_data, (len(occlusion_data) / 4, 4))
+            #print retrieved_data
 
             for data_idx in np.arange(retrieved_data.shape[0]):
                 identity = np.int(retrieved_data[data_idx, 0])
@@ -611,15 +618,13 @@ def get_object_visibility_levels(objects_list, c_id):
                         if not visibility_levels[obj_list_idx][0]:
                             visibility_levels[obj_list_idx][0] = retrieved_data[data_idx, 1]
 
-                        # Only interested in parent object sizes
-                        # the returned size is based on percentage of the axis,
-                        # assume both axis range from -pi to pi. Current the size to radians.
+                        # Only interested in parent object sizes (not in diagnostic parts size)
+                        # the returned size is based on percentage of the axis.
 
-                        # TODO: Need to consider aspect ratio in this calculation.
-                        # Current assumption is  = 1. so both axis span the specified range.
-                        # for a different aspect ratio this would not necessarily be the case.
-                        sizes[obj_list_idx] = retrieved_data[data_idx, 3] * np.pi * 2
-                        break
+                        # Assume 180 degrees spaces the projection plane. This corresponds to a
+                        # returned size metric of 1 (see above). Therefore to convert to visual
+                        # degree multiply by 180 degree
+                        sizes[obj_list_idx] = retrieved_data[data_idx, 3] * np.pi
 
                     # if diagnostic object part, add diagnostic visibility. But also adjust
                     # nondiagnostic visibility. The returned nondiagnostic visibility is
@@ -952,12 +957,6 @@ def main():
                                )
 
             it_cortex.append(neuron)
-
-        # Scale up the firing rates of neurons
-        # pop_max_fire = utils.population_max_firing_rate(it_cortex)
-        # for n_idx in np.arange(population_size):
-        #     it_cortex[n_idx].max_fire_rate = \
-        #         it_cortex[n_idx].max_fire_rate * 200.0 / pop_max_fire
 
         # Get Ground Truth  ---------------------------------------------------------------------
         print("Starting Data collection...")

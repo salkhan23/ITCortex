@@ -1,5 +1,34 @@
 # -*- coding: utf-8 -*-
+""" --------------------------------------------------------------------------------------------
+In Lehky 2011, stimuli were presented at fixed position and sizes for the IT neurons. As a result
+the parameters that were used to generate mean firing rate distribution for various objects was
+non-ideal. Here we use our position and size tuning profiles to generate scale factors that model
+the amount of distortion expected under the testing conditions. This is used to modify the
+parameters of the rate generating distribution of model IT neurons.
+
+REF: Lehky, S. R., Kiani, R., Esteky, H., & Tanaka, K. (2011).
+Statistics of visual responses in primate inferotemporal cortex to object stimuli.
+Journal of Neurophysiology, 106(3), 1097–117.
+
+Random samples of scale factors that would be expected in the Lehky et al. experiment.
+The number of samples isn't critical as they are just used to estimate a distribution.
+Samples should lie between [0, 1].
+
+POSITION:
+All stimuli were presented foveally at (0, 0) radians. However the receptive field centers
+of IT neurons and their preferred positions are distributed around the fovea. To account for this
+we create a large sample of position profiles and determine the amount of deviation expected if
+stimuli are presented at (0, 0) to all neurons.
+
+SIZE:
+The largest dimension of all stimuli extended 7 degrees. Similarly to account for this non-optimal
+size we generate a large sample of size tuning profiles of IT neurons and determine the amount of
+deviation expected if stimuli are presented with a size of 7 degrees.
+
+@author: bptripp, s362khan
+-------------------------------------------------------------------------------------------- """
 __author__ = 'bptripp'
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -236,46 +265,47 @@ class LehkySparseness:
         blb = 0.5
 
         # empirical expectation and variance of scales ...
-        Es = np.mean(scale_samples)
-        Vs = np.var(scale_samples)
+        mu_s = np.mean(scale_samples)
+        var_s = np.var(scale_samples)
 
         # expectation and variance of Lehky et al. distribution of mean rates ...
-        El = ala*bla*alb*blb
-        Vl = ala*bla**2*alb*blb**2 + ala*bla**2*(alb*blb)**2 + alb*blb**2*(ala*bla)**2
+        mu_l = ala*bla*alb*blb
+        var_l = ala*bla**2*alb*blb**2 + ala*bla**2*(alb*blb)**2 + alb*blb**2*(ala*bla)**2
 
         # expectation and variance of "full" (unscaled) distribution of mean rates
         #   that will approximate Lehky after scaling ...
-        Ef = El / Es
-        Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
+        mu_f = mu_l / mu_s
+        var_f = (var_l - var_s*(mu_l/mu_s)**2) / (var_s + mu_s**2)
 
         # Prevent negative scale parameters and large values by preventing
         # bfb calculations from going negative or too small
         # ------------------------------------------------------------------------------
         epsilon = 0.1
-        Vs_max = (Vl - (Ef**2/ala+epsilon)*Es**2) / (Ef**2/ala+epsilon + (El/Es)**2)
+        var_s_max = (var_l - (mu_f**2/ala + epsilon)*mu_s**2) / \
+            (mu_f**2/ala + epsilon + (mu_l/mu_s)**2)
 
-        if Vs > Vs_max:
+        if var_s > var_s_max:
             print('********FIXING*********')
-            print("V scaled %0.4f, Solution %0.4f" %(Vs, Vs_max))
-            Vs = Vs_max
+            print("V scaled %0.4f, Solution %0.4f" % (var_s, var_s_max))
+            var_s = var_s_max
 
             # Recalculate the full variance again as this is the parameter that changes
-            # with the new Vs in the calculation of bfb and bfa
-            Vf = (Vl - Vs*(El/Es)**2) / (Vs + Es**2)
+            # with the new var_s in the calculation of bfb and bfa
+            var_f = (var_l - var_s*(mu_l/mu_s)**2) / (var_s + mu_s**2)
         # ----------------------------------------------------------------------------
 
         # # Debug Prints
-        # print("sample mean %0.4f, var %0.4f" %(Es, Vs))
-        # print("Lehky mean %0.4f, var %0.4f" %(El, Vl))
-        # print("Full mean %0.4f, var %0.4f" %(Ef, Vf))
+        # print("sample mean %0.4f, var %0.4f" %(mu_s, var_s))
+        # print("Lehky mean %0.4f, var %0.4f" %(mu_l, var_l))
+        # print("Full mean %0.4f, var %0.4f" %(mu_f, var_f))
 
         # shape and scale parameters for full distribution (keeping shape same as scaled one) ...
         self._afa = ala
         self._bfa = bla
-        self._bfb = (Vf - Ef**2/ala) / (Ef*bla*(1+ala))
-        self._afb = Ef / (self._afa*self._bfa*self._bfb)
+        self._bfb = (var_f - mu_f**2/ala) / (mu_f*bla*(1+ala))
+        self._afb = mu_f / (self._afa*self._bfa*self._bfb)
 
-        #print("Scale distribution Gamma parameters: a=%0.4f, b=%0.4f" %(self._afb, self._bfb))
+        # print("Scale distribution Gamma parameters: a=%0.4f, b=%0.4f" %(self._afb, self._bfb))
 
     def sample_rates_rates(self, n):
         """
@@ -316,6 +346,10 @@ class LehkySparseness:
 
 if __name__ == '__main__':
     plt.ion()
+
+    # --------------------------------------------------------------
+    #  Original Code
+    # # --------------------------------------------------------------
     # scale_factor_samples = np.random.rand(500)
     # ls = LehkySparseness(scale_factor_samples)
     #
@@ -331,8 +365,6 @@ if __name__ == '__main__':
     # plt.hist(scaled_max_rates)
     # plt.title('histogram of scaled max spike rates')
     # plt.show()
-
-    # -----------------------------------------------------
 
     # # --------------------------------------------------------------
     # # Reproduce Lehky Results
@@ -357,7 +389,7 @@ if __name__ == '__main__':
     # --------------------------------------------------------------
     # Find scale distribution parameter
     # --------------------------------------------------------------
-    n_runs = 1
+    n_runs = 10   # change to multiple runs to get average scale parameters
     neurons = 674
     objects = 806
 
@@ -371,8 +403,6 @@ if __name__ == '__main__':
     scale_b_arr = np.zeros(n_runs)
 
     for r_idx in np.arange(n_runs):
-
-        # print ("Run %i" % r_idx)
 
         # Scale Factors
         # scale_factor_samples = np.random.rand(10000)
@@ -405,15 +435,17 @@ if __name__ == '__main__':
         s_avg_selectivity_arr[r_idx], s_avg_sparseness_arr[r_idx] = \
             get_average_selectivity_and_sparseness(scaled_rates)
 
+        # Plot the selectivities and sparseness distributions of the last run
+        if n_runs > 1:
+            print ("Run %i" % r_idx)
+        else:
+            plot_selectivity_and_sparseness(scaled_rates)
 
-    # Plot the selectivities and sparseness distributions of the last run
-    plot_selectivity_and_sparseness(scaled_rates)
-
-    print("Full  : average selectivity %0.4f+%0.4f, sparseness %0.4f+0.4%f"
+    print("Full  : average neuronal selectivity %0.4f+%0.4f, population sparseness %0.4f+0.4%f"
           % (np.mean(f_avg_selectivity_arr), np.std(f_avg_selectivity_arr),
              np.mean(f_avg_sparseness_arr), np.std(f_avg_sparseness_arr)))
 
-    print("Scaled: average selectivity %0.4f+%0.4f, sparseness %0.4f+%0.4f"
+    print("Scaled: average neuronal selectivity %0.4f+%0.4f, population sparseness %0.4f+%0.4f"
           % (np.mean(s_avg_selectivity_arr), np.std(s_avg_selectivity_arr),
              np.mean(s_avg_sparseness_arr), np.std(s_avg_sparseness_arr)))
 
@@ -501,5 +533,3 @@ if __name__ == '__main__':
     #
     # # Plot the selectivities and sparseness distributions of the last run
     # plot_selectivity_and_sparseness(scaled_fire_rates)
-
-

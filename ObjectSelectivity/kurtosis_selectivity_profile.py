@@ -60,7 +60,7 @@ class KurtosisSparseness:
         non-optimal for many neurons. We do use their shape-parameter distribution, but we
         use a different scale parameter distribution that approximates that of Lehky et al.
         after being scaled by a realistic distribution of scale factors for non-optimal size,
-        position, etc. For derivation of scale factors see kurtosis_fit.py
+        position, etc. For derivation of scale factors see sparseness.py
 
         Additionally a function is provided to get the max firing rate of the neuron. Once
         parameters of the gamma distribution over the objects is calculated, we take the point at
@@ -101,7 +101,7 @@ class KurtosisSparseness:
     def __get_distribution_shape_parameter():
         """
         Get sample shape parameter for the gamma distribution of firing rates over objects.
-        See derivation in kurtosis_fit.py.
+        These are the same as Lehky 2011.
 
         :rtype : shape parameter.
         """
@@ -113,7 +113,7 @@ class KurtosisSparseness:
     def __get_distribution_scale_parameter():
         """
         Get sample shape parameter for the gamma distribution of firing rate over objects.
-        See derivation in kurtosis_fit.py.
+        See derivation in sparseness.py.
 
         :rtype : scale parameter.
         """

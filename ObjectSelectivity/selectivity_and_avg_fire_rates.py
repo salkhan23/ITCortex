@@ -1,4 +1,14 @@
 # -*- coding: utf-8 -*-
+""" --------------------------------------------------------------------------------------------
+Find the correlation between mean firing rate and selectivity (Kurtosis).
+
+[Lehky, 2011] found that that the mean firing rate of neurons decreased  as their selectivity
+increased. Here fnd the correlation between the mean firing rates of neurons and their
+selectivities and show that the same trend is preserved even with our modified firing rate
+distribution of model neurons.
+
+A plot of selectivity and mean firing rates is also generated. (Figure 5 in the paper)
+-------------------------------------------------------------------------------------------- """
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -51,6 +61,7 @@ if __name__ == '__main__':
 
     # Stimulus Set
     list_of_objects = []
+
     for idx_n in np.arange(objects):
         list_of_objects.append('random_' + str(idx_n))
 
@@ -77,47 +88,9 @@ if __name__ == '__main__':
 
         correlation_arr[r_idx] = np.corrcoef(mean_rates, selectivities)[0, 1]
 
+        # Plot neuronal selectivities versus average fire rate for last run
+        if r_idx == (runs - 1):
+            plot_selectivity_vs_mean_rates(mean_rates, selectivities)
+
     print("Average correlation between selectivity and mean_rates %0.4f+%0.4f"
           % (np.mean(correlation_arr), np.std(correlation_arr)))
-
-    # Plot neuronal selectivities versus average fire rate for last run
-    plot_selectivity_vs_mean_rates(mean_rates, selectivities)
-
-    # # -----------------------------------------------------------------------------------------
-    # # Using Model Initialization
-    # # -----------------------------------------------------------------------------------------
-    # correlation_arr = np.zeros(shape=runs)
-    #
-    # for r_idx in np.arange(runs):
-    #
-    #     print("Run %d" % r_idx)
-    #
-    #     # Create Population ------------------------------------------------------------------
-    #     selectivities = np.zeros(shape=neurons)
-    #     mean_rates = np.zeros(shape=neurons)
-    #
-    #     for n_idx in np.arange(neurons):
-    #
-    #         # print ("Creating neuron %i" % idx_n)
-    #         neuron = it.Neuron(
-    #             list_of_objects,
-    #             selectivity_profile='Kurtosis',
-    #             # position_profile='Gaussian',
-    #             # size_profile='Lognormal',
-    #             # rotation_profile='Gaussian',
-    #             # dynamic_profile='Tamura',
-    #             # occlusion_profile='TwoInputSigmoid'
-    #         )
-    #
-    #         selectivities[n_idx] = neuron.selectivity.kurtosis_measured
-    #
-    #         rates = np.array(neuron.selectivity.objects.values())
-    #         mean_rates[n_idx] = np.mean(rates) * neuron.max_fire_rate
-    #
-    #     correlation_arr[r_idx] = np.corrcoef(mean_rates, np.log(selectivities + 1))[0, 1]
-    #
-    # print("Average correlation between selectivity and mean_rates %0.4f+%0.4f"
-    #       % (np.mean(correlation_arr), np.std(correlation_arr)))
-    #
-    # # Plot neuronal selectivities versus average fire rate for last run
-    # plot_selectivity_vs_mean_rates(mean_rates, selectivities)

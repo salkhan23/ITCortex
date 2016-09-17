@@ -674,20 +674,20 @@ def set_object_handles_for_rotation_symmetries(objects_list, c_id):
 
     VREP Signal: getRotationSymmetryForHandles
 
-    -- For each object, if it displays any rotational symmetry, add it into custom data field
-    -- under (Scene Object Properties>>Common>>View/Edit custom data) under a header defined as
-	-- the numerical of ROTATION_SYMMETRY_HEADER.
-	-- Custom data under this head should follow the convention
-    -- " ROTATION_SYMMETRY_HEADER,           # 12345678,
-    --   x-rotation-period,                  # valid range {1 (no rotation symmetry),360 (complete rotation symmetry)}
-    --   x-rotation_is_mirror_symmetric,     # {0: not mirror symmetric, 1: mirror symmetric}
-    --   y-rotation-period,
-    --   y-rotation_is_mirror_symmetric,
-	--   z-rotation-period,
-    --   z-rotation_is_mirror_symmetric,
+    For each object, if it displays any rotational symmetry, add it into custom data field
+    under (Scene Object Properties>>Common>>View/Edit custom data) under a header defined as
+	the numerical of ROTATION_SYMMETRY_HEADER.
+	Custom data under this head should follow the convention
+
+    " ROTATION_SYMMETRY_HEADER,           # 12345678,
+       x-rotation-period,                 # valid range {1 (no rotation symmetry),360 (complete rotation symmetry)}
+       x-rotation_is_mirror_symmetric,    # {0: not mirror symmetric, 1: mirror symmetric}
+       y-rotation-period,
+       y-rotation_is_mirror_symmetric,
+	   z-rotation-period,
+       z-rotation_is_mirror_symmetric,
+
 	ROTATION_SYMMETRY_HEADER = 12345
-
-
 
     :param objects_list: List of Vrep objects to get rotation symmetries for
     :param c_id: connected scene id.
@@ -919,14 +919,15 @@ def main():
 
     population_size = 100
     it_cortex = []
-    rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
 
+    # Debug Data storage
     # noinspection PyBroadException
+    rates_vs_time_arr = np.zeros(shape=(t_stop_ms / t_step_ms, population_size))
     scales = []
     objects = []
     max_dimensions = []
-    try:
 
+    try:
         # SETUP VREP  ---------------------------------------------------------------------------
         # Get list of objects in scene
         print("Initializing VREP simulation...")

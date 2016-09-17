@@ -60,8 +60,8 @@ class GaussianPositionProfile:
         Method determines the position tolerance of the Neuron. Position Tolerance is
         defined as 2*standard deviation of the Gaussian function.
 
-        Two properties of position tolerance are modeled: (1) Position tolerance decreases
-        as selectivity/spareness of neuron increases, (2) Position tolerance variations
+        Two properties of position tolerance are modeled: (1) On average, Position tolerance
+        decreases as selectivity/spareness of neuron increases, (2) Position tolerance variations
         (spread) decrease as selectivity/sparseness decreases.
 
         A set of gamma random variables with constant shape (alpha) and variable spread

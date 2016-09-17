@@ -1,195 +1,126 @@
 # -*- coding: utf-8 -*-
-"""
+""" ---------------------------------------------------------------------------------------------
+Fit(s) for the Position Tolerance vs Selectivity data from Figure Figure 4.A of of
+[Zoccolan et. al, 2007].
+
+Two properties of position tolerance are modeled: (1) On average, position tolerance decreases as
+selectivity (activity fraction) of neuron increases, (2) Position tolerance variations (spread)
+decrease as selectivity/sparseness decreases.
+
+First, a linear regression fit of the data is done to model property one.
+
+Second, to model the variations about the mean position tolerance, given by the linear regression
+fit, three different approaches are tried to model variations about the mean value. In all three
+cases a gamma distribution is used. However there are variations in the parameters of the
+distribution
+
+  (1) Scale of distribution = found mean position tolerance
+  (2) Mean of distribution = found mean position tolerance. Scale =  Mean / alpha
+  (3) Mode of the distribution = found mean position tolerance. Scale = Mode / (alpha - 1)
+
+alpha is found for all the options using ML estimation.
+
+
+Best ML estimates were found with option two when the the fitted mean position tolerance was set
+to mean of the gamma distribution.
+
 Created on Thu Nov 13 16:53:46 2014
 
 @author: s362khan
-"""
-
-import dill
+----------------------------------------------------------------------------------------------"""
+import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as ss
 
-plt.ion()
 
-dill.load_session('positionToleranceData.pkl')
+if __name__ == '__main__':
+    plt.ion()
 
+    # Load the data
+    with open("Zoccolan2007.pkl") as handle:
+        data = pickle.load(handle)
 
-# ---------------------------------------------------------
-# Code to plot Zoccolan Data onto a figure
-zoc_pos_tol = yScatterRaw * np.pi / 180.0  # in Radians
-zoc_sel_af = xScatterRaw
+    zoc_sel_af = data["xScatterRaw"]
+    zoc_pos_tol = data["yScatterRaw"]
 
-plt.scatter(zoc_sel_af, zoc_pos_tol, label='Original Data',  marker='o', s=60, color='blue')
-plt.plot(xScatterRaw,
-         (yLineFit[0]* np.pi / 180.0 * xScatterRaw + yLineFit[1] * np.pi / 180.0),
-         color='blue',
-         linewidth=2)
-#----------------------------------------------------------
+    plt.figure("Original Data")
+    plt.scatter(zoc_sel_af, zoc_pos_tol, label='Original Data',  marker='o', s=60, color='blue')
 
+    # ---------------------------------------------------------------------------------------
+    # Linear Regression fit to find the average position tolerance given selectivity
+    # ---------------------------------------------------------------------------------------
+    m, b = np.polyfit(zoc_sel_af, zoc_pos_tol, 1)
 
-plt.figure('Original Data')
+    print("[1] Mean position tolerance given activity fraction selectivity = %f*selectivity + %f"
+          % (m, b))
 
-plt.scatter(xScatterRaw,yScatterRaw, label='Scatter Data')
-plt.plot(xScatterRaw, yLineFit[0]*xScatterRaw+yLineFit[1],\
-         label='Best linear fit', color='red', linewidth=2)
-         
-plt.legend()
-plt.xlabel('Selectivity')
-plt.ylabel('Position Tolerance')
+    sel_arr = np.arange(1.05, step=0.05)
+    plt.plot(sel_arr, m * sel_arr + b, label="Best Linear Fit", color='blue', linewidth=2)
 
-''' -----------------------------------------------------------------------------------'''
-plt.figure('Alpha')
-plt.title('Best fit Gamma RV: Max.likiehood Alpha estimate, scale defined by specified function')
+    plt.legend()
+    plt.xlabel('Selectivity')
+    plt.xlim([0, 1])
+    plt.ylabel('Position Tolerance')
 
-''' Gamma Fit, scale variable based on best fit line '''
-alphaArray = np.arange(start=0.01, stop=20, step=0.01)
-logLikelihood = []
+    # ---------------------------------------------------------------------------------------
+    # Distribution of actual position tolerance about the calculated mean position tolerance
+    # ---------------------------------------------------------------------------------------
+    print("[2] Gamma distributions about mean position tolerance")
+    plt.figure('Alpha')
+    plt.title('Gamma RV: ML Alpha estimates, scale defined by specified function in label')
 
-for alpha in alphaArray:
-    prob = [ss.gamma.pdf(y, a=alpha, scale = (yLineFit[0]*xScatterRaw[idx]+yLineFit[1])) \
-            for idx, y in enumerate(yScatterRaw)]
-    logLikelihood.append( np.log(prob).sum() )
+    alphaArray = np.arange(start=0.01, stop=20, step=0.01)
 
-logLikelihood = np.array(logLikelihood)
-print ("Method: ML Gamma RV Fit, alpha fixed, scale = best linear fit of data")
-print ("alpha %f, max Loglikelihood %f" %(alphaArray[logLikelihood.argmax()], logLikelihood.max()) )
+    # Method 1 - Scale = calculated mean pos tolerance
+    # -------------------------------------------------
+    logLikelihood = []
+    for alpha in alphaArray:
+        prob = [ss.gamma.pdf(y, a=alpha, scale=(m * zoc_sel_af[idx] + b))
+                for idx, y in enumerate(zoc_pos_tol)]
 
-plt.plot(alphaArray, logLikelihood, label = ('scale = best linear fit of data'))
-plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood), 'r+', linewidth=3)
-   
-''' -----------------------------------------------------------------------------------'''
-''' Gamma Fit, mean based on best fit line, scale = mean/alpha '''
-alphaArray = np.arange(start=0.01, stop=20, step=0.01)
-logLikelihood = []
+        logLikelihood.append(np.log(prob).sum())
 
-for alpha in alphaArray:
-    prob = [ss.gamma.pdf(y, a=alpha, scale = (yLineFit[0]*xScatterRaw[idx]+yLineFit[1])/(alpha)) \
-            for idx, y in enumerate(yScatterRaw)]
-    logLikelihood.append( np.log(prob).sum() )
+    logLikelihood = np.array(logLikelihood)
+    print ("\tMethod A [Scale = calculated mean pos tolerance]: alpha=%f, LLV=%f"
+           % (alphaArray[logLikelihood.argmax()], logLikelihood.max()))
 
-logLikelihood = np.array(logLikelihood)
-print ("Method: ML Gamma RV Fit, Gamma Fit, mean based on best fit line, scale = mean/alpha")
-print ("alpha %f, max Loglikelihood %f" %(alphaArray[logLikelihood.argmax()], logLikelihood.max()) )
+    plt.plot(alphaArray, logLikelihood, label="Scale = calculated mean pos tolerance")
+    plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood),
+             'r+', markeredgewidth=3)
 
-plt.plot(alphaArray, logLikelihood, label = 'mean based on best fit line, scale = mean/alpha')
-plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood), 'r+', linewidth=3)
+    # Method 2 - Mean = calculated mean pos tolerance
+    # -------------------------------------------------
+    logLikelihood = []
+    for alpha in alphaArray:
+        prob = [ss.gamma.pdf(y, a=alpha, scale=(m * zoc_sel_af[idx] + b) / alpha)
+                for idx, y in enumerate(zoc_pos_tol)]
 
-''' -----------------------------------------------------------------------------------'''
-''' Gamma Fit, mode based on best fit line, scale = mode/(alpha-1) '''
-alphaArray = np.arange(start=0.01, stop=20, step=0.01)
-logLikelihood = []
+        logLikelihood.append(np.log(prob).sum())
 
-for alpha in alphaArray:
-    prob = [ss.gamma.pdf(y, a=alpha, scale = yLineFit[0]*xScatterRaw[idx]+yLineFit[1]/(alpha-1))\
-            for idx, y in enumerate(yScatterRaw)]
-    logLikelihood.append( np.log(prob).sum() )
+    logLikelihood = np.array(logLikelihood)
+    print ("\tMethod B [Mean = calculated mean pos tolerance]: alpha=%f, LLV=%f"
+           % (alphaArray[logLikelihood.argmax()], logLikelihood.max()))
 
-logLikelihood = np.array(logLikelihood)
-print ("Method: ML Gamma RV Fit, Gamma Fit, mean based on best fit line, scale = mode/alpha")
-print ("alpha %f, max Loglikelihood %f" %(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood)) )
+    plt.plot(alphaArray, logLikelihood, label="Mean = calculated mean pos tolerance")
+    plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood),
+             'r+', markeredgewidth=3)
 
-plt.plot(alphaArray, logLikelihood, label = 'mode based on best fit line,  scale = mode/alpha')
-plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood), 'r+', linewidth=3)
-plt.legend(loc='lower right')
-plt.xlabel('alpha')
-plt.ylabel('Loglikelihood')
+    # Method 3 - Mode = calculated mean pos tolerance
+    # -------------------------------------------------
+    logLikelihood = []
+    alphaArray[alphaArray == 1] = 1.01  # Remove alpha = 1, avoid divide by zero
 
-''' -----------------------------------------------------------------------------------'''
-''' Raw Gamma Fit '''
-[gFitAlpha, gFitLocation, gFitScale] = ss.gamma.fit(yScatterRaw)
-prob = [ss.gamma.pdf(x,a=gFitAlpha,loc=gFitLocation,scale=gFitScale) for x in yScatterRaw]
-ll= np.log(prob).sum()
-print ('Method: Raw Gamma Fit of Data')
-print ("Alpha=%f,loc=%f,scale=%f, logLikelihood of Data %f" %(gFitAlpha, gFitLocation, gFitScale, ll))
+    for alpha in alphaArray:
+        prob = [ss.gamma.pdf(y, a=alpha, scale=(m * zoc_sel_af[idx] + b) / (alpha - 1))
+                for idx, y in enumerate(zoc_pos_tol)]
 
+        logLikelihood.append(np.log(prob).sum())
 
-''' -----------------------------------------------------------------------------------'''
-plt.figure('Gamma Distirbutions as selectivity Increase, alpha =4.04, scale=mean/alpha')
-xArray = np.arange(30, step=0.5)
-alpha=4.04
-#[plt.plot(xArray, ss.gamma.pdf(xArray, a=alpha, scale =(yLineFit[0]*x+yLineFit[1])/(alpha))) for x in xArray]
-[plt.plot(xArray, ss.gamma.pdf(xArray, a=alpha, scale=yLineFit[0]*x+yLineFit[1]/(alpha))) \
- for x in xScatterRaw]
-plt.xlabel('Position Tolerance')
-plt.ylabel('Probability of Occurrence')
-plt.text(15, 0.6, "<--- Selectivity Increases")
+    logLikelihood = np.array(logLikelihood)
+    print ("\tMethod C [Mode = calculated mean pos tolerance]: alpha=%f, LLV=%f"
+           % (alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood)))
 
-
-
-
-
-
-
-
-
-
-
-
-
-#''' Gamma Fit Scale based on best line fit line '''
-#alphaArray = np.arange(start=0.01, stop =5, step=0.01)
-#logLikelihood = []
-#for alpha in alphaArray:
-#    prob = [ ss.gamma.pdf( x, a=alpha, scale=(yLineFit[0]*x + yLineFit[1]) ) \
-#             for idx, x in enumerate(yScatterRaw) ]
-#    logLikelihood.append(np.log(prob).sum())
-#    
-#logLikelihood = np.array(logLikelihood)
-#print ("Method: Gamma RV fit, alpha fixed, scale = best linear fit of data")
-#print ("max logLikelihood %f, alpha %f" \
-#        %(logLikelihood.max(), alphaArray[logLikelihood.argmax()]) )
-#
-#plt.figure('Alpha')
-#plt.plot(alphaArray, logLikelihood, label = 'Scale based on best fit line')
-#plt.plot(alphaArray[logLikelihood.argmax()], logLikelihood.max(), 'r+', linewidth=3)
-#    
-#''' Gamma Fit'''
-#[gFitAlpha, gFitLocation, gFitScale ] = ss.gamma.fit(yScatterRaw)
-#prob = [ss.gamma.pdf(x,a=gFitAlpha,loc=gFitLocation,scale=gFitScale) for x in yScatterRaw]
-#ll= np.log(prob).sum()
-#print ('Method: Basic gamma Fit')
-#print ("Alpha=%f,loc=%f,scale=%f, logLikelihood of Data %f" %(gFitAlpha, gFitLocation, gFitScale, ll))
-#
-#''' Gamma Fit mean based on best line fit line  '''
-#alphaArray = np.arange(start=0.01, stop =5, step=0.01)
-#logLikelihood = []
-#for alpha in alphaArray:
-#    prob = [ ss.gamma.pdf( x, a=alpha, scale=(yLineFit[0]*x + yLineFit[1])/alpha ) \
-#             for idx, x in enumerate(xScatterRaw) ]
-#    logLikelihood.append(np.log(prob).sum())
-#    
-#logLikelihood = np.array(logLikelihood)
-#print ("Method: Gamma RV fit, alpha fixed, scale = mean/alpha, mean given by bist fit regression line")
-#print ("max logLikelihood %f, alpha %f" \
-#        %(logLikelihood.max(), alphaArray[logLikelihood.argmax()]) )
-#
-#plt.plot(alphaArray, logLikelihood, label = 'Mean based on best fit line')
-#plt.plot(alphaArray[logLikelihood.argmax()], logLikelihood.max(), 'r+', linewidth=3)
-#        
-#''' Gamma Fit mode based on best line fit line  '''
-#alphaArray = np.arange(start=0.01, stop =5, step=0.01)
-#logLikelihood = []
-#for alpha in alphaArray:
-#    prob = [ ss.gamma.pdf( x, a=alpha, scale=(yLineFit[0]*x + yLineFit[1])/(alpha-1) ) \
-#             for idx, x in enumerate(xScatterRaw) ]
-#    logLikelihood.append(np.log(prob).sum())
-#    
-#logLikelihood = np.array(logLikelihood)
-#print ("Method: Gamma RV fit, alpha fixed, scale = mode/(alpha-1), mode given by bist fit regression line")
-#print ("max logLikelihood %f, alpha %f" \
-#        %(np.nanmax(logLikelihood), alphaArray[np.nanargmax(logLikelihood)]) )
-#
-#plt.plot(alphaArray, logLikelihood, label = 'Mode based on best fit line')
-#plt.plot(alphaArray[logLikelihood.argmax()], logLikelihood.max(), 'r+', linewidth=3)
-#
-#plt.legend()
-#
-#''' exponential distribution '''
-#ss.exp
-
-
-
-raw_input('Exit?')
-#plt.close()
-
+    plt.plot(alphaArray, logLikelihood, label="Mode = calculated mean pos tolerance")
+    plt.plot(alphaArray[np.nanargmax(logLikelihood)], np.nanmax(logLikelihood),
+             'r+', markeredgewidth=3)

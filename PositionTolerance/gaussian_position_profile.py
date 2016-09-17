@@ -125,6 +125,7 @@ class GaussianPositionProfile:
         """
         Contour Plots of the spatial receptive field of the neuron.
 
+        :param print_parameters: Whether to print the prams in the generated figure.
         :param font_size    : font_size of text on plot (default=34)
         :param x_start      : Default = -np.pi/2
         :param x_stop       : Default = np.pi/2

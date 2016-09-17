@@ -664,6 +664,30 @@ def get_object_visibility_levels(objects_list, c_id):
 
 def set_object_handles_for_rotation_symmetries(objects_list, c_id):
     """
+    Retrieve rotational symmetries(x, y, z) of objects in the list from the VREP Child script.
+    Rotational symmetries are defined as the number of identical views within a 360 rotation.
+
+    NOTE that this is not the vision sensor child script, but is the child script associated with
+    the main robot.
+
+    Range of rotational symmetries is [1, 360(every view is symmetric)]
+
+    VREP Signal: getRotationSymmetryForHandles
+
+    -- For each object, if it displays any rotational symmetry, add it into custom data field
+    -- under (Scene Object Properties>>Common>>View/Edit custom data) under a header defined as
+	-- the numerical of ROTATION_SYMMETRY_HEADER.
+	-- Custom data under this head should follow the convention
+    -- " ROTATION_SYMMETRY_HEADER,           # 12345678,
+    --   x-rotation-period,                  # valid range {1 (no rotation symmetry),360 (complete rotation symmetry)}
+    --   x-rotation_is_mirror_symmetric,     # {0: not mirror symmetric, 1: mirror symmetric}
+    --   y-rotation-period,
+    --   y-rotation_is_mirror_symmetric,
+	--   z-rotation-period,
+    --   z-rotation_is_mirror_symmetric,
+	ROTATION_SYMMETRY_HEADER = 12345
+
+
 
     :param objects_list: List of Vrep objects to get rotation symmetries for
     :param c_id: connected scene id.
@@ -889,7 +913,7 @@ def get_ground_truth(c_id, objects, vis_sen_handle, proj_mat, ar, projection_ang
 
 def main():
 
-    t_step_ms = 5       # 5ms
+    t_step_ms = 5         # 5ms
     t_stop_ms = 5 * 1000  # 5 seconds
     client_id = connect_vrep(t_stop_ms, t_step_ms)
 

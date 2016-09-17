@@ -71,7 +71,7 @@ class GaussianPositionProfile:
         gamma random variables.
 
         Maximum likelihood fitting (alpha value that best fits the data) is used to
-        determine alpha. See mLGammaFit.py for ML fitting.
+        determine alpha. See position_tolerance_fit for ML fitting.
 
         Gamma RV Mean(sparseness) = -9.820*sparseness + 13.9730
         Gamma RV Scale(sparseness) = mean(spareness) \ alpha

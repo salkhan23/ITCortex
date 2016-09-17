@@ -57,9 +57,9 @@ if __name__ == '__main__':
         for n_idx in np.arange(neurons):
             # print ("Creating neuron %i" % n_idx)
 
-            # # Use actual model neurons. Note that individual neurons have gamma distributed
-            # # object selectivities and activity fraction is calculated.
-            # # ------------------------------------------------------------------------------
+            # Use actual model neurons. Note that individual neurons have gamma distributed
+            # object selectivities and activity fraction is calculated.
+            # ------------------------------------------------------------------------------
             neuron = it.Neuron(
                 list_of_objects,
                 selectivity_profile='Kurtosis',

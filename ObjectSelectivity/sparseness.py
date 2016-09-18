@@ -316,7 +316,7 @@ class LehkySparseness:
         a = np.random.gamma(self._afa, scale=self._bfa, size=n)  # Samples of shape parameter
         b = np.random.gamma(self._afb, scale=self._bfb, size=n)  # Samples of scale parameter
 
-        a = np.maximum(1.01, a)  # Avoid making PDF go to infinity at zero spike rate
+        #a = np.maximum(1.01, a)  # Avoid making PDF go to infinity at zero spike rate
 
         return gamma.ppf(.99, a, loc=0, scale=b)
 

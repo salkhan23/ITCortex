@@ -303,7 +303,7 @@ def plot_neuron_tuning_profiles(it_neuron, font_size=30):
 
     ax1 = f.add_subplot(3, 2, 1)
     it_neuron.selectivity.plot_object_preferences(
-        axis=ax1, font_size=font_size, print_parameters=False)
+        axis=ax1, fontsize=font_size, print_parameters=False)
     ax1.grid()  # Turn the default grid off
     ax1.tick_params(axis='y', labelsize=font_size)
     ax1.set_xlabel('Ranked Objects', fontsize=font_size)

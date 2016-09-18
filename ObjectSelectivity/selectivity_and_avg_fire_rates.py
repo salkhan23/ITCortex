@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     neurons = 674
     objects = 806
-    runs = 1000
+    runs = 500
 
     # Stimulus Set
     list_of_objects = []
